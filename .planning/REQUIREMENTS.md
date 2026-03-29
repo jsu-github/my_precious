@@ -109,43 +109,43 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ASSET-01 | — | Pending |
-| ASSET-02 | — | Pending |
-| ASSET-03 | — | Pending |
-| ASSET-04 | — | Pending |
-| ASSET-05 | — | Pending |
-| DIM-01 | — | Pending |
-| DIM-02 | — | Pending |
-| DIM-03 | — | Pending |
-| DIM-04 | — | Pending |
-| RISK-01 | — | Pending |
-| RISK-02 | — | Pending |
-| RISK-03 | — | Pending |
-| RISK-04 | — | Pending |
-| MIT-01 | — | Pending |
-| MIT-02 | — | Pending |
-| MIT-03 | — | Pending |
-| MIT-04 | — | Pending |
-| TAG-01 | — | Pending |
-| TAG-02 | — | Pending |
-| TAG-03 | — | Pending |
-| PORT-01 | — | Pending |
-| PORT-02 | — | Pending |
-| PORT-03 | — | Pending |
-| PORT-04 | — | Pending |
-| WARN-01 | — | Pending |
-| WARN-02 | — | Pending |
-| WARN-03 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
+| ASSET-01 | 2 — Asset Management | Pending |
+| ASSET-02 | 2 — Asset Management | Pending |
+| ASSET-03 | 2 — Asset Management | Pending |
+| ASSET-04 | 2 — Asset Management | Pending |
+| ASSET-05 | 2 — Asset Management | Pending |
+| DIM-01 | 3 — Risk Dimensions & Scoring | Pending |
+| DIM-02 | 3 — Risk Dimensions & Scoring | Pending |
+| DIM-03 | 3 — Risk Dimensions & Scoring | Pending |
+| DIM-04 | 3 — Risk Dimensions & Scoring | Pending |
+| RISK-01 | 3 — Risk Dimensions & Scoring | Pending |
+| RISK-02 | 3 — Risk Dimensions & Scoring | Pending |
+| RISK-03 | 3 — Risk Dimensions & Scoring | Pending |
+| RISK-04 | 3 — Risk Dimensions & Scoring | Pending |
+| MIT-01 | 4 — Mitigations & Tags | Pending |
+| MIT-02 | 4 — Mitigations & Tags | Pending |
+| MIT-03 | 4 — Mitigations & Tags | Pending |
+| MIT-04 | 4 — Mitigations & Tags | Pending |
+| TAG-01 | 4 — Mitigations & Tags | Pending |
+| TAG-02 | 4 — Mitigations & Tags | Pending |
+| TAG-03 | 4 — Mitigations & Tags | Pending |
+| PORT-01 | 5 — Portfolio Dashboard | Pending |
+| PORT-02 | 5 — Portfolio Dashboard | Pending |
+| PORT-03 | 5 — Portfolio Dashboard | Pending |
+| PORT-04 | 5 — Portfolio Dashboard | Pending |
+| WARN-01 | 6 — Concentration Warnings | Pending |
+| WARN-02 | 6 — Concentration Warnings | Pending |
+| WARN-03 | 6 — Concentration Warnings | Pending |
+| INFRA-01 | 1 — Infrastructure & Project Foundation | Pending |
+| INFRA-02 | 1 — Infrastructure & Project Foundation | Pending |
+| INFRA-03 | 1 — Infrastructure & Project Foundation | Pending |
+| INFRA-04 | 1 — Infrastructure & Project Foundation | Pending |
 
 **Coverage:**
 - v1 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️ (populated by roadmapper)
+- Mapped to phases: 31
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initialization*
+*Last updated: 2026-03-29 after roadmap creation*
