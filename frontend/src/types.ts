@@ -12,3 +12,29 @@ export interface Asset {
 
 export type AssetCreateInput = Pick<Asset, 'name' | 'description' | 'type_label' | 'value' | 'currency'>;
 export type AssetUpdateInput = AssetCreateInput;
+
+export interface Dimension {
+  id: string;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DimensionCreateInput = Pick<Dimension, 'name' | 'description'>;
+export type DimensionUpdateInput = Partial<DimensionCreateInput>;
+
+export interface AssetScore {
+  dimension_id: string;
+  dimension_name: string;
+  is_default: boolean;
+  score_id: string | null;
+  gross_score: number | null;
+  net_score: number | null;
+}
+
+export interface UpdateScoreInput {
+  gross_score: number | null;
+  net_score: number | null;
+}

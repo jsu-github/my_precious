@@ -1,4 +1,4 @@
-import type { Asset, AssetCreateInput, AssetUpdateInput } from './types';
+import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -25,5 +25,23 @@ export const api = {
       request<Asset>(`/api/assets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<void>(`/api/assets/${id}`, { method: 'DELETE' }),
+  },
+  dimensions: {
+    list: () => request<Dimension[]>('/api/dimensions'),
+    create: (data: DimensionCreateInput) =>
+      request<Dimension>('/api/dimensions', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: DimensionUpdateInput) =>
+      request<Dimension>(`/api/dimensions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<void>(`/api/dimensions/${id}`, { method: 'DELETE' }),
+  },
+  scores: {
+    listForAsset: (assetId: string) =>
+      request<AssetScore[]>(`/api/assets/${assetId}/scores`),
+    updateScore: (assetId: string, dimensionId: string, data: UpdateScoreInput) =>
+      request<AssetScore>(`/api/assets/${assetId}/scores/${dimensionId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
   },
 };

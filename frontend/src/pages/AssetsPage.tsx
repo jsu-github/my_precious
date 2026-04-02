@@ -6,7 +6,12 @@ import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 type FormMode = { type: 'create' } | { type: 'edit'; asset: Asset } | null;
 
-export function AssetsPage(): React.JSX.Element {
+interface Props {
+  onNavigateToDimensions: () => void;
+  onNavigateToAsset: (assetId: string) => void;
+}
+
+export function AssetsPage({ onNavigateToDimensions, onNavigateToAsset }: Props): React.JSX.Element {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +81,20 @@ export function AssetsPage(): React.JSX.Element {
           </span>
         </div>
         {formMode === null && (
-          <button
-            style={styles.addBtn}
-            onClick={() => setFormMode({ type: 'create' })}
-          >
-            + Add asset
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              style={styles.dimBtn}
+              onClick={onNavigateToDimensions}
+            >
+              ⚙ Dimensions
+            </button>
+            <button
+              style={styles.addBtn}
+              onClick={() => setFormMode({ type: 'create' })}
+            >
+              + Add asset
+            </button>
+          </div>
         )}
       </header>
 
@@ -122,7 +135,12 @@ export function AssetsPage(): React.JSX.Element {
             {assets.map((asset) => (
               <tr key={asset.id} style={styles.row}>
                 <td style={styles.td}>
-                  <span style={styles.assetName}>{asset.name}</span>
+                  <button
+                    onClick={() => onNavigateToAsset(asset.id)}
+                    style={styles.assetNameBtn}
+                  >
+                    {asset.name}
+                  </button>
                   {asset.type_label && (
                     <span style={styles.typeLabel}>{asset.type_label}</span>
                   )}
@@ -290,5 +308,32 @@ const styles = {
     color: '#ef4444',
     borderColor: '#450a0a',
     marginLeft: '0.5rem',
+  } as React.CSSProperties,
+  dimBtn: {
+    background: 'transparent',
+    border: '1px solid #334155',
+    borderRadius: '6px',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    padding: '0.5rem 1rem',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+  } as React.CSSProperties,
+  assetNameBtn: {
+    display: 'block',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#93c5fd',
+    fontSize: 'inherit',
+    fontWeight: 500,
+    padding: 0,
+    textDecoration: 'underline',
+    textDecorationColor: '#1e40af',
+    textUnderlineOffset: '3px',
+    fontFamily: 'inherit',
+    textAlign: 'left' as const,
   } as React.CSSProperties,
 } satisfies Record<string, React.CSSProperties>;
