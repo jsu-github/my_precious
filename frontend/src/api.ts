@@ -1,4 +1,4 @@
-import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation } from './types';
+import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation, Tag, TagCreateInput, AssetTagEntry } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -59,5 +59,23 @@ export const api = {
       }),
     delete: (assetId: string, mitId: string) =>
       request<void>(`/api/assets/${assetId}/mitigations/${mitId}`, { method: 'DELETE' }),
+  },
+  tags: {
+    list: () => request<Tag[]>('/api/tags'),
+    create: (data: TagCreateInput) =>
+      request<Tag>('/api/tags', { method: 'POST', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<void>(`/api/tags/${id}`, { method: 'DELETE' }),
+  },
+  assetTags: {
+    list: (assetId: string) =>
+      request<AssetTagEntry[]>(`/api/assets/${assetId}/tags`),
+    assign: (assetId: string, tagId: string) =>
+      request<AssetTagEntry>(`/api/assets/${assetId}/tags`, {
+        method: 'POST',
+        body: JSON.stringify({ tag_id: tagId }),
+      }),
+    remove: (assetId: string, tagId: string) =>
+      request<void>(`/api/assets/${assetId}/tags/${tagId}`, { method: 'DELETE' }),
   },
 };

@@ -50,3 +50,16 @@ export interface Mitigation {
 
 export type MitigationCreateInput = Pick<Mitigation, 'dimension_id' | 'description'>;
 export type MitigationUpdateInput = Pick<Mitigation, 'description'>;
+
+export interface Tag {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export type TagCreateInput = Pick<Tag, 'name'>;
+
+export interface AssetTagEntry {
+  tag_id: string;
+  tag_name: string;
+}

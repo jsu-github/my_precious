@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Asset, AssetScore, Mitigation } from '../types';
+import type { Asset, AssetScore, Mitigation, Tag, AssetTagEntry } from '../types';
 
 const SCORE_LABELS = ['Extra Low', 'Low', 'Medium', 'High', 'Critical'] as const;
 const SCORE_COLORS = ['#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444'] as const;
@@ -25,14 +25,19 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
   const [savingMit, setSavingMit] = useState(false);
   const [editingMitId, setEditingMitId] = useState<string | null>(null);
   const [editMitText, setEditMitText] = useState('');
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [assetTags, setAssetTags] = useState<Set<string>>(new Set());
+  const [togglingTagId, setTogglingTagId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       api.assets.get(assetId),
       api.scores.listForAsset(assetId),
       api.mitigations.listForAsset(assetId),
+      api.tags.list(),
+      api.assetTags.list(assetId),
     ])
-      .then(([a, s, mits]) => {
+      .then(([a, s, mits, tags, assignedTags]) => {
         setAsset(a);
         setScores(s);
         const grouped: Record<string, Mitigation[]> = {};
@@ -41,6 +46,8 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
           grouped[m.dimension_id].push(m);
         });
         setMitigations(grouped);
+        setAllTags(tags);
+        setAssetTags(new Set((assignedTags as AssetTagEntry[]).map((t) => t.tag_id)));
       })
       .catch(() => setError('Failed to load asset'))
       .finally(() => setLoading(false));
@@ -141,6 +148,28 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
       // silently ignore
     } finally {
       setEditingMitId(null);
+    }
+  };
+
+  const handleToggleTag = async (tagId: string) => {
+    setTogglingTagId(tagId);
+    const isAssigned = assetTags.has(tagId);
+    try {
+      if (isAssigned) {
+        await api.assetTags.remove(assetId, tagId);
+        setAssetTags((prev) => {
+          const next = new Set(prev);
+          next.delete(tagId);
+          return next;
+        });
+      } else {
+        await api.assetTags.assign(assetId, tagId);
+        setAssetTags((prev) => new Set(prev).add(tagId));
+      }
+    } catch {
+      // silently ignore — state stays unchanged
+    } finally {
+      setTogglingTagId(null);
     }
   };
 
@@ -408,6 +437,50 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
               </div>
             ))}
           </div>
+
+          {/* Tag assignment section */}
+          {allTags.length > 0 && (
+            <div style={{ marginTop: '2rem' }}>
+              <h2
+                style={{
+                  margin: '0 0 0.875rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: '#cbd5e1',
+                }}
+              >
+                Tags
+              </h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {allTags.map((tag) => {
+                  const assigned = assetTags.has(tag.id);
+                  const toggling = togglingTagId === tag.id;
+                  return (
+                    <button
+                      key={tag.id}
+                      disabled={toggling}
+                      onClick={() => void handleToggleTag(tag.id)}
+                      style={{
+                        border: `1px solid ${assigned ? '#3b82f6' : '#334155'}`,
+                        background: assigned ? '#1e3a5f' : 'transparent',
+                        color: assigned ? '#93c5fd' : '#64748b',
+                        borderRadius: 20,
+                        padding: '0.3rem 0.875rem',
+                        fontSize: '0.875rem',
+                        fontWeight: assigned ? 600 : 400,
+                        cursor: toggling ? 'not-allowed' : 'pointer',
+                        opacity: toggling ? 0.5 : 1,
+                        transition: 'all 0.1s',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {assigned ? '✓ ' : ''}🏷 {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

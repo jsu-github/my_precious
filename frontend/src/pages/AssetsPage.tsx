@@ -8,10 +8,11 @@ type FormMode = { type: 'create' } | { type: 'edit'; asset: Asset } | null;
 
 interface Props {
   onNavigateToDimensions: () => void;
+  onNavigateToTags: () => void;
   onNavigateToAsset: (assetId: string) => void;
 }
 
-export function AssetsPage({ onNavigateToDimensions, onNavigateToAsset }: Props): React.JSX.Element {
+export function AssetsPage({ onNavigateToDimensions, onNavigateToTags, onNavigateToAsset }: Props): React.JSX.Element {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +88,12 @@ export function AssetsPage({ onNavigateToDimensions, onNavigateToAsset }: Props)
               onClick={onNavigateToDimensions}
             >
               ⚙ Dimensions
+            </button>
+            <button
+              style={styles.dimBtn}
+              onClick={onNavigateToTags}
+            >
+              🏷 Tags
             </button>
             <button
               style={styles.addBtn}
