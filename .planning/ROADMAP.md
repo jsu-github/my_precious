@@ -81,7 +81,7 @@
 
 ---
 
-### Phase 4: Mitigations & Tags
+### Phase 4: Mitigations & Tags ✓ COMPLETE
 **Goal:** Users can document the concrete actions that reduce each dimension's risk per asset, and apply portfolio-wide tags to group assets for cross-cutting concentration analysis.
 **Depends on:** Phase 3
 **Requirements:** MIT-01, MIT-02, MIT-03, MIT-04, TAG-01, TAG-02, TAG-03
