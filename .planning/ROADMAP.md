@@ -110,8 +110,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Portfolio scoring API + frontend types (GET /api/portfolio/summary, PortfolioSummary types, api.portfolio.summary())
-- [ ] 05-02-PLAN.md — Dashboard UI: RadarChart SVG component + DashboardPage (metrics strip, heatmap, gross/net table) + routing wiring
+- [x] 05-01-PLAN.md — Portfolio scoring API + frontend types (GET /api/portfolio/summary, PortfolioSummary types, api.portfolio.summary())
+- [x] 05-02-PLAN.md — Dashboard UI: RadarChart SVG component + DashboardPage (metrics strip, heatmap, gross/net table) + routing wiring
 
 **Success Criteria:**
 1. Dashboard displays a single capital-weighted portfolio risk score computed from the net residual scores of all assets, weighted by their capital value
