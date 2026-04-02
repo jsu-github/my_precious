@@ -5,6 +5,7 @@ import { healthRouter } from './routes/health';
 import { assetsRouter } from './routes/assets';
 import { dimensionsRouter } from './routes/dimensions';
 import { tagsRouter } from './routes/tags';
+import { portfolioRouter } from './routes/portfolio';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/health', healthRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/dimensions', dimensionsRouter);
 app.use('/api/tags', tagsRouter);
+app.use('/api/portfolio', portfolioRouter);
 
 // Error handler — must be last
 app.use(errorHandler);
