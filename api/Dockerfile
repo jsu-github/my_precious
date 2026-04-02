@@ -18,8 +18,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/migrations ./migrations
-COPY knexfile.ts ./
+# Copy compiled JS migrations (not TS source) to where knex production config expects them
+COPY --from=builder /app/dist/migrations ./migrations
 
 EXPOSE 3001
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
