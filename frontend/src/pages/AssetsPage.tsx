@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Asset } from '../types';
+import { AssetForm } from '../components/AssetForm';
+
+type FormMode = { type: 'create' } | { type: 'edit'; asset: Asset } | null;
 
 export function AssetsPage(): React.JSX.Element {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formMode, setFormMode] = useState<FormMode>(null);
 
   useEffect(() => {
     api.assets.list()
@@ -13,6 +17,21 @@ export function AssetsPage(): React.JSX.Element {
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  function handleSaved(saved: Asset): void {
+    setAssets((prev) => {
+      const idx = prev.findIndex((a) => a.id === saved.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = saved;
+        return next;
+      }
+      return [...prev, saved];
+    });
+    // Refresh weights from server after any change
+    api.assets.list().then(setAssets).catch(() => null);
+    setFormMode(null);
+  }
 
   if (loading) {
     return (
@@ -33,18 +52,36 @@ export function AssetsPage(): React.JSX.Element {
   return (
     <div style={styles.page}>
       <header style={styles.header}>
-        <h1 style={styles.title}>Portfolio</h1>
-        <span style={styles.count}>
-          {assets.length} {assets.length === 1 ? 'asset' : 'assets'}
-        </span>
+        <div>
+          <h1 style={styles.title}>Portfolio</h1>
+          <span style={styles.count}>
+            {assets.length} {assets.length === 1 ? 'asset' : 'assets'}
+          </span>
+        </div>
+        {formMode === null && (
+          <button
+            style={styles.addBtn}
+            onClick={() => setFormMode({ type: 'create' })}
+          >
+            + Add asset
+          </button>
+        )}
       </header>
 
-      {assets.length === 0 ? (
+      {formMode !== null && (
+        <AssetForm
+          asset={formMode.type === 'edit' ? formMode.asset : undefined}
+          onSuccess={handleSaved}
+          onCancel={() => setFormMode(null)}
+        />
+      )}
+
+      {assets.length === 0 && formMode === null ? (
         <div style={styles.empty}>
           <p style={styles.emptyText}>No assets yet.</p>
           <p style={styles.muted}>Add your first asset to start tracking sovereign risk.</p>
         </div>
-      ) : (
+      ) : assets.length > 0 ? (
         <table style={styles.table}>
           <thead>
             <tr>
@@ -52,6 +89,7 @@ export function AssetsPage(): React.JSX.Element {
               <th style={{ ...styles.th, ...styles.right }}>Value</th>
               <th style={{ ...styles.th, ...styles.right }}>Weight</th>
               <th style={{ ...styles.th, ...styles.right }}>Net Risk</th>
+              <th style={styles.th} />
             </tr>
           </thead>
           <tbody>
@@ -80,11 +118,19 @@ export function AssetsPage(): React.JSX.Element {
                 <td style={{ ...styles.td, ...styles.right }}>
                   <span style={styles.placeholder}>—</span>
                 </td>
+                <td style={{ ...styles.td, textAlign: 'right' }}>
+                  <button
+                    style={styles.editBtn}
+                    onClick={() => setFormMode({ type: 'edit', asset })}
+                  >
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -97,8 +143,8 @@ const styles = {
   } as React.CSSProperties,
   header: {
     display: 'flex',
-    alignItems: 'baseline',
-    gap: '1rem',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: '2rem',
     borderBottom: '1px solid #1e293b',
     paddingBottom: '1rem',
@@ -112,6 +158,20 @@ const styles = {
   count: {
     fontSize: '0.875rem',
     color: '#64748b',
+    display: 'block',
+    marginTop: '0.125rem',
+  } as React.CSSProperties,
+  addBtn: {
+    background: '#3b82f6',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    padding: '0.5rem 1rem',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   centred: {
     display: 'flex',
@@ -183,5 +243,15 @@ const styles = {
   } as React.CSSProperties,
   placeholder: {
     color: '#334155',
+  } as React.CSSProperties,
+  editBtn: {
+    background: 'transparent',
+    border: '1px solid #334155',
+    borderRadius: '4px',
+    color: '#64748b',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    padding: '0.25rem 0.6rem',
+    fontFamily: 'inherit',
   } as React.CSSProperties,
 } satisfies Record<string, React.CSSProperties>;
