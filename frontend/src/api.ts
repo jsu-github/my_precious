@@ -1,4 +1,4 @@
-import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput } from './types';
+import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -43,5 +43,21 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
+  },
+  mitigations: {
+    listForAsset: (assetId: string) =>
+      request<Mitigation[]>(`/api/assets/${assetId}/mitigations`),
+    create: (assetId: string, dimensionId: string, description: string) =>
+      request<Mitigation>(`/api/assets/${assetId}/mitigations`, {
+        method: 'POST',
+        body: JSON.stringify({ dimension_id: dimensionId, description }),
+      }),
+    update: (assetId: string, mitId: string, description: string) =>
+      request<Mitigation>(`/api/assets/${assetId}/mitigations/${mitId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ description }),
+      }),
+    delete: (assetId: string, mitId: string) =>
+      request<void>(`/api/assets/${assetId}/mitigations/${mitId}`, { method: 'DELETE' }),
   },
 };

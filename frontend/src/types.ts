@@ -38,3 +38,15 @@ export interface UpdateScoreInput {
   gross_score: number | null;
   net_score: number | null;
 }
+
+export interface Mitigation {
+  id: string;
+  asset_id: string;
+  dimension_id: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MitigationCreateInput = Pick<Mitigation, 'dimension_id' | 'description'>;
+export type MitigationUpdateInput = Pick<Mitigation, 'description'>;

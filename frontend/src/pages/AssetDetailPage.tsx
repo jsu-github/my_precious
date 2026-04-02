@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Asset, AssetScore } from '../types';
+import type { Asset, AssetScore, Mitigation } from '../types';
 
 const SCORE_LABELS = ['Extra Low', 'Low', 'Medium', 'High', 'Critical'] as const;
 const SCORE_COLORS = ['#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444'] as const;
@@ -19,15 +19,28 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<Set<SavingKey>>(new Set());
+  const [mitigations, setMitigations] = useState<Record<string, Mitigation[]>>({});
+  const [addingMitFor, setAddingMitFor] = useState<string | null>(null);
+  const [newMitText, setNewMitText] = useState('');
+  const [savingMit, setSavingMit] = useState(false);
+  const [editingMitId, setEditingMitId] = useState<string | null>(null);
+  const [editMitText, setEditMitText] = useState('');
 
   useEffect(() => {
     Promise.all([
       api.assets.get(assetId),
       api.scores.listForAsset(assetId),
+      api.mitigations.listForAsset(assetId),
     ])
-      .then(([a, s]) => {
+      .then(([a, s, mits]) => {
         setAsset(a);
         setScores(s);
+        const grouped: Record<string, Mitigation[]> = {};
+        mits.forEach((m) => {
+          if (!grouped[m.dimension_id]) grouped[m.dimension_id] = [];
+          grouped[m.dimension_id].push(m);
+        });
+        setMitigations(grouped);
       })
       .catch(() => setError('Failed to load asset'))
       .finally(() => setLoading(false));
@@ -81,6 +94,53 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
         next.delete(key);
         return next;
       });
+    }
+  };
+
+  const handleAddMitigation = async (dimensionId: string) => {
+    const text = newMitText.trim();
+    if (!text) return;
+    setSavingMit(true);
+    try {
+      const created = await api.mitigations.create(assetId, dimensionId, text);
+      setMitigations((prev) => ({
+        ...prev,
+        [dimensionId]: [...(prev[dimensionId] ?? []), created],
+      }));
+      setNewMitText('');
+      setAddingMitFor(null);
+    } catch {
+      // silently ignore
+    } finally {
+      setSavingMit(false);
+    }
+  };
+
+  const handleDeleteMitigation = async (dimensionId: string, mitId: string) => {
+    try {
+      await api.mitigations.delete(assetId, mitId);
+      setMitigations((prev) => ({
+        ...prev,
+        [dimensionId]: (prev[dimensionId] ?? []).filter((m) => m.id !== mitId),
+      }));
+    } catch {
+      // silently ignore
+    }
+  };
+
+  const handleUpdateMitigation = async (dimensionId: string, mitId: string) => {
+    const text = editMitText.trim();
+    if (!text) { setEditingMitId(null); return; }
+    try {
+      const updated = await api.mitigations.update(assetId, mitId, text);
+      setMitigations((prev) => ({
+        ...prev,
+        [dimensionId]: (prev[dimensionId] ?? []).map((m) => (m.id === mitId ? updated : m)),
+      }));
+    } catch {
+      // silently ignore
+    } finally {
+      setEditingMitId(null);
     }
   };
 
@@ -168,40 +228,169 @@ export function AssetDetailPage({ assetId, onBack }: Props): React.JSX.Element {
                 No risk dimensions configured. Add dimensions first.
               </p>
             ) : (
-              scores.map((score, idx) => (
-                <div
-                  key={score.dimension_id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    alignItems: 'center',
-                    padding: '0.875rem 1.25rem',
-                    borderBottom: idx < scores.length - 1 ? '1px solid #0f172a' : 'none',
-                    gap: '1rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.875rem', color: score.is_default ? '#f59e0b' : '#475569' }}>
-                      {score.is_default ? '🔒' : '◈'}
-                    </span>
-                    <span style={{ color: '#e2e8f0', fontWeight: 500, fontSize: '0.9375rem' }}>
-                      {score.dimension_name}
-                    </span>
+              scores.map((score, idx) => {
+                const dimMitigations = mitigations[score.dimension_id] ?? [];
+                return (
+                  <div
+                    key={score.dimension_id}
+                    style={{
+                      borderBottom: idx < scores.length - 1 ? '1px solid #0f172a' : 'none',
+                    }}
+                  >
+                    {/* Score row */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        alignItems: 'center',
+                        padding: '0.875rem 1.25rem',
+                        gap: '1rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.875rem', color: score.is_default ? '#f59e0b' : '#475569' }}>
+                          {score.is_default ? '🔒' : '◈'}
+                        </span>
+                        <span style={{ color: '#e2e8f0', fontWeight: 500, fontSize: '0.9375rem' }}>
+                          {score.dimension_name}
+                        </span>
+                      </div>
+                      <ScoreButtonGroup
+                        value={score.gross_score}
+                        saving={saving.has(`${score.dimension_id}:gross`)}
+                        onSelect={(v) => void handleScore(score.dimension_id, 'gross', score.gross_score, v)}
+                      />
+                      <ScoreButtonGroup
+                        value={score.net_score}
+                        saving={saving.has(`${score.dimension_id}:net`)}
+                        onSelect={(v) => void handleScore(score.dimension_id, 'net', score.net_score, v)}
+                      />
+                    </div>
+
+                    {/* Mitigations sub-row */}
+                    <div style={{ padding: '0 1.25rem 0.875rem', paddingTop: 0 }}>
+                      {dimMitigations.map((m) => (
+                        <div
+                          key={m.id}
+                          style={{
+                            display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                            marginBottom: '0.375rem',
+                          }}
+                        >
+                          <span style={{ color: '#475569', fontSize: '0.75rem', marginTop: 3 }}>▸</span>
+                          {editingMitId === m.id ? (
+                            <textarea
+                              autoFocus
+                              value={editMitText}
+                              onChange={(e) => setEditMitText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  void handleUpdateMitigation(score.dimension_id, m.id);
+                                }
+                                if (e.key === 'Escape') setEditingMitId(null);
+                              }}
+                              rows={2}
+                              style={{
+                                flex: 1, background: '#0f172a', border: '1px solid #3b82f6',
+                                borderRadius: 5, color: '#f1f5f9', padding: '0.25rem 0.5rem',
+                                fontSize: '0.8125rem', resize: 'vertical', fontFamily: 'inherit',
+                                outline: 'none',
+                              }}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                flex: 1, color: '#94a3b8', fontSize: '0.8125rem',
+                                lineHeight: 1.5, cursor: 'pointer',
+                              }}
+                              onClick={() => { setEditingMitId(m.id); setEditMitText(m.description); }}
+                              title="Click to edit"
+                            >
+                              {m.description}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => void handleDeleteMitigation(score.dimension_id, m.id)}
+                            style={{
+                              background: 'none', border: 'none', color: '#475569',
+                              cursor: 'pointer', fontSize: '0.875rem', padding: '0 0.125rem',
+                              lineHeight: 1, flexShrink: 0, fontFamily: 'inherit',
+                            }}
+                            title="Remove mitigation"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+
+                      {addingMitFor === score.dimension_id ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 4 }}>
+                          <textarea
+                            autoFocus
+                            placeholder="Describe this mitigation…"
+                            value={newMitText}
+                            onChange={(e) => setNewMitText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                void handleAddMitigation(score.dimension_id);
+                              }
+                              if (e.key === 'Escape') { setAddingMitFor(null); setNewMitText(''); }
+                            }}
+                            rows={2}
+                            disabled={savingMit}
+                            style={{
+                              flex: 1, background: '#0f172a', border: '1px solid #334155',
+                              borderRadius: 5, color: '#f1f5f9', padding: '0.25rem 0.5rem',
+                              fontSize: '0.8125rem', resize: 'vertical', fontFamily: 'inherit',
+                              outline: 'none',
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <button
+                              onClick={() => void handleAddMitigation(score.dimension_id)}
+                              disabled={savingMit || !newMitText.trim()}
+                              style={{
+                                background: savingMit || !newMitText.trim() ? '#334155' : '#3b82f6',
+                                border: 'none', borderRadius: 5, color: '#fff',
+                                padding: '0.25rem 0.625rem', fontSize: '0.75rem', cursor: 'pointer',
+                                fontFamily: 'inherit', fontWeight: 500,
+                              }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => { setAddingMitFor(null); setNewMitText(''); }}
+                              style={{
+                                background: 'none', border: '1px solid #334155', borderRadius: 5,
+                                color: '#64748b', padding: '0.25rem 0.625rem',
+                                fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit',
+                              }}
+                            >
+                              Esc
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setAddingMitFor(score.dimension_id);
+                            setEditingMitId(null);
+                          }}
+                          style={{
+                            background: 'none', border: 'none', color: '#475569',
+                            cursor: 'pointer', fontSize: '0.75rem', padding: '0.125rem 0',
+                            fontFamily: 'inherit', marginTop: dimMitigations.length > 0 ? 4 : 0,
+                          }}
+                        >
+                          + mitigation
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <ScoreButtonGroup
-                    value={score.gross_score}
-                    saving={saving.has(`${score.dimension_id}:gross`)}
-                    onSelect={(v) => void handleScore(score.dimension_id, 'gross', score.gross_score, v)}
-                  />
-
-                  <ScoreButtonGroup
-                    value={score.net_score}
-                    saving={saving.has(`${score.dimension_id}:net`)}
-                    onSelect={(v) => void handleScore(score.dimension_id, 'net', score.net_score, v)}
-                  />
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
