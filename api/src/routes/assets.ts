@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../db';
+import { scoresRouter } from './scores';
 
 export const assetsRouter = Router();
 
@@ -126,3 +127,6 @@ assetsRouter.delete('/:id', async (req: Request, res: Response, next: NextFuncti
     next(err);
   }
 });
+
+// Nested scores routes: GET /api/assets/:id/scores, PUT /api/assets/:id/scores/:dimensionId
+assetsRouter.use('/:id/scores', scoresRouter);
