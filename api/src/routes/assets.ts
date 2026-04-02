@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../db';
 import { scoresRouter } from './scores';
+import { mitigationsRouter } from './mitigations';
 
 export const assetsRouter = Router();
 
@@ -130,3 +131,6 @@ assetsRouter.delete('/:id', async (req: Request, res: Response, next: NextFuncti
 
 // Nested scores routes: GET /api/assets/:id/scores, PUT /api/assets/:id/scores/:dimensionId
 assetsRouter.use('/:id/scores', scoresRouter);
+
+// Nested mitigations routes: GET/POST /api/assets/:id/mitigations; PUT/DELETE /:mitigationId
+assetsRouter.use('/:id/mitigations', mitigationsRouter);
