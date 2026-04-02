@@ -10,9 +10,10 @@ interface Props {
   onNavigateToDimensions: () => void;
   onNavigateToTags: () => void;
   onNavigateToAsset: (assetId: string) => void;
+  onNavigateToDashboard: () => void;
 }
 
-export function AssetsPage({ onNavigateToDimensions, onNavigateToTags, onNavigateToAsset }: Props): React.JSX.Element {
+export function AssetsPage({ onNavigateToDimensions, onNavigateToTags, onNavigateToAsset, onNavigateToDashboard }: Props): React.JSX.Element {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +84,12 @@ export function AssetsPage({ onNavigateToDimensions, onNavigateToTags, onNavigat
         </div>
         {formMode === null && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              style={styles.dimBtn}
+              onClick={onNavigateToDashboard}
+            >
+              📊 Dashboard
+            </button>
             <button
               style={styles.dimBtn}
               onClick={onNavigateToDimensions}

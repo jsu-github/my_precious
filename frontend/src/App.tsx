@@ -4,9 +4,11 @@ import { AssetDetailPage } from './pages/AssetDetailPage';
 import { DimensionsPage } from './pages/DimensionsPage';
 import { TagsPage } from './pages/TagsPage';
 import { TagOverviewPage } from './pages/TagOverviewPage';
+import { DashboardPage } from './pages/DashboardPage';
 
 type View =
   | { page: 'portfolio' }
+  | { page: 'dashboard' }
   | { page: 'dimensions' }
   | { page: 'tags' }
   | { page: 'tag-overview' }
@@ -22,7 +24,11 @@ function App(): React.JSX.Element {
           onNavigateToDimensions={() => setView({ page: 'dimensions' })}
           onNavigateToTags={() => setView({ page: 'tags' })}
           onNavigateToAsset={(assetId) => setView({ page: 'asset-detail', assetId })}
+          onNavigateToDashboard={() => setView({ page: 'dashboard' })}
         />
+      )}
+      {view.page === 'dashboard' && (
+        <DashboardPage onBack={() => setView({ page: 'portfolio' })} />
       )}
       {view.page === 'dimensions' && (
         <DimensionsPage
