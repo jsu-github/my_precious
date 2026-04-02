@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../db';
 import { scoresRouter } from './scores';
 import { mitigationsRouter } from './mitigations';
+import { assetTagsRouter } from './assetTags';
 
 export const assetsRouter = Router();
 
@@ -134,3 +135,6 @@ assetsRouter.use('/:id/scores', scoresRouter);
 
 // Nested mitigations routes: GET/POST /api/assets/:id/mitigations; PUT/DELETE /:mitigationId
 assetsRouter.use('/:id/mitigations', mitigationsRouter);
+
+// Nested tag-assignment routes: GET/POST/DELETE /api/assets/:id/tags
+assetsRouter.use('/:id/tags', assetTagsRouter);
