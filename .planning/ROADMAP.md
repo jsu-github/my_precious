@@ -10,7 +10,7 @@
 | # | Phase | Goal | Requirements | Plans |
 |---|-------|------|--------------|-------|
 | 1 | Infrastructure & Project Foundation | Full project stack runs end-to-end via a single `docker compose up` | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 5 |
-| 2 | Asset Management | Users can add, view, edit, and delete any asset type with its current value | ASSET-01, ASSET-02, ASSET-03, ASSET-04, ASSET-05 | 5 |
+| 2 | Asset Management | 5/5 | Complete   | 2026-04-02 |
 | 3 | Risk Dimensions & Scoring | Every asset can be scored against every risk dimension with gross and net scores stored separately | DIM-01, DIM-02, DIM-03, DIM-04, RISK-01, RISK-02, RISK-03, RISK-04 | 5 |
 | 4 | Mitigations & Tags | Users can document concrete mitigation actions and group assets with cross-cutting tags | MIT-01, MIT-02, MIT-03, MIT-04, TAG-01, TAG-02, TAG-03 | 5 |
 | 5 | Portfolio Dashboard | Dashboard presents a capital-weighted risk overview with heatmap visualization that updates in real time | PORT-01, PORT-02, PORT-03, PORT-04 | 5 |
@@ -45,7 +45,7 @@
 **Requirements:** ASSET-01, ASSET-02, ASSET-03, ASSET-04, ASSET-05
 
 **Plans:**
-1. Asset database migration — Schema for `assets` table: id, name, description, type_label, value, currency, created_at, updated_at; no category-specific columns
+5/5 plans complete
 2. Asset REST API — Full CRUD: `POST /assets`, `GET /assets`, `GET /assets/:id`, `PUT /assets/:id`, `DELETE /assets/:id`; DELETE cascades to all child records
 3. Asset list view — React page showing all assets with name, type label, current value, capital weight (% of total portfolio), and a placeholder net risk score
 4. Asset add/edit form — Shared form component for creating and editing assets; field validation; currency/unit is a free-text label, not a dropdown
