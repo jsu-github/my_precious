@@ -80,3 +80,20 @@ export interface TagOverview {
   portfolio_pct: number;
   assets: TagOverviewAsset[];
 }
+
+export interface DimensionSummary {
+  dimension_id: string;
+  dimension_name: string;
+  is_default: boolean;
+  weighted_gross: number | null; // 1–5 capital-weighted gross risk score
+  weighted_net: number | null;   // 1–5 capital-weighted net risk score
+  scored_asset_count: number;
+}
+
+export interface PortfolioSummary {
+  total_value: number;
+  asset_count: number;
+  weighted_gross: number | null; // 1–5 overall capital-weighted gross
+  weighted_net: number | null;   // 1–5 overall capital-weighted net
+  by_dimension: DimensionSummary[];
+}

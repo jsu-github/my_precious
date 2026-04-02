@@ -1,4 +1,4 @@
-import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation, Tag, TagCreateInput, AssetTagEntry, TagOverview } from './types';
+import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation, Tag, TagCreateInput, AssetTagEntry, TagOverview, PortfolioSummary } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -78,5 +78,8 @@ export const api = {
       }),
     remove: (assetId: string, tagId: string) =>
       request<void>(`/api/assets/${assetId}/tags/${tagId}`, { method: 'DELETE' }),
+  },
+  portfolio: {
+    summary: () => request<PortfolioSummary>('/api/portfolio/summary'),
   },
 };
