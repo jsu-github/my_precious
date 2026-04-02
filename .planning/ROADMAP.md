@@ -129,12 +129,11 @@ Plans:
 **Depends on:** Phase 5
 **Requirements:** WARN-01, WARN-02, WARN-03
 
-**Plans:**
-1. Concentration detection logic — API function computing, for each tag, the percentage of total portfolio value held by assets bearing that tag; returns warnings for tags exceeding the threshold
-2. Warning API endpoint — `GET /warnings/concentration` returning active warnings with tag name, percentage, contributing asset list; threshold configurable via API
-3. Dashboard warning component — Prominent alert banner or card on the dashboard for each active warning; uses strong visual hierarchy (red/amber) to demand attention
-4. Threshold configuration UI — Settings control to adjust the warning threshold percentage (default 70%); change persists to database or config
-5. Reactive warning refresh — Warnings recompute and re-render whenever asset values or tag assignments change, without requiring a page reload
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Concentration warnings API: GET /portfolio/warnings, GET/PUT /portfolio/threshold, ConcentrationWarning type, api.portfolio methods
+- [ ] 06-02-PLAN.md — Dashboard warning section: WarningCard component + DashboardPage warning section with inline threshold control
 
 **Success Criteria:**
 1. When ≥70% of total portfolio value is held in assets sharing a single tag, the system generates and displays a warning automatically
