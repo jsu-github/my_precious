@@ -13,7 +13,7 @@
 | 2 | Asset Management | 5/5 | Complete   | 2026-04-02 |
 | 3 | Risk Dimensions & Scoring | 5/5 | Complete   | 2026-04-02 |
 | 4 | Mitigations & Tags | Users can document concrete mitigation actions and group assets with cross-cutting tags | MIT-01, MIT-02, MIT-03, MIT-04, TAG-01, TAG-02, TAG-03 | 5 |
-| 5 | Portfolio Dashboard | Dashboard presents a capital-weighted risk overview with heatmap visualization that updates in real time | PORT-01, PORT-02, PORT-03, PORT-04 | 5 |
+| 5 | Portfolio Dashboard | Dashboard presents a capital-weighted risk overview with heatmap visualization that updates in real time | PORT-01, PORT-02, PORT-03, PORT-04 | 2 |
 | 6 | Concentration Warnings | System automatically detects and prominently alerts when capital is dangerously concentrated under a single tag | WARN-01, WARN-02, WARN-03 | 4 |
 
 ## Phases
@@ -107,12 +107,11 @@
 **Depends on:** Phase 4
 **Requirements:** PORT-01, PORT-02, PORT-03, PORT-04
 
-**Plans:**
-1. Portfolio scoring API — Endpoint computing capital-weighted total risk score, per-dimension capital-weighted aggregates, and gross/net contribution breakdown across the portfolio
-2. Dashboard page layout — React page with a summary metrics strip (total value, weighted risk score) and two-column section grid for visual components
-3. Capital-weighted score component — Prominent headline metric showing the portfolio risk score with a brief visual indicator (color band or gauge); hover tooltip explains weighting
-4. Risk heatmap component — Spider chart or heat matrix showing capital-weighted risk concentration per dimension; cells/segments turn red at Critical, amber at High
-5. Gross vs net breakdown component — Side-by-side bar or table showing gross risk contribution vs net risk contribution across the full portfolio, making the aggregate mitigation effect visible
+**Plans:** 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Portfolio scoring API + frontend types (GET /api/portfolio/summary, PortfolioSummary types, api.portfolio.summary())
+- [ ] 05-02-PLAN.md — Dashboard UI: RadarChart SVG component + DashboardPage (metrics strip, heatmap, gross/net table) + routing wiring
 
 **Success Criteria:**
 1. Dashboard displays a single capital-weighted portfolio risk score computed from the net residual scores of all assets, weighted by their capital value
