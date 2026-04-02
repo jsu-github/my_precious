@@ -11,7 +11,7 @@
 |---|-------|------|--------------|-------|
 | 1 | Infrastructure & Project Foundation | Full project stack runs end-to-end via a single `docker compose up` | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 5 |
 | 2 | Asset Management | 5/5 | Complete   | 2026-04-02 |
-| 3 | Risk Dimensions & Scoring | Every asset can be scored against every risk dimension with gross and net scores stored separately | DIM-01, DIM-02, DIM-03, DIM-04, RISK-01, RISK-02, RISK-03, RISK-04 | 5 |
+| 3 | Risk Dimensions & Scoring | 5/5 | Complete   | 2026-04-02 |
 | 4 | Mitigations & Tags | Users can document concrete mitigation actions and group assets with cross-cutting tags | MIT-01, MIT-02, MIT-03, MIT-04, TAG-01, TAG-02, TAG-03 | 5 |
 | 5 | Portfolio Dashboard | Dashboard presents a capital-weighted risk overview with heatmap visualization that updates in real time | PORT-01, PORT-02, PORT-03, PORT-04 | 5 |
 | 6 | Concentration Warnings | System automatically detects and prominently alerts when capital is dangerously concentrated under a single tag | WARN-01, WARN-02, WARN-03 | 4 |
