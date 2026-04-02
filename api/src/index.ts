@@ -3,6 +3,7 @@ import cors from 'cors';
 import { runMigrations } from './db';
 import { healthRouter } from './routes/health';
 import { assetsRouter } from './routes/assets';
+import { dimensionsRouter } from './routes/dimensions';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/health', healthRouter);
 app.use('/api/assets', assetsRouter);
+app.use('/api/dimensions', dimensionsRouter);
 
 // Error handler — must be last
 app.use(errorHandler);
