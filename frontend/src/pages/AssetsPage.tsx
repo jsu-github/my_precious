@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Asset } from '../types';
 import { AssetForm } from '../components/AssetForm';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 type FormMode = { type: 'create' } | { type: 'edit'; asset: Asset } | null;
 
@@ -10,6 +11,8 @@ export function AssetsPage(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<FormMode>(null);
+  const [pendingDelete, setPendingDelete] = useState<Asset | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.assets.list()
@@ -31,6 +34,20 @@ export function AssetsPage(): React.JSX.Element {
     // Refresh weights from server after any change
     api.assets.list().then(setAssets).catch(() => null);
     setFormMode(null);
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await api.assets.delete(pendingDelete.id);
+      setAssets((prev) => prev.filter((a) => a.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (err) {
+      console.error('Delete failed', err);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -67,6 +84,15 @@ export function AssetsPage(): React.JSX.Element {
           </button>
         )}
       </header>
+
+      {pendingDelete && (
+        <DeleteConfirmDialog
+          assetName={pendingDelete.name}
+          deleting={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
 
       {formMode !== null && (
         <AssetForm
@@ -124,6 +150,12 @@ export function AssetsPage(): React.JSX.Element {
                     onClick={() => setFormMode({ type: 'edit', asset })}
                   >
                     Edit
+                  </button>
+                  <button
+                    style={{ ...styles.editBtn, ...styles.deleteRowBtn }}
+                    onClick={() => setPendingDelete(asset)}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -253,5 +285,10 @@ const styles = {
     fontSize: '0.75rem',
     padding: '0.25rem 0.6rem',
     fontFamily: 'inherit',
+  } as React.CSSProperties,
+  deleteRowBtn: {
+    color: '#ef4444',
+    borderColor: '#450a0a',
+    marginLeft: '0.5rem',
   } as React.CSSProperties,
 } satisfies Record<string, React.CSSProperties>;
