@@ -63,3 +63,20 @@ export interface AssetTagEntry {
   tag_id: string;
   tag_name: string;
 }
+
+export interface TagOverviewAsset {
+  id: string;
+  name: string;
+  value: number;
+  currency: string;
+  capital_weight_pct: number;
+}
+
+export interface TagOverview {
+  tag_id: string;
+  tag_name: string;
+  asset_count: number;
+  combined_value: number;
+  portfolio_pct: number;
+  assets: TagOverviewAsset[];
+}

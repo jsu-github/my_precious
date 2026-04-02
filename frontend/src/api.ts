@@ -1,4 +1,4 @@
-import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation, Tag, TagCreateInput, AssetTagEntry } from './types';
+import type { Asset, AssetCreateInput, AssetUpdateInput, Dimension, DimensionCreateInput, DimensionUpdateInput, AssetScore, UpdateScoreInput, Mitigation, Tag, TagCreateInput, AssetTagEntry, TagOverview } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -62,6 +62,7 @@ export const api = {
   },
   tags: {
     list: () => request<Tag[]>('/api/tags'),
+    overview: () => request<TagOverview[]>('/api/tags/overview'),
     create: (data: TagCreateInput) =>
       request<Tag>('/api/tags', { method: 'POST', body: JSON.stringify(data) }),
     delete: (id: string) =>

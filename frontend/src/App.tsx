@@ -3,11 +3,13 @@ import { AssetsPage } from './pages/AssetsPage';
 import { AssetDetailPage } from './pages/AssetDetailPage';
 import { DimensionsPage } from './pages/DimensionsPage';
 import { TagsPage } from './pages/TagsPage';
+import { TagOverviewPage } from './pages/TagOverviewPage';
 
 type View =
   | { page: 'portfolio' }
   | { page: 'dimensions' }
   | { page: 'tags' }
+  | { page: 'tag-overview' }
   | { page: 'asset-detail'; assetId: string };
 
 function App(): React.JSX.Element {
@@ -30,7 +32,12 @@ function App(): React.JSX.Element {
       {view.page === 'tags' && (
         <TagsPage
           onBack={() => setView({ page: 'portfolio' })}
-          onNavigateToOverview={() => setView({ page: 'tags' })}
+          onNavigateToOverview={() => setView({ page: 'tag-overview' })}
+        />
+      )}
+      {view.page === 'tag-overview' && (
+        <TagOverviewPage
+          onBack={() => setView({ page: 'tags' })}
         />
       )}
       {view.page === 'asset-detail' && (
