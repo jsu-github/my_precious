@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#00311f",
+                    "surface-variant": "#2d3449",
+                    "on-secondary": "#003824",
+                    "inverse-primary": "#735c00",
+                    "surface-container-highest": "#2d3449",
+                    "on-background": "#dae2fd",
+                    "on-error": "#690005",
+                    "on-primary-fixed-variant": "#574500",
+                    "outline-variant": "#45464d",
+                    "surface-dim": "#0b1326",
+                    "primary-container": "#1f1700",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "surface-tint": "#e9c349",
+                    "primary-fixed": "#ffe088",
+                    "on-surface-variant": "#c6c6cd",
+                    "outline": "#909097",
+                    "surface-container": "#171f33",
+                    "on-tertiary": "#233144",
+                    "secondary-fixed": "#6ffbbe",
+                    "secondary-container": "#00a572",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "on-secondary-fixed-variant": "#005236",
+                    "surface": "#0b1326",
+                    "error": "#ffb4ab",
+                    "surface-bright": "#31394d",
+                    "secondary-fixed-dim": "#4edea3",
+                    "inverse-surface": "#dae2fd",
+                    "inverse-on-surface": "#283044",
+                    "on-surface": "#dae2fd",
+                    "tertiary": "#b9c7e0",
+                    "secondary": "#4edea3",
+                    "primary-fixed-dim": "#e9c349",
+                    "surface-container-high": "#222a3d",
+                    "surface-container-low": "#131b2e",
+                    "on-secondary-fixed": "#002113",
+                    "background": "#0b1326",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "tertiary-container": "#09182a",
+                    "tertiary-fixed": "#d5e3fd",
+                    "error-container": "#93000a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#060e20"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .glass-card {
+            background: rgba(34, 42, 61, 0.7);
+            backdrop-filter: blur(24px);
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #e9c349 0%, #9d7d00 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 border-r border-outline-variant/20 bg-[#0b1326] flex flex-col py-8 shadow-2xl shadow-black/50 z-20">
+<div class="px-8 mb-12">
+<span class="font-['Newsreader'] text-2xl italic text-[#e9c349]">The Vault</span>
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mt-1">Sovereign Wealth</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 py-3 hover:bg-[#222a3d] transition-colors text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-3 hover:bg-[#222a3d] transition-colors text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-['Inter'] text-sm tracking-tight">Assets</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 py-3 bg-[#222a3d]/50 text-[#e9c349] font-semibold border-l-2 border-[#e9c349] pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-['Inter'] text-sm tracking-tight">Business vs. Personal</span>
+</a>
+<a class="flex items-center gap-3 py-3 hover:bg-[#222a3d] transition-colors text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-sm tracking-tight">Analytics</span>
+</a>
+<a class="flex items-center gap-3 py-3 hover:bg-[#222a3d] transition-colors text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-['Inter'] text-sm tracking-tight">Ledger</span>
+</a>
+<a class="flex items-center gap-3 py-3 hover:bg-[#222a3d] transition-colors text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Inter'] text-sm tracking-tight">Tax</span>
+</a>
+</nav>
+<div class="px-6 mt-auto space-y-4">
+<button class="w-full gold-gradient text-on-primary py-3 rounded-md font-semibold text-sm shadow-lg shadow-primary/10 transition-transform active:scale-95">
+                    Transfer Funds
+                </button>
+<div class="pt-6 border-t border-outline-variant/10 space-y-1">
+<a class="flex items-center gap-3 py-2 text-on-surface-variant hover:text-white text-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span>Security Status</span>
+</a>
+<a class="flex items-center gap-3 py-2 text-on-surface-variant hover:text-white text-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="support_agent">support_agent</span>
+<span>Support</span>
+</a>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col relative overflow-y-auto">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-8 w-full h-16 border-b border-[#45464d]/20 bg-[#0b1326]/70 backdrop-blur-xl">
+<div class="flex items-center gap-8">
+<h1 class="font-['Newsreader'] text-xl font-bold text-[#e9c349]">Sovereign Wealth Command</h1>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-[#b9c7e0] font-normal hover:text-[#e9c349] transition-all text-sm" href="#">Personal</a>
+<a class="text-[#b9c7e0] font-normal hover:text-[#e9c349] transition-all text-sm" href="#">Business</a>
+<a class="text-[#b9c7e0] font-normal hover:text-[#e9c349] transition-all text-sm" href="#">Global</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-[10px] font-medium tracking-widest text-on-surface-variant uppercase">
+<span>Currency: USD</span>
+<span class="h-1 w-1 rounded-full bg-secondary"></span>
+<span>Market: Connected</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="lock">lock</span>
+<div class="relative">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-secondary rounded-full"></span>
+</div>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="settings">settings</span>
+</div>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-primary/20 object-cover" data-alt="Portrait of a sophisticated executive in a dark suit with soft studio lighting and a professional atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDT5_8PFKhTWqm5Okzm8Mg_n1ZCJCI95_ZrnjVAUjkwGNOXe_m65oVTWWXEfRIMgadSX9f_qjNwERnUYpeKqZTLMLowXq0ulrn8n5_mC9VSEEgOT3y2ROf43FVGpnSaHt0VDTLoP2BSXzbxz3Os450E8y2IdETXuLMwoqL6jcV3agrFC7Vv1OMcq3FHmnOgbZNaxxtfpZLYVb35Jq6EofaHlr7Uu3NHnnPb6YAudYPHjlQcqJ-W-hGk-LegXDnwg_Osmso36vcpAvY"/>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="p-8 space-y-8 bg-surface relative">
+<!-- Atmospheric Spotlight -->
+<div class="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="flex justify-between items-end">
+<div class="space-y-2">
+<h2 class="font-headline text-4xl font-medium tracking-tight">Accounting Separation</h2>
+<p class="text-on-surface-variant font-light max-w-xl">A specialized dual-ledger view maintained through the Sovereign Vault protocol for strict asset segregation.</p>
+</div>
+<!-- Sync Indicator -->
+<div class="flex items-center gap-4 px-6 py-3 bg-surface-container-high rounded-lg border border-outline-variant/10">
+<div class="flex flex-col items-end">
+<span class="text-[10px] uppercase tracking-widest text-secondary font-bold">Protocol Active</span>
+<span class="text-xs text-on-surface-variant">Last Sync: 2m ago</span>
+</div>
+<div class="p-2 bg-secondary/10 rounded-full">
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="sync">sync</span>
+</div>
+</div>
+</div>
+<!-- Comparison Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+<!-- Business Side -->
+<div class="flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="business_center">business_center</span>
+<h3 class="font-headline text-2xl font-medium">Business Assets</h3>
+</div>
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold tracking-tighter uppercase rounded-full border border-primary/20">Entity: Sovereign-LLC</span>
+</div>
+<div class="surface-container-low p-8 rounded-xl border border-outline-variant/10 space-y-8">
+<!-- Metric -->
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs uppercase tracking-widest">Total Valuation</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline tabular-nums font-bold">$12,482,900</span>
+<span class="text-secondary text-sm font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                        +4.2%
+                                    </span>
+</div>
+</div>
+<!-- Assets Breakdown -->
+<div class="grid grid-cols-2 gap-4">
+<div class="p-5 bg-surface-container-high rounded-lg space-y-3">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest block">Liquid Assets</span>
+<p class="text-xl font-bold tabular-nums">$3,120,000</p>
+<div class="h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[25%] shadow-[0_0_8px_rgba(78,222,163,0.4)]"></div>
+</div>
+</div>
+<div class="p-5 bg-surface-container-high rounded-lg space-y-3">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest block">Fixed Assets</span>
+<p class="text-xl font-bold tabular-nums">$9,362,900</p>
+<div class="h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] shadow-[0_0_8px_rgba(233,195,73,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Tax Tags -->
+<div class="space-y-4">
+<p class="text-xs font-semibold text-on-surface-variant">Business Tax Tags</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> R&amp;D Credits
+                                    </span>
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 179 Deduction
+                                    </span>
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span> Corp Excise
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Mini Image Card -->
+<div class="relative h-48 rounded-xl overflow-hidden group">
+<img alt="Modern Glass Skyscraper" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Ultra-modern glass skyscraper reflecting a deep blue twilight sky with sharp architectural lines and golden interior lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPwKZdrchkVvBGRxlEnH2izpavuWaVw4uqyytXtAKMcEP6fA67zUsH13O0jIOq9f4L7u9mY5PxF0sMXXK1UMT25SEdfA3C6kkkUwmyKxQwSTBxd-IcS-s_WaM8V0e_3lGEpaZM9LRtgNYVZtqav2bd0AjLsYdnE2_Hg30G9ZV9G8GX37TkGPUGomj7emI08hRMAu-YYDWHQxHHmWN9o1jy-1FndBrS7svGJmhI8mJHlN-1HMYu6gPYgHk9WkDMPp8dPFnyxf8zMNs"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<p class="text-xs uppercase tracking-widest text-primary font-bold">Real Estate Portfolio</p>
+<p class="text-lg font-headline">Corporate Headquarters</p>
+</div>
+</div>
+</div>
+<!-- Personal Side -->
+<div class="flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary" data-icon="person">person</span>
+<h3 class="font-headline text-2xl font-medium">Personal Holdings</h3>
+</div>
+<span class="px-3 py-1 bg-tertiary/10 text-tertiary text-[10px] font-bold tracking-tighter uppercase rounded-full border border-tertiary/20">Account: Principal Global</span>
+</div>
+<div class="surface-container-low p-8 rounded-xl border border-outline-variant/10 space-y-8">
+<!-- Metric -->
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs uppercase tracking-widest">Net Worth (Excl. Entity)</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline tabular-nums font-bold">$4,812,050</span>
+<span class="text-secondary text-sm font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                        +1.8%
+                                    </span>
+</div>
+</div>
+<!-- Assets Breakdown -->
+<div class="grid grid-cols-2 gap-4">
+<div class="p-5 bg-surface-container-high rounded-lg space-y-3">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest block">Liquid Assets</span>
+<p class="text-xl font-bold tabular-nums">$842,000</p>
+<div class="h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[18%] shadow-[0_0_8px_rgba(78,222,163,0.4)]"></div>
+</div>
+</div>
+<div class="p-5 bg-surface-container-high rounded-lg space-y-3">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest block">Investment Portfolio</span>
+<p class="text-xl font-bold tabular-nums">$3,970,050</p>
+<div class="h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[82%] shadow-[0_0_8px_rgba(185,199,224,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Tax Tags -->
+<div class="space-y-4">
+<p class="text-xs font-semibold text-on-surface-variant">Personal Tax Tags</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Long-Term Capital
+                                    </span>
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> AMT Adjustment
+                                    </span>
+<span class="px-4 py-2 bg-surface-container-highest rounded-md text-xs border border-outline-variant/20 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Qualified Dividends
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Chart Widget -->
+<div class="surface-container-low p-6 rounded-xl border border-outline-variant/10 flex-1">
+<div class="flex items-center justify-between mb-6">
+<p class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Growth Distribution</p>
+<span class="material-symbols-outlined text-on-surface-variant text-sm cursor-pointer" data-icon="open_in_full">open_in_full</span>
+</div>
+<div class="h-32 flex items-end justify-between gap-1">
+<div class="w-full bg-surface-variant/30 rounded-t h-[40%] group relative">
+<div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface-bright rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Equity</div>
+</div>
+<div class="w-full bg-secondary/40 rounded-t h-[65%] group relative">
+<div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface-bright rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Bonds</div>
+</div>
+<div class="w-full bg-surface-variant/30 rounded-t h-[45%] group relative"></div>
+<div class="w-full bg-tertiary/40 rounded-t h-[90%] group relative"></div>
+<div class="w-full bg-surface-variant/30 rounded-t h-[55%] group relative"></div>
+<div class="w-full bg-primary/40 rounded-t h-[75%] group relative"></div>
+<div class="w-full bg-surface-variant/30 rounded-t h-[40%] group relative"></div>
+</div>
+<div class="flex justify-between mt-4">
+<span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Global Index</span>
+<span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Principal Strategy</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Ledger History (Asymmetric Pattern) -->
+<div class="grid grid-cols-3 gap-8">
+<div class="col-span-2 surface-container-low p-8 rounded-xl border border-outline-variant/10">
+<h4 class="font-headline text-xl mb-6">Cross-Boundary Transactions</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between py-4 border-b border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="p-2 rounded bg-surface-container-highest">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<p class="text-sm font-semibold">Management Fee Disbursement</p>
+<p class="text-[10px] text-on-surface-variant">From Sovereign-LLC to Personal Principal</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm tabular-nums font-bold">-$45,000.00</p>
+<p class="text-[10px] text-on-surface-variant">Tax Tag: Deductible Expense</p>
+</div>
+</div>
+<div class="flex items-center justify-between py-4 border-b border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="p-2 rounded bg-surface-container-highest">
+<span class="material-symbols-outlined text-secondary" data-icon="payments">payments</span>
+</div>
+<div>
+<p class="text-sm font-semibold">Dividend Reinvestment</p>
+<p class="text-[10px] text-on-surface-variant">Internal Personal Equity Growth</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm tabular-nums font-bold text-secondary">+$12,400.00</p>
+<p class="text-[10px] text-on-surface-variant">Tax Tag: Exempt Growth</p>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-card p-8 rounded-xl border border-primary/20 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-primary mb-4" data-icon="security">security</span>
+<h4 class="font-headline text-xl mb-2">Piercing the Veil Alert</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed">No unauthorized commingling detected in the last 180 days. Your corporate shield integrity is currently at 100%.</p>
+</div>
+<button class="w-full mt-6 py-3 border border-primary text-primary text-xs font-bold uppercase tracking-widest rounded hover:bg-primary/5 transition-colors">
+                            Audit Certificate
+                        </button>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

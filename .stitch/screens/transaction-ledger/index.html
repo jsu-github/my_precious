@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ledger | Sovereign Wealth Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#00311f",
+                    "surface-variant": "#2d3449",
+                    "on-secondary": "#003824",
+                    "inverse-primary": "#735c00",
+                    "surface-container-highest": "#2d3449",
+                    "on-background": "#dae2fd",
+                    "on-error": "#690005",
+                    "on-primary-fixed-variant": "#574500",
+                    "outline-variant": "#45464d",
+                    "surface-dim": "#0b1326",
+                    "primary-container": "#1f1700",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "surface-tint": "#e9c349",
+                    "primary-fixed": "#ffe088",
+                    "on-surface-variant": "#c6c6cd",
+                    "outline": "#909097",
+                    "surface-container": "#171f33",
+                    "on-tertiary": "#233144",
+                    "secondary-fixed": "#6ffbbe",
+                    "secondary-container": "#00a572",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "on-tertiary-container": "#738298",
+                    "on-primary-fixed": "#241a00",
+                    "on-primary": "#3c2f00",
+                    "on-primary-container": "#9d7d00",
+                    "primary": "#e9c349",
+                    "on-secondary-fixed-variant": "#005236",
+                    "surface": "#0b1326",
+                    "error": "#ffb4ab",
+                    "surface-bright": "#31394d",
+                    "secondary-fixed-dim": "#4edea3",
+                    "inverse-surface": "#dae2fd",
+                    "inverse-on-surface": "#283044",
+                    "on-surface": "#dae2fd",
+                    "tertiary": "#b9c7e0",
+                    "secondary": "#4edea3",
+                    "primary-fixed-dim": "#e9c349",
+                    "surface-container-high": "#222a3d",
+                    "surface-container-low": "#131b2e",
+                    "on-secondary-fixed": "#002113",
+                    "background": "#0b1326",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "tertiary-container": "#09182a",
+                    "tertiary-fixed": "#d5e3fd",
+                    "error-container": "#93000a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#060e20"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { background-color: #0b1326; font-family: 'Inter', sans-serif; color: #dae2fd; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { backdrop-filter: blur(24px); background: rgba(34, 42, 61, 0.7); }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-x-hidden">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 border-r border-[#45464d]/20 bg-[#0b1326] flex flex-col py-8 sticky top-0 shrink-0 z-50">
+<div class="px-8 mb-12">
+<span class="font-['Newsreader'] text-2xl italic text-[#e9c349]">The Vault</span>
+<p class="text-[10px] uppercase tracking-widest text-on-tertiary-container mt-1">Sovereign Wealth</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center py-3 text-[#b9c7e0] hover:text-white hover:bg-[#222a3d] transition-colors pl-4 group" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">dashboard</span>
+<span class="font-['Inter'] text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center py-3 text-[#b9c7e0] hover:text-white hover:bg-[#222a3d] transition-colors pl-4 group" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">account_balance_wallet</span>
+<span class="font-['Inter'] text-sm tracking-tight">Assets</span>
+</a>
+<a class="flex items-center py-3 text-[#b9c7e0] hover:text-white hover:bg-[#222a3d] transition-colors pl-4 group" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">account_tree</span>
+<span class="font-['Inter'] text-sm tracking-tight">Business vs. Personal</span>
+</a>
+<a class="flex items-center py-3 text-[#b9c7e0] hover:text-white hover:bg-[#222a3d] transition-colors pl-4 group" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">analytics</span>
+<span class="font-['Inter'] text-sm tracking-tight">Analytics</span>
+</a>
+<!-- Active State for Ledger -->
+<a class="flex items-center py-3 text-[#e9c349] font-semibold border-l-2 border-[#e9c349] pl-4 bg-[#131b2e]" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">menu_book</span>
+<span class="font-['Inter'] text-sm tracking-tight">Ledger</span>
+</a>
+<a class="flex items-center py-3 text-[#b9c7e0] hover:text-white hover:bg-[#222a3d] transition-colors pl-4 group" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">receipt_long</span>
+<span class="font-['Inter'] text-sm tracking-tight">Tax</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full py-3 bg-gradient-to-br from-[#e9c349] to-[#9d7d00] text-[#241a00] rounded-md font-semibold text-sm transition-transform active:scale-95">
+                Transfer Funds
+            </button>
+<div class="pt-4 border-t border-outline-variant/20">
+<a class="flex items-center py-2 text-[#b9c7e0] text-xs hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-2 text-sm">verified_user</span>
+                    Security Status
+                </a>
+<a class="flex items-center py-2 text-[#b9c7e0] text-xs hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-2 text-sm">support_agent</span>
+                    Support
+                </a>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col bg-surface overflow-y-auto">
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-8 w-full h-16 border-b border-[#45464d]/20 bg-[#0b1326]/70 backdrop-blur-xl">
+<div class="flex items-center space-x-8">
+<span class="font-['Newsreader'] text-xl font-bold text-[#e9c349]">Sovereign Wealth Command</span>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="bg-surface-container-highest/50 border-none rounded-md pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-1 focus:ring-[#e9c349] text-on-surface" placeholder="Global asset search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<nav class="flex space-x-6">
+<a class="font-['Newsreader'] text-lg font-normal text-[#b9c7e0] hover:text-[#e9c349] transition-all" href="#">Personal</a>
+<a class="font-['Newsreader'] text-lg font-normal text-[#b9c7e0] hover:text-[#e9c349] transition-all" href="#">Business</a>
+<a class="font-['Newsreader'] text-lg font-medium text-[#e9c349] border-b-2 border-[#e9c349] pb-1" href="#">Global</a>
+</nav>
+<div class="h-6 w-px bg-outline-variant/30 mx-2"></div>
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer text-xl">lock</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer text-xl">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer text-xl">settings</span>
+<img alt="User" class="w-8 h-8 rounded-full border border-primary/20" data-alt="Close up portrait of a sophisticated middle-aged man in a tailored dark suit with subtle studio lighting and dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOU837It7g9oH6Ptnj4gSdDqYMVKmsTw8OsEgNe3aPQE1dPN7fua0Tbmv_MIkxcHGFlAuJKQMCxtRosGh_oBZL9bfrC2r2ReGgRLfaGdtkeI6P4qM3XIPVIH4ppXNik7lxcBcqwAB5cgMGvoZB9pEuFVg9LZT_A2pi5JWoUiVIn--zX8D6KBhsnGJ37FdSeiiIgzcTxODGEi6NHeAIo246SUJxJWDtafaa8lUdpPXenAh30D8w83BJWmYfBWb2davzRoWX8KkX4FI"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-12 space-y-10 max-w-7xl mx-auto w-full">
+<!-- Page Header & Metrics Bento -->
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-12 lg:col-span-8">
+<h1 class="font-['Newsreader'] text-5xl font-bold text-on-surface mb-2">Acquisition Ledger</h1>
+<p class="text-on-surface-variant font-light text-lg">Strategically audited history of all sovereign wealth entries.</p>
+</div>
+<div class="col-span-12 lg:col-span-4 flex items-end justify-end space-x-4">
+<div class="text-right">
+<span class="text-[10px] uppercase tracking-widest text-on-tertiary-container block">Total Cost Basis</span>
+<span class="font-['Inter'] text-2xl tabular-nums font-semibold">$124,802,400.00</span>
+</div>
+<div class="h-10 w-px bg-outline-variant/30"></div>
+<div class="text-right">
+<span class="text-[10px] uppercase tracking-widest text-secondary block">Net Unrealized ROI</span>
+<span class="font-['Inter'] text-2xl tabular-nums font-semibold text-secondary">+14.2%</span>
+</div>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="flex flex-wrap items-center justify-between gap-4 py-4 px-6 bg-surface-container-low rounded-xl border border-outline-variant/10">
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-2">
+<span class="text-xs text-on-tertiary-container font-medium uppercase tracking-tighter">Tax Status</span>
+<select class="bg-transparent border-none text-sm text-primary focus:ring-0 cursor-pointer">
+<option>All Jurisdictions</option>
+<option>Tax-Exempt</option>
+<option>Taxable (Domestic)</option>
+<option>International (Offshore)</option>
+</select>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-xs text-on-tertiary-container font-medium uppercase tracking-tighter">Asset Class</span>
+<select class="bg-transparent border-none text-sm text-primary focus:ring-0 cursor-pointer">
+<option>All Assets</option>
+<option>Private Equity</option>
+<option>Real Estate</option>
+<option>Fixed Income</option>
+<option>Exotics</option>
+</select>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="flex items-center px-4 py-2 bg-surface-container-highest text-sm text-on-surface hover:bg-surface-bright transition-colors rounded-lg">
+<span class="material-symbols-outlined text-sm mr-2">download</span> Export Ledger
+                    </button>
+<button class="flex items-center px-4 py-2 bg-surface-container-highest text-sm text-on-surface hover:bg-surface-bright transition-colors rounded-lg">
+<span class="material-symbols-outlined text-sm mr-2">filter_list</span> More Filters
+                    </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 shadow-2xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50 border-b border-outline-variant/20">
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container">Purchase Date</th>
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container">Asset Description</th>
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container text-right">Cost Basis</th>
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container text-right">Current Value</th>
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container text-right">Net ROI</th>
+<th class="px-6 py-5 text-xs font-semibold uppercase tracking-widest text-on-tertiary-container text-center">Status</th>
+<th class="px-6 py-5 w-10"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
+<td class="px-6 py-6 tabular-nums text-sm text-on-surface-variant font-medium">OCT 24, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary text-xl">apartment</span>
+</div>
+<div>
+<div class="text-sm font-semibold text-on-surface">The Mayfair Collection</div>
+<div class="text-[10px] text-on-tertiary-container uppercase tracking-tight">Real Estate • London, UK</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$42,500,000</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$48,200,000</td>
+<td class="px-6 py-6 text-right">
+<span class="text-secondary text-sm font-semibold tabular-nums">+13.4%</span>
+<div class="text-[10px] text-on-tertiary-container">+$5.7M</div>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="px-2 py-1 rounded-full bg-secondary-container/20 text-secondary text-[10px] font-bold uppercase tracking-widest border border-secondary/20">Tax Exempt</span>
+</td>
+<td class="px-6 py-6 text-right">
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
+<td class="px-6 py-6 tabular-nums text-sm text-on-surface-variant font-medium">SEP 12, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary text-xl">rocket_launch</span>
+</div>
+<div>
+<div class="text-sm font-semibold text-on-surface">Series D Equity - Axiom Space</div>
+<div class="text-[10px] text-on-tertiary-container uppercase tracking-tight">Private Equity • Delaware, US</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$12,000,000</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$14,850,000</td>
+<td class="px-6 py-6 text-right">
+<span class="text-secondary text-sm font-semibold tabular-nums">+23.7%</span>
+<div class="text-[10px] text-on-tertiary-container">+$2.85M</div>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="px-2 py-1 rounded-full bg-surface-container-highest text-on-tertiary-container text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20">Domestic</span>
+</td>
+<td class="px-6 py-6 text-right">
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
+<td class="px-6 py-6 tabular-nums text-sm text-on-surface-variant font-medium">AUG 05, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary text-xl">diamond</span>
+</div>
+<div>
+<div class="text-sm font-semibold text-on-surface">Patek Philippe Ref. 2499</div>
+<div class="text-[10px] text-on-tertiary-container uppercase tracking-tight">Collectibles • Geneva, CH</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$3,100,000</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$2,950,000</td>
+<td class="px-6 py-6 text-right">
+<span class="text-error text-sm font-semibold tabular-nums">-4.8%</span>
+<div class="text-[10px] text-on-tertiary-container">-$150k</div>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="px-2 py-1 rounded-full bg-secondary-container/20 text-secondary text-[10px] font-bold uppercase tracking-widest border border-secondary/20">Tax Exempt</span>
+</td>
+<td class="px-6 py-6 text-right">
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
+<td class="px-6 py-6 tabular-nums text-sm text-on-surface-variant font-medium">JUN 18, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary text-xl">currency_bitcoin</span>
+</div>
+<div>
+<div class="text-sm font-semibold text-on-surface">Digital Asset Allocation (BTC)</div>
+<div class="text-[10px] text-on-tertiary-container uppercase tracking-tight">Crypto • Decentralized</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$8,400,000</td>
+<td class="px-6 py-6 text-right tabular-nums text-sm font-medium">$12,140,000</td>
+<td class="px-6 py-6 text-right">
+<span class="text-secondary text-sm font-semibold tabular-nums">+44.5%</span>
+<div class="text-[10px] text-on-tertiary-container">+$3.74M</div>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="px-2 py-1 rounded-full bg-surface-container-highest text-on-tertiary-container text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20">Domestic</span>
+</td>
+<td class="px-6 py-6 text-right">
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Detail Drill Down (Floating Card Context) -->
+<div class="grid grid-cols-12 gap-8 mt-12">
+<div class="col-span-12 lg:col-span-4 glass-panel border border-outline-variant/20 p-8 rounded-xl">
+<h3 class="font-['Newsreader'] text-2xl font-bold text-primary mb-6">Order Insight</h3>
+<div class="space-y-6">
+<div class="flex justify-between items-center pb-4 border-b border-outline-variant/10">
+<span class="text-xs text-on-tertiary-container uppercase tracking-widest">Transaction ID</span>
+<span class="text-sm font-mono text-on-surface">#SV-99201-B</span>
+</div>
+<div class="flex justify-between items-center pb-4 border-b border-outline-variant/10">
+<span class="text-xs text-on-tertiary-container uppercase tracking-widest">Legal Entity</span>
+<span class="text-sm text-on-surface">Vanguard Holding Ltd.</span>
+</div>
+<div class="flex justify-between items-center pb-4 border-b border-outline-variant/10">
+<span class="text-xs text-on-tertiary-container uppercase tracking-widest">Custodian</span>
+<span class="text-sm text-on-surface">Morgan Stanley Private</span>
+</div>
+<div class="flex justify-between items-center pb-4 border-b border-outline-variant/10">
+<span class="text-xs text-on-tertiary-container uppercase tracking-widest">Audit Status</span>
+<span class="flex items-center text-sm text-secondary">
+<span class="material-symbols-outlined text-sm mr-1">verified</span> Verified
+                            </span>
+</div>
+</div>
+<button class="w-full mt-8 py-3 border border-primary/40 text-primary text-sm font-semibold rounded hover:bg-primary/5 transition-colors">
+                        View Audit Log
+                    </button>
+</div>
+<div class="col-span-12 lg:col-span-8 flex flex-col justify-center">
+<div class="relative rounded-xl overflow-hidden group border border-outline-variant/20 shadow-2xl">
+<img alt="Atmospheric Texture" class="w-full h-[400px] object-cover transition-transform duration-1000 group-hover:scale-105" data-alt="Abstract deep blue and gold fluid silk texture with soft waves and elegant motion blur and high luxury feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFgwDCjE4Igve_b8HGMdtGSYW5LGnBuMkFW-VrTuSAIUFYRbPfclQfE7hpIBAJ2oeB996quyCHpDFK41vR8tSXuts8txDwGfoqZC2vVahm1FrBJ6VLHUVrjT-E_nH3YN0EN-Em7v-NuyIqDpQ0m2_ZvjurZHp-kXKYZANYozEiu3wJ69jaO_6lVej24MwhtsCAXggWOaBxaMxSLwvBlVtBS0w_B55nj_GosYQErjZKAHIsHJeeBvY2fg6uTCrBp0c5ITS4tWWZ5Us"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent flex flex-col justify-end p-8">
+<h4 class="font-['Newsreader'] text-3xl font-bold text-white max-w-md mb-2">Preserving Legacy Through Sovereign Precision.</h4>
+<p class="text-on-surface-variant text-sm max-w-sm">Detailed cost basis tracking ensures long-term capital preservation across generational wealth transfers.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Pagination -->
+<footer class="px-12 py-8 border-t border-outline-variant/20 mt-auto flex items-center justify-between">
+<div class="text-xs text-on-tertiary-container">
+                Showing 4 of 1,248 Sovereign Ledger Entries
+            </div>
+<div class="flex items-center space-x-2">
+<button class="p-2 rounded hover:bg-surface-container-high transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">first_page</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container-high transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex items-center px-4 space-x-4">
+<span class="text-sm font-semibold text-primary">1</span>
+<span class="text-sm text-on-tertiary-container">2</span>
+<span class="text-sm text-on-tertiary-container">3</span>
+<span class="text-sm text-on-tertiary-container">...</span>
+<span class="text-sm text-on-tertiary-container">312</span>
+</div>
+<button class="p-2 rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">last_page</span>
+</button>
+</div>
+</footer>
+</main>
+</body></html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Wealth Command | Asset Location</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#00311f",
+                    "surface-variant": "#2d3449",
+                    "on-secondary": "#003824",
+                    "inverse-primary": "#735c00",
+                    "surface-container-highest": "#2d3449",
+                    "on-background": "#dae2fd",
+                    "on-error": "#690005",
+                    "on-primary-fixed-variant": "#574500",
+                    "outline-variant": "#45464d",
+                    "surface-dim": "#0b1326",
+                    "primary-container": "#1f1700",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "surface-tint": "#e9c349",
+                    "primary-fixed": "#ffe088",
+                    "on-surface-variant": "#c6c6cd",
+                    "outline": "#909097",
+                    "surface-container": "#171f33",
+                    "on-tertiary": "#233144",
+                    "secondary-fixed": "#6ffbbe",
+                    "secondary-container": "#00a572",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "on-tertiary-container": "#738298",
+                    "on-primary-fixed": "#241a00",
+                    "on-primary": "#3c2f00",
+                    "on-primary-container": "#9d7d00",
+                    "primary": "#e9c349",
+                    "on-secondary-fixed-variant": "#005236",
+                    "surface": "#0b1326",
+                    "error": "#ffb4ab",
+                    "surface-bright": "#31394d",
+                    "secondary-fixed-dim": "#4edea3",
+                    "inverse-surface": "#dae2fd",
+                    "inverse-on-surface": "#283044",
+                    "on-surface": "#dae2fd",
+                    "tertiary": "#b9c7e0",
+                    "secondary": "#4edea3",
+                    "primary-fixed-dim": "#e9c349",
+                    "surface-container-high": "#222a3d",
+                    "surface-container-low": "#131b2e",
+                    "on-secondary-fixed": "#002113",
+                    "background": "#0b1326",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "tertiary-container": "#09182a",
+                    "tertiary-fixed": "#d5e3fd",
+                    "error-container": "#93000a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#060e20"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tabular { font-variant-numeric: tabular-nums; }
+        .glass-panel {
+            background: rgba(34, 42, 61, 0.7);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-x-hidden selection:bg-primary/30">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-[#45464d]/20 bg-[#0b1326] shadow-2xl shadow-black/50 py-8 fixed left-0 top-0 z-50">
+<div class="px-6 mb-12">
+<div class="font-['Newsreader'] text-2xl italic text-[#e9c349]">The Vault</div>
+<div class="text-[10px] uppercase tracking-[0.2em] text-[#b9c7e0] mt-1">Sovereign Wealth</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center py-3 transition-colors hover:bg-[#222a3d] text-[#b9c7e0] hover:text-white pl-4 group" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center py-3 transition-colors text-[#e9c349] font-semibold border-l-2 border-[#e9c349] pl-4 bg-[#222a3d]/30" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-['Inter'] text-sm tracking-tight">Assets</span>
+</a>
+<a class="flex items-center py-3 transition-colors hover:bg-[#222a3d] text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="account_tree">account_tree</span>
+<span class="font-['Inter'] text-sm tracking-tight">Business vs. Personal</span>
+</a>
+<a class="flex items-center py-3 transition-colors hover:bg-[#222a3d] text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-sm tracking-tight">Analytics</span>
+</a>
+<a class="flex items-center py-3 transition-colors hover:bg-[#222a3d] text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="menu_book">menu_book</span>
+<span class="font-['Inter'] text-sm tracking-tight">Ledger</span>
+</a>
+<a class="flex items-center py-3 transition-colors hover:bg-[#222a3d] text-[#b9c7e0] hover:text-white pl-4" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Inter'] text-sm tracking-tight">Tax</span>
+</a>
+</nav>
+<div class="px-4 mt-8">
+<button class="w-full bg-gradient-to-br from-[#e9c349] to-[#9d7d00] text-[#3c2f00] py-3 rounded-md font-semibold text-sm transition-transform active:scale-95 shadow-lg shadow-primary/10">
+                    Transfer Funds
+                </button>
+</div>
+<div class="mt-auto border-t border-[#45464d]/10 pt-6">
+<a class="flex items-center py-3 px-4 text-[#b9c7e0] hover:text-white text-sm transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="verified_user">verified_user</span>
+                    Security Status
+                </a>
+<a class="flex items-center py-3 px-4 text-[#b9c7e0] hover:text-white text-sm transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="support_agent">support_agent</span>
+                    Support
+                </a>
+<div class="flex items-center px-4 mt-4 space-x-3">
+<img alt="UHNW Principal Profile" class="w-8 h-8 rounded-full border border-primary/20" data-alt="professional portrait of a high-net-worth individual in a dark tailored suit with neutral background and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbEjMLoy7U0JQ_jsKocCX2Jb-Ph5nRCWSSd6NBVxZIVcMkaa_J1KUwKOP-kat8r41f6hrJAbliIRHd0H1AQZJIoWta602Du3o79rdeDButkmSeksekXwNzA-V7I5gz3UVeeDmUTHLv6z1rV_LIfazVT_-dWl1CRutkzoDlejikRh8ds2AudrJJGGHamLvwFQ9uO8eN3aZYSqQP1y6b6PhNiKAoRy8SbVuRqwl5JYnl-7tz_GMWY_S_KYObFm7ycDbHfcvKoDaiCMU"/>
+<div>
+<div class="text-xs font-semibold text-white">Jameson Vane</div>
+<div class="text-[10px] text-[#b9c7e0]">Principal</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 flex items-center justify-between px-8 w-full h-16 border-b border-[#45464d]/20 bg-[#0b1326]/70 backdrop-blur-xl">
+<div class="flex items-center flex-1">
+<div class="relative w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-md pl-10 text-xs text-on-surface placeholder-on-surface-variant focus:ring-1 focus:ring-primary/30 h-9 transition-all" placeholder="Search Vault..." type="text"/>
+</div>
+</div>
+<div class="hidden lg:flex items-center space-x-8 px-8">
+<a class="font-['Newsreader'] text-lg font-medium text-[#b9c7e0] transition-all hover:text-[#e9c349]" href="#">Personal</a>
+<a class="font-['Newsreader'] text-lg font-medium text-[#e9c349] border-b-2 border-[#e9c349] pb-1" href="#">Business</a>
+<a class="font-['Newsreader'] text-lg font-medium text-[#b9c7e0] transition-all hover:text-[#e9c349]" href="#">Global</a>
+</div>
+<div class="flex items-center space-x-6">
+<div class="flex flex-col items-end mr-4">
+<span class="text-[10px] uppercase tracking-widest text-[#b9c7e0]">Market: Connected</span>
+<span class="text-[10px] font-bold text-secondary">Currency: USD</span>
+</div>
+<div class="flex items-center space-x-3">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-high" data-icon="lock">lock</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-high" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-high" data-icon="settings">settings</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 space-y-8">
+<!-- Page Title -->
+<div class="flex flex-col space-y-1">
+<h1 class="font-headline text-4xl text-on-surface">Global Asset Jurisdictions</h1>
+<p class="text-on-surface-variant font-light tracking-wide">Multi-jurisdictional custody tracking and physical inventory verification.</p>
+</div>
+<!-- Bento Grid: Map & Overview -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- The Map Panel (Bento 2/3) -->
+<div class="lg:col-span-2 relative h-[500px] rounded-xl overflow-hidden shadow-2xl group border border-outline-variant/10">
+<div class="absolute inset-0 z-0">
+<img alt="World Map Location" class="w-full h-full object-cover grayscale opacity-40 mix-blend-luminosity scale-110" data-alt="a stylized dark world map with luminous nodes connecting global financial capitals, deep navy and black aesthetic with golden sparks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx3ynpNtOepoddD-yF4upzs6w4XAypqrD0fDaYGMWt1SPtPnbO8quSpALqh--MUj_3zS8YziUo3-0Z88RrrZFTkOUhP-glLtv-bVg5OHSz-F57fhSKbD2jig79bimt3jjBIFiPynQJ3BCZ4C_v7dcXQt457dSburcTzItff2r62EMccJl7_DVkG9ZI6ZxOm1xKjEqxQwQGHRl1ZDaaj3U5tTMmes-XyiL5TrcjFnQgWE-cU4ShobIXzIZcCMu4-n-6GDDSylIV500"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<!-- Map Pins Overlay -->
+<div class="absolute inset-0 z-10">
+<!-- Switzerland -->
+<div class="absolute top-[35%] left-[48%] group/pin cursor-pointer">
+<div class="flex flex-col items-center">
+<div class="glass-panel px-3 py-1.5 rounded-lg border border-primary/30 text-[10px] font-bold text-primary mb-2 shadow-lg opacity-0 group-hover/pin:opacity-100 transition-opacity translate-y-1 group-hover/pin:translate-y-0">ZURICH VAULT (CH)</div>
+<div class="w-4 h-4 bg-primary rounded-full animate-pulse shadow-[0_0_15px_rgba(233,195,73,0.8)] border-2 border-white"></div>
+</div>
+</div>
+<!-- Singapore -->
+<div class="absolute top-[65%] left-[78%] group/pin cursor-pointer">
+<div class="flex flex-col items-center">
+<div class="glass-panel px-3 py-1.5 rounded-lg border border-secondary/30 text-[10px] font-bold text-secondary mb-2 shadow-lg opacity-0 group-hover/pin:opacity-100 transition-opacity translate-y-1 group-hover/pin:translate-y-0">LE FREEPORT (SG)</div>
+<div class="w-4 h-4 bg-secondary rounded-full shadow-[0_0_15px_rgba(78,222,163,0.8)] border-2 border-white"></div>
+</div>
+</div>
+<!-- Netherlands -->
+<div class="absolute top-[30%] left-[46%] group/pin cursor-pointer">
+<div class="flex flex-col items-center">
+<div class="glass-panel px-3 py-1.5 rounded-lg border border-primary/30 text-[10px] font-bold text-primary mb-2 shadow-lg opacity-0 group-hover/pin:opacity-100 transition-opacity translate-y-1 group-hover/pin:translate-y-0">DELFT SECURE (NL)</div>
+<div class="w-4 h-4 bg-primary rounded-full shadow-[0_0_10px_rgba(233,195,73,0.5)] border-2 border-white"></div>
+</div>
+</div>
+</div>
+<!-- Map Control Panel -->
+<div class="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+<div class="glass-panel p-4 rounded-xl border border-outline-variant/20 flex space-x-6">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Total Jurisdictions</div>
+<div class="text-2xl font-headline text-on-surface tabular">12 <span class="text-sm font-body text-primary ml-1">Live</span></div>
+</div>
+<div class="w-[1px] bg-outline-variant/20 h-full"></div>
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Transit Risk</div>
+<div class="text-2xl font-headline text-secondary tabular">Minimal</div>
+</div>
+</div>
+<div class="flex flex-col space-y-2">
+<button class="w-10 h-10 glass-panel rounded-full flex items-center justify-center hover:bg-surface-container-highest transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+</button>
+<button class="w-10 h-10 glass-panel rounded-full flex items-center justify-center hover:bg-surface-container-highest transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined text-sm" data-icon="remove">remove</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Statistics Panel (Bento 1/3) -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 flex flex-col justify-between h-1/2">
+<div>
+<h3 class="font-headline text-xl mb-4">Storage Compliance</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Tier-1 Vaulting</span>
+<span class="text-sm font-bold text-secondary">94%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 94%"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Audit Frequency</span>
+<span class="text-sm font-bold text-primary">Monthly</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<div class="pt-6">
+<button class="text-xs font-bold text-primary flex items-center hover:translate-x-1 transition-transform">
+                                    VIEW FULL COMPLIANCE REPORT <span class="material-symbols-outlined ml-1 text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 h-1/2 relative overflow-hidden group">
+<div class="absolute -right-10 -bottom-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
+<span class="material-symbols-outlined text-[160px]" data-icon="shield">shield</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-headline text-xl mb-2">Primary Custodian</h3>
+<p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Global custody provided by Sovereign Trust Limited. All assets fully allocated and segregated.</p>
+<div class="flex items-center space-x-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="text-sm font-bold">Standard Chartered Vaults</div>
+<div class="text-[10px] text-on-surface-variant">Lead Security Partner</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Asset Inventory Detailed List -->
+<section class="space-y-6">
+<div class="flex items-end justify-between">
+<h2 class="font-headline text-2xl">Inventory Breakdown</h2>
+<div class="flex space-x-3">
+<button class="bg-surface-container-high px-4 py-2 rounded-md text-xs font-medium border border-outline-variant/20 hover:bg-surface-container-highest transition-colors flex items-center">
+<span class="material-symbols-outlined text-sm mr-2" data-icon="filter_list">filter_list</span> Filter
+                            </button>
+<button class="bg-surface-container-high px-4 py-2 rounded-md text-xs font-medium border border-outline-variant/20 hover:bg-surface-container-highest transition-colors flex items-center">
+<span class="material-symbols-outlined text-sm mr-2" data-icon="file_download">file_download</span> Export CSV
+                            </button>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden shadow-xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50 text-[10px] uppercase tracking-[0.15em] text-on-surface-variant border-b border-outline-variant/10">
+<th class="px-8 py-4 font-semibold">Location / Asset</th>
+<th class="px-6 py-4 font-semibold">Security Status</th>
+<th class="px-6 py-4 font-semibold">Weight / Qty</th>
+<th class="px-6 py-4 font-semibold">Purity</th>
+<th class="px-8 py-4 font-semibold text-right">Market Value (USD)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Location 1 -->
+<tr class="hover:bg-surface-container-high/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center space-x-4">
+<div class="w-10 h-10 rounded-md bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary" data-icon="gold">potted_plant</span>
+</div>
+<div>
+<div class="text-sm font-bold text-on-surface">Gold Bullion (Bars)</div>
+<div class="text-[10px] text-on-surface-variant">Zurich Vault, Switzerland</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-xs font-medium text-secondary">Class-AAA Secure</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm tabular font-medium">400.00 oz</span>
+</td>
+<td class="px-6 py-6">
+<span class="text-xs text-on-surface-variant px-2 py-1 bg-surface-container-highest rounded border border-outline-variant/20">99.99% FINE</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="text-sm font-bold tabular">$824,400.00</div>
+<div class="text-[10px] text-secondary tabular">+1.24% today</div>
+</td>
+</tr>
+<!-- Location 2 -->
+<tr class="hover:bg-surface-container-high/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center space-x-4">
+<div class="w-10 h-10 rounded-md bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-tertiary" data-icon="diamond">diamond</span>
+</div>
+<div>
+<div class="text-sm font-bold text-on-surface">Rough Cut Diamonds</div>
+<div class="text-[10px] text-on-surface-variant">Le Freeport, Singapore</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-xs font-medium text-secondary">Class-AAA Secure</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm tabular font-medium">12.50 ct</span>
+</td>
+<td class="px-6 py-6">
+<span class="text-xs text-on-surface-variant px-2 py-1 bg-surface-container-highest rounded border border-outline-variant/20">IF / D-COLOR</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="text-sm font-bold tabular">$315,000.00</div>
+<div class="text-[10px] text-on-surface-variant tabular">Audit pending</div>
+</td>
+</tr>
+<!-- Location 3 -->
+<tr class="hover:bg-surface-container-high/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center space-x-4">
+<div class="w-10 h-10 rounded-md bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="currency_bitcoin">currency_bitcoin</span>
+</div>
+<div>
+<div class="text-sm font-bold text-on-surface">Cold Storage Ledger #1</div>
+<div class="text-[10px] text-on-surface-variant">Delft Secure, Netherlands</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-xs font-medium text-primary">Biometric Restricted</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm tabular font-medium">45.20 BTC</span>
+</td>
+<td class="px-6 py-6">
+<span class="text-xs text-on-surface-variant px-2 py-1 bg-surface-container-highest rounded border border-outline-variant/20">OFFLINE</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="text-sm font-bold tabular">$2,892,110.00</div>
+<div class="text-[10px] text-error tabular">-0.45% today</div>
+</td>
+</tr>
+<!-- Location 4 -->
+<tr class="hover:bg-surface-container-high/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center space-x-4">
+<div class="w-10 h-10 rounded-md bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-[#b9c7e0]" data-icon="palette">palette</span>
+</div>
+<div>
+<div class="text-sm font-bold text-on-surface">17th Cent. Dutch Masterpiece</div>
+<div class="text-[10px] text-on-surface-variant">Schiphol Art Vault (NL)</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-xs font-medium text-secondary">Class-AAA Secure</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm tabular font-medium">1 unit</span>
+</td>
+<td class="px-6 py-6">
+<span class="text-xs text-on-surface-variant px-2 py-1 bg-surface-container-highest rounded border border-outline-variant/20">CERTIFIED</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="text-sm font-bold tabular">$4,200,000.00</div>
+<div class="text-[10px] text-on-surface-variant tabular">Stable</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-auto p-8 border-t border-outline-variant/10">
+<div class="flex flex-col md:flex-row justify-between items-center text-[10px] text-on-surface-variant uppercase tracking-widest gap-4">
+<div class="flex items-center space-x-4">
+<span>Last Verified Audit: 14 Oct 2023</span>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<span>Next Audit Scheduled: 14 Nov 2023</span>
+</div>
+<div class="flex items-center space-x-6">
+<span class="text-primary flex items-center"><span class="w-2 h-2 rounded-full bg-primary mr-2"></span> System: All Vaults Operational</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Jurisdictional Disclosures</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Privacy Vault v4.2</span>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</body></html>
