@@ -152,9 +152,84 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| (filled by roadmap) | | |
+| INFRA-01 | Phase 1: Foundation | Not Started |
+| INFRA-02 | Phase 1: Foundation | Not Started |
+| INFRA-03 | Phase 1: Foundation | Not Started |
+| INFRA-05 | Phase 1: Foundation | Not Started |
+| INFRA-06 | Phase 1: Foundation | Not Started |
+| DATA-01 | Phase 2: Data Model & API | Not Started |
+| DATA-02 | Phase 2: Data Model & API | Not Started |
+| DATA-03 | Phase 2: Data Model & API | Not Started |
+| DATA-04 | Phase 2: Data Model & API | Not Started |
+| DATA-05 | Phase 2: Data Model & API | Not Started |
+| DATA-06 | Phase 2: Data Model & API | Not Started |
+| DATA-07 | Phase 2: Data Model & API | Not Started |
+| DATA-08 | Phase 2: Data Model & API | Not Started |
+| DATA-09 | Phase 2: Data Model & API | Not Started |
+| DATA-10 | Phase 2: Data Model & API | Not Started |
+| NAV-01 | Phase 3: App Shell | Not Started |
+| NAV-02 | Phase 3: App Shell | Not Started |
+| NAV-03 | Phase 3: App Shell | Not Started |
+| NAV-04 | Phase 3: App Shell | Not Started |
+| NAV-05 | Phase 3: App Shell | Not Started |
+| DS-01 | Phase 3: App Shell | Not Started |
+| DS-02 | Phase 3: App Shell | Not Started |
+| DS-03 | Phase 3: App Shell | Not Started |
+| DS-04 | Phase 3: App Shell | Not Started |
+| DS-05 | Phase 3: App Shell | Not Started |
+| DS-06 | Phase 3: App Shell | Not Started |
+| DASH-01 | Phase 4: Dashboard | Not Started |
+| DASH-02 | Phase 4: Dashboard | Not Started |
+| DASH-03 | Phase 4: Dashboard | Not Started |
+| DASH-04 | Phase 4: Dashboard | Not Started |
+| DASH-05 | Phase 4: Dashboard | Not Started |
+| LEDG-01 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-02 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-03 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-04 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-05 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-06 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-07 | Phase 5: Transaction Ledger | Not Started |
+| LEDG-08 | Phase 5: Transaction Ledger | Not Started |
+| ANAL-01 | Phase 6: Performance Analytics | Not Started |
+| ANAL-02 | Phase 6: Performance Analytics | Not Started |
+| ANAL-03 | Phase 6: Performance Analytics | Not Started |
+| ANAL-04 | Phase 6: Performance Analytics | Not Started |
+| ANAL-05 | Phase 6: Performance Analytics | Not Started |
+| LOC-01 | Phase 7: Asset Locations | Not Started |
+| LOC-02 | Phase 7: Asset Locations | Not Started |
+| LOC-03 | Phase 7: Asset Locations | Not Started |
+| LOC-04 | Phase 7: Asset Locations | Not Started |
+| LOC-05 | Phase 7: Asset Locations | Not Started |
+| LOC-06 | Phase 7: Asset Locations | Not Started |
+| TAX-01 | Phase 8: Tax & Compliance | Not Started |
+| TAX-02 | Phase 8: Tax & Compliance | Not Started |
+| TAX-03 | Phase 8: Tax & Compliance | Not Started |
+| TAX-04 | Phase 8: Tax & Compliance | Not Started |
+| TAX-05 | Phase 8: Tax & Compliance | Not Started |
+| TAX-06 | Phase 8: Tax & Compliance | Not Started |
+| BVP-01 | Phase 9: Business vs. Personal | Not Started |
+| BVP-02 | Phase 9: Business vs. Personal | Not Started |
+| BVP-03 | Phase 9: Business vs. Personal | Not Started |
+| BVP-04 | Phase 9: Business vs. Personal | Not Started |
+| BVP-05 | Phase 9: Business vs. Personal | Not Started |
+| BVP-06 | Phase 9: Business vs. Personal | Not Started |
+| CRUD-01 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-02 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-03 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-04 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-05 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-06 | Phase 10: Data Entry Forms | Not Started |
+| CRUD-07 | Phase 10: Data Entry Forms | Not Started |
+| IMP-01 | Phase 11: Excel Import | Not Started |
+| IMP-02 | Phase 11: Excel Import | Not Started |
+| IMP-03 | Phase 11: Excel Import | Not Started |
+| IMP-04 | Phase 11: Excel Import | Not Started |
+| IMP-05 | Phase 11: Excel Import | Not Started |
+| INFRA-04 | Phase 12: PWA & Polish | Not Started |
 
 ---
 
 *Requirements for: Precious Dashboard v1*
 *Defined: April 9, 2026*
+*Traceability assigned: April 9, 2026*
