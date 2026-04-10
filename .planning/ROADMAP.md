@@ -10,7 +10,7 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** - Docker Compose + PostgreSQL + API skeleton + auto-running migrations
+- [x] **Phase 1: Foundation** - Docker Compose + PostgreSQL + API skeleton + auto-running migrations
 - [ ] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
 - [ ] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
 - [ ] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
@@ -36,7 +36,13 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
   4. API console logs confirm migrations complete on startup — no manual `make migrate` required in dev
   5. All monetary DB columns established as `NUMERIC(20, 2)` — enforced as a migration convention from the first schema file
   6. API error responses use `{ error: { message: string, status: number } }` shape
-**Plans**: TBD
+**Plans**: 5 plans complete ✓
+Plans:
+- [x] 01-01-PLAN.md — API package layer (Express + Knex + pg)
+- [x] 01-02-PLAN.md — Frontend package layer (React + Vite + TypeScript)
+- [x] 01-03-PLAN.md — API server (index.ts + errorHandler + routes + migration)
+- [x] 01-04-PLAN.md — Docker Compose + Makefile + React source stubs
+- [x] 01-05-PLAN.md — Integration checkpoint (verified ✓)
 
 ### Phase 2: Data Model & API
 **Goal**: All six data entities are persisted in PostgreSQL with full CRUD REST endpoints — TypeScript types and `api.ts` helper methods are ready for frontend screen development
