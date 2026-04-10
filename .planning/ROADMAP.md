@@ -14,11 +14,11 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 - [x] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
 - [x] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
 - [x] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
-- [ ] **Phase 5: Transaction Ledger** - Acquisition table + filters + P&L summary + CSV export
-- [ ] **Phase 6: Performance Analytics** - Batch-level P&L table + market ticker bar
-- [ ] **Phase 7: Asset Locations** - Jurisdictional world map + dynamic pins + inventory table
-- [ ] **Phase 8: Tax & Compliance** - Fiscal tagging + compliance score + report/VAT export
-- [ ] **Phase 9: Business vs. Personal** - Dual-column entity comparison layout
+- [x] **Phase 5: Transaction Ledger** - Acquisition table + filters + P&L summary + CSV export
+- [x] **Phase 6: Performance Analytics** - Batch-level P&L table + market ticker bar
+- [x] **Phase 7: Asset Locations** - Jurisdictional world map + dynamic pins + inventory table
+- [x] **Phase 8: Tax & Compliance** - Fiscal tagging + compliance score + report/VAT export
+- [x] **Phase 9: Business vs. Personal** - Dual-column entity comparison layout
 - [ ] **Phase 10: Data Entry Forms** - Add/edit/delete modals for all entities
 - [ ] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
 - [ ] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
