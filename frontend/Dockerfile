@@ -4,7 +4,7 @@ WORKDIR /app
 # Install dependencies into the container image layer
 # (source files are volume-mounted from host at runtime)
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Expose Vite dev server port
 EXPOSE 3000

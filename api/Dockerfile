@@ -4,7 +4,8 @@ WORKDIR /app
 # Install dependencies into the container image layer
 # (source files are volume-mounted from host at runtime)
 COPY package*.json ./
-RUN npm ci
+COPY tsconfig.json ./
+RUN npm install
 
 # Expose API port
 EXPOSE 3001

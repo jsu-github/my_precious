@@ -18,13 +18,14 @@ services:
     build:
       context: ./api
     ports:
-      - "3001:3001"
+      - "4001:3001"
     environment:
       DATABASE_URL: postgres://precious:precious@db:5432/precious
       NODE_ENV: development
     volumes:
       - ./api/src:/app/src
       - ./api/migrations:/app/migrations
+      - ./api/tsconfig.json:/app/tsconfig.json
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +34,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:3000"
+      - "4000:3000"
     environment:
       VITE_API_URL: http://api:3001
     volumes:
