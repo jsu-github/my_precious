@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, Shield, Layers } from 'lucide-react';
+import { TrendingUp, Shield, Layers, Plus } from 'lucide-react';
 import { api } from '../api';
-import type { Asset, AssetClass, AssetLocation } from '../types';
+import type { Asset, AssetClass, AssetLocation, Entity } from '../types';
 import type { EntityFilter } from '../layouts/AppShell';
+import AssetModal from '../components/modals/AssetModal';
 
 // ─── Asset class metadata ─────────────────────────────────────────────────────
 const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
@@ -51,15 +52,18 @@ interface Props {
 export default function DashboardPage({ entityFilter }: Props) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [locations, setLocations] = useState<AssetLocation[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddAsset, setShowAddAsset] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.assets.list(), api.locations.list()])
-      .then(([a, l]) => {
+    Promise.all([api.assets.list(), api.locations.list(), api.entities.list()])
+      .then(([a, l, e]) => {
         setAssets(a);
         setLocations(l);
+        setEntities(e);
       })
       .catch(err => setError(String(err)))
       .finally(() => setLoading(false));
@@ -100,7 +104,7 @@ export default function DashboardPage({ entityFilter }: Props) {
           .map(a => a.last_audit_date)
           .filter(Boolean)
           .sort()
-          .at(-1);
+          [locAssets.map(a => a.last_audit_date).filter(Boolean).sort().length - 1];
         return { ...loc, asset_count: locAssets.length, total_value: locValue, last_audit: lastAudit };
       })
       .filter(l => l.asset_count > 0);
@@ -108,7 +112,7 @@ export default function DashboardPage({ entityFilter }: Props) {
 
   const lastUpdated = useMemo(() => {
     const dates = assets.map(a => a.updated_at).sort();
-    return dates.at(-1) ?? null;
+    return dates[dates.length - 1] ?? null;
   }, [assets]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -129,6 +133,7 @@ export default function DashboardPage({ entityFilter }: Props) {
   }
 
   return (
+    <>
     <div className="p-6 space-y-6">
 
       {/* ── Net Worth Hero ─────────────────────────────────────────────────── */}
@@ -169,6 +174,15 @@ export default function DashboardPage({ entityFilter }: Props) {
               <span className="capitalize">{entityFilter}</span>
               <span className="opacity-60">view</span>
             </div>
+
+            {/* Add Asset */}
+            <button
+              onClick={() => setShowAddAsset(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Asset
+            </button>
 
             {/* Trend stub — Phase 12 will wire real snapshot comparison */}
             <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/40">
@@ -273,5 +287,17 @@ export default function DashboardPage({ entityFilter }: Props) {
       </div>
 
     </div>
+    {showAddAsset && (
+      <AssetModal
+        entities={entities}
+        locations={locations}
+        onClose={() => setShowAddAsset(false)}
+        onSaved={asset => {
+          setAssets(prev => [...prev, asset]);
+          setShowAddAsset(false);
+        }}
+      />
+    )}
+    </>
   );
 }

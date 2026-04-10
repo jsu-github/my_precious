@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter, Plus } from 'lucide-react';
 import { api } from '../api';
-import type { LedgerRow, AssetClass, TaxStatus } from '../types';
+import type { LedgerRow, AssetClass, TaxStatus, Asset } from '../types';
 import type { EntityFilter } from '../layouts/AppShell';
+import AcquisitionModal from '../components/modals/AcquisitionModal';
 
 // ─── Asset class labels ───────────────────────────────────────────────────────
 const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
@@ -101,15 +102,17 @@ interface Props {
 
 export default function LedgerPage({ entityFilter }: Props) {
   const [rows, setRows] = useState<LedgerRow[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [taxFilter, setTaxFilter] = useState<TaxStatus | 'all'>('all');
   const [classFilter, setClassFilter] = useState<AssetClass | 'all'>('all');
+  const [addAcqAsset, setAddAcqAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    api.ledger.list()
-      .then(setRows)
+    Promise.all([api.ledger.list(), api.assets.list()])
+      .then(([r, a]) => { setRows(r); setAssets(a); })
       .catch(err => setError(String(err)))
       .finally(() => setLoading(false));
   }, []);
@@ -158,6 +161,7 @@ export default function LedgerPage({ entityFilter }: Props) {
   const selectClass = "bg-surface-high/60 border border-outline-variant/30 rounded text-sm text-on-surface-variant py-1.5 pl-3 pr-8 focus:outline-none focus:border-primary/40 appearance-none cursor-pointer";
 
   return (
+    <>
     <div className="p-6 space-y-4">
 
       {/* ── Page header + actions ──────────────────────────────────────────── */}
@@ -168,13 +172,36 @@ export default function LedgerPage({ entityFilter }: Props) {
             {enrichedRows.length} records · <span className="text-primary capitalize">{entityFilter}</span>
           </p>
         </div>
-        <button
-          onClick={() => exportCSV(enrichedRows)}
-          className="flex items-center gap-2 px-4 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-sm text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Add acquisition — user picks asset from inline select */}
+          <div className="flex items-center gap-1.5">
+            <select
+              className="bg-surface-high/60 border border-outline-variant/30 rounded text-xs text-on-surface-variant py-2 pl-3 pr-7 focus:outline-none focus:border-primary/40 appearance-none cursor-pointer"
+              defaultValue=""
+              onChange={e => {
+                const asset = assets.find(a => a.id === Number(e.target.value)) ?? null;
+                setAddAcqAsset(asset);
+                e.target.value = '';
+              }}
+            >
+              <option value="" disabled>Add to asset…</option>
+              {assets.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+            <button
+              onClick={() => assets.length > 0 && setAddAcqAsset(assets[0])}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <button
+            onClick={() => exportCSV(enrichedRows)}
+            className="flex items-center gap-2 px-4 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-sm text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* ── Filter bar ────────────────────────────────────────────────────── */}
@@ -289,5 +316,17 @@ export default function LedgerPage({ entityFilter }: Props) {
       )}
 
     </div>
+    {addAcqAsset && (
+      <AcquisitionModal
+        asset={addAcqAsset}
+        onClose={() => setAddAcqAsset(null)}
+        onSaved={async () => {
+          setAddAcqAsset(null);
+          const updated = await api.ledger.list();
+          setRows(updated);
+        }}
+      />
+    )}
+    </>
   );
 }
