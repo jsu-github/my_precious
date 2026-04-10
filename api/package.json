@@ -6,7 +6,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "knex migrate:latest"
+    "migrate": "knex migrate:latest",
+    "seed": "ts-node --transpile-only src/seed.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

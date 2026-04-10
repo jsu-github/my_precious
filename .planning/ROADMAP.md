@@ -11,7 +11,7 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 ## Phases
 
 - [x] **Phase 1: Foundation** - Docker Compose + PostgreSQL + API skeleton + auto-running migrations
-- [ ] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
+- [x] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
 - [ ] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
 - [ ] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
 - [ ] **Phase 5: Transaction Ledger** - Acquisition table + filters + P&L summary + CSV export
@@ -55,7 +55,13 @@ Plans:
   4. `frontend/src/types.ts` defines interfaces for all 6 entities matching the DB schema
   5. `frontend/src/api.ts` exposes typed helper methods for every resource — no endpoint requires an inline `fetch()` in a component
   6. Seed data is loadable and returns meaningful values from all endpoints
-**Plans**: TBD
+**Plans**: 5 plans complete ✓
+Plans:
+- [x] 02-01-PLAN.md — DB Migrations (7 tables: entities, asset_locations, assets, acquisitions, fiscal_tags, transfers, valuation_snapshots)
+- [x] 02-02-PLAN.md — TypeScript types (all entity interfaces + enums + input types)
+- [x] 02-03-PLAN.md — Simple routes: entities, assetLocations, transfers
+- [x] 02-04-PLAN.md — Assets route complex (CRUD + nested acquisitions/fiscal-tags/snapshots)
+- [x] 02-05-PLAN.md — Wiring + routes/index.ts + dashboard.ts + frontend api.ts + seed data
 
 ### Phase 3: App Shell
 **Goal**: The React app renders the complete Midnight Sovereign visual chrome — Sidebar, TopHeader, and discriminated-union navigation work across all 6 named routes (pages show placeholder content)
@@ -199,8 +205,8 @@ Plans:
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | Foundation | 0/TBD | Not started | - |
-| 2 | Data Model & API | 0/TBD | Not started | - |
+| 1 | Foundation | 5/5 | Complete ✓ | 2026-04-10 |
+| 2 | Data Model & API | 5/5 | Complete ✓ | 2026-04-10 |
 | 3 | App Shell | 0/TBD | Not started | - |
 | 4 | Dashboard | 0/TBD | Not started | - |
 | 5 | Transaction Ledger | 0/TBD | Not started | - |

@@ -5,6 +5,17 @@
  * Error shape from the server: { error: { message: string, status: number } }
  * On non-OK responses, request() throws the error message as a plain Error.
  */
+import type {
+  Entity, CreateEntity, UpdateEntity,
+  AssetLocation, CreateAssetLocation, UpdateAssetLocation,
+  Asset, CreateAsset, UpdateAsset,
+  Acquisition, CreateAcquisition, UpdateAcquisition,
+  FiscalTag, CreateFiscalTag, UpdateFiscalTag,
+  Transfer, CreateTransfer,
+  ValuationSnapshot, CreateValuationSnapshot,
+  DashboardSummary,
+} from './types';
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: {
@@ -24,10 +35,81 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// Entity namespaces added in Phase 2:
-// assets, entities, locations, acquisitions, fiscalTags, transfers, dashboard, analytics
-
 export const api = {
-  // Placeholder — Phase 2 will populate entity namespaces
-  _request: request,
+  entities: {
+    list: () => request<Entity[]>('/entities'),
+    get: (id: number) => request<Entity>(`/entities/${id}`),
+    create: (body: CreateEntity) =>
+      request<Entity>('/entities', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: number, body: UpdateEntity) =>
+      request<Entity>(`/entities/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (id: number) =>
+      request<void>(`/entities/${id}`, { method: 'DELETE' }),
+  },
+
+  locations: {
+    list: () => request<AssetLocation[]>('/asset-locations'),
+    get: (id: number) => request<AssetLocation>(`/asset-locations/${id}`),
+    create: (body: CreateAssetLocation) =>
+      request<AssetLocation>('/asset-locations', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: number, body: UpdateAssetLocation) =>
+      request<AssetLocation>(`/asset-locations/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (id: number) =>
+      request<void>(`/asset-locations/${id}`, { method: 'DELETE' }),
+  },
+
+  assets: {
+    list: (entityId?: number) =>
+      request<Asset[]>(`/assets${entityId ? `?entity_id=${entityId}` : ''}`),
+    get: (id: number) => request<Asset>(`/assets/${id}`),
+    create: (body: CreateAsset) =>
+      request<Asset>('/assets', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: number, body: UpdateAsset) =>
+      request<Asset>(`/assets/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (id: number) =>
+      request<void>(`/assets/${id}`, { method: 'DELETE' }),
+    acquisitions: {
+      list: (assetId: number) =>
+        request<Acquisition[]>(`/assets/${assetId}/acquisitions`),
+      create: (assetId: number, body: CreateAcquisition) =>
+        request<Acquisition>(`/assets/${assetId}/acquisitions`, { method: 'POST', body: JSON.stringify(body) }),
+      update: (assetId: number, id: number, body: UpdateAcquisition) =>
+        request<Acquisition>(`/assets/${assetId}/acquisitions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+      delete: (assetId: number, id: number) =>
+        request<void>(`/assets/${assetId}/acquisitions/${id}`, { method: 'DELETE' }),
+    },
+    fiscalTags: {
+      list: (assetId: number) =>
+        request<FiscalTag[]>(`/assets/${assetId}/fiscal-tags`),
+      create: (assetId: number, body: CreateFiscalTag) =>
+        request<FiscalTag>(`/assets/${assetId}/fiscal-tags`, { method: 'POST', body: JSON.stringify(body) }),
+      update: (assetId: number, id: number, body: UpdateFiscalTag) =>
+        request<FiscalTag>(`/assets/${assetId}/fiscal-tags/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+      delete: (assetId: number, id: number) =>
+        request<void>(`/assets/${assetId}/fiscal-tags/${id}`, { method: 'DELETE' }),
+    },
+    snapshots: {
+      list: (assetId: number) =>
+        request<ValuationSnapshot[]>(`/assets/${assetId}/valuation-snapshots`),
+      create: (assetId: number, body: CreateValuationSnapshot) =>
+        request<ValuationSnapshot>(`/assets/${assetId}/valuation-snapshots`, {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+    },
+  },
+
+  transfers: {
+    list: () => request<Transfer[]>('/transfers'),
+    get: (id: number) => request<Transfer>(`/transfers/${id}`),
+    create: (body: CreateTransfer) =>
+      request<Transfer>('/transfers', { method: 'POST', body: JSON.stringify(body) }),
+    delete: (id: number) =>
+      request<void>(`/transfers/${id}`, { method: 'DELETE' }),
+  },
+
+  dashboard: {
+    summary: (entityId?: number) =>
+      request<DashboardSummary>(`/dashboard/summary${entityId ? `?entity_id=${entityId}` : ''}`),
+  },
 } as const;

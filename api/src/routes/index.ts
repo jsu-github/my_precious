@@ -1,15 +1,16 @@
 import { Router } from 'express';
+import entitiesRouter from './entities';
+import assetLocationsRouter from './assetLocations';
+import assetsRouter from './assets';
+import transfersRouter from './transfers';
+import dashboardRouter from './dashboard';
 
 const router = Router();
 
-// Phase 2 will mount entity routers here:
-// router.use('/assets', assetsRouter);
-// router.use('/entities', entitiesRouter);
-// router.use('/locations', locationsRouter);
-// router.use('/acquisitions', acquisitionsRouter);
-// router.use('/fiscal-tags', fiscalTagsRouter);
-// router.use('/transfers', transfersRouter);
-// router.use('/dashboard', dashboardRouter);
-// router.use('/analytics', analyticsRouter);
+router.use('/entities', entitiesRouter);
+router.use('/asset-locations', assetLocationsRouter);
+router.use('/assets', assetsRouter);
+router.use('/transfers', transfersRouter);
+router.use('/dashboard', dashboardRouter);
 
 export default router;
