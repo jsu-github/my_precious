@@ -12,7 +12,7 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 
 - [x] **Phase 1: Foundation** - Docker Compose + PostgreSQL + API skeleton + auto-running migrations
 - [x] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
-- [ ] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
+- [x] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
 - [ ] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
 - [ ] **Phase 5: Transaction Ledger** - Acquisition table + filters + P&L summary + CSV export
 - [ ] **Phase 6: Performance Analytics** - Batch-level P&L table + market ticker bar
@@ -75,8 +75,11 @@ Plans:
   5. Clicking each nav link renders the correct page component; `App.tsx` uses a discriminated union `View` type — no React Router import anywhere
   6. Entity toggle state in `App.tsx` updates the active tab in the header and propagates to all page props
   7. `.glass-panel`, `.gold-gradient`, and `tabular-nums` CSS utilities are defined in global styles
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans complete ✓
+Plans:
+- [x] 03-01-PLAN.md — Tailwind CSS + Design System Foundation (tokens, fonts, PostCSS)
+- [x] 03-02-PLAN.md — App Shell components (Sidebar, TopHeader, AppShell, 6 page stubs)
+- [x] 03-03-PLAN.md — App.tsx View union + EntityFilter wiring
 
 ### Phase 4: Dashboard
 **Goal**: The Dashboard screen displays live totals from the API — net worth hero with glassmorphism panel, asset allocation breakdown, and vault security status — and responds to the entity toggle

@@ -44,5 +44,7 @@ services:
       - ./frontend/vite.config.ts:/app/vite.config.ts
       - ./frontend/tsconfig.json:/app/tsconfig.json
       - ./frontend/tsconfig.node.json:/app/tsconfig.node.json
+      - ./frontend/tailwind.config.ts:/app/tailwind.config.ts
+      - ./frontend/tailwind.config.ts:/app/tailwind.config.ts
     depends_on:
       - api

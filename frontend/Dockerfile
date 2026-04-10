@@ -6,6 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY vite.config.ts ./
+COPY tailwind.config.ts ./
+COPY tailwind.config.ts ./
 RUN npm install
 
 # Expose Vite dev server port
