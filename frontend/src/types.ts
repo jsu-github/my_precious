@@ -136,7 +136,23 @@ export type CreateTransfer = Omit<
 
 export type CreateValuationSnapshot = Pick<ValuationSnapshot, 'value'>;
 
-// ─── Dashboard summary ────────────────────────────────────────────────────────
+// ─── Ledger ───────────────────────────────────────────────────────────────────
+export interface LedgerRow {
+  id: number;
+  asset_id: number;
+  purchase_date: string;
+  cost_basis: string;      // NUMERIC as string
+  quantity: string;        // NUMERIC as string
+  tax_status: TaxStatus;
+  description: string | null;
+  asset_name: string;
+  asset_class: AssetClass;
+  asset_current_value: string; // NUMERIC as string — total value of parent asset
+  entity_name: string;
+  entity_type: EntityType;
+  created_at: string;
+  updated_at: string;
+}
 export interface DashboardSummary {
   total_value: string;
   entity_id: number | null;

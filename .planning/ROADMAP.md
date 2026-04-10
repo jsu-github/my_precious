@@ -13,7 +13,7 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 - [x] **Phase 1: Foundation** - Docker Compose + PostgreSQL + API skeleton + auto-running migrations
 - [x] **Phase 2: Data Model & API** - All 6 entity schemas, full CRUD endpoints, TypeScript types + api.ts
 - [x] **Phase 3: App Shell** - React scaffold + Midnight Sovereign Tailwind tokens + AppShell + discriminated-union navigation
-- [ ] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
+- [x] **Phase 4: Dashboard** - Global net worth hero + asset allocation + vault security panel
 - [ ] **Phase 5: Transaction Ledger** - Acquisition table + filters + P&L summary + CSV export
 - [ ] **Phase 6: Performance Analytics** - Batch-level P&L table + market ticker bar
 - [ ] **Phase 7: Asset Locations** - Jurisdictional world map + dynamic pins + inventory table

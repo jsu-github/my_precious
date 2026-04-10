@@ -14,6 +14,7 @@ import type {
   Transfer, CreateTransfer,
   ValuationSnapshot, CreateValuationSnapshot,
   DashboardSummary,
+  LedgerRow,
 } from './types';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -111,5 +112,16 @@ export const api = {
   dashboard: {
     summary: (entityId?: number) =>
       request<DashboardSummary>(`/dashboard/summary${entityId ? `?entity_id=${entityId}` : ''}`),
+  },
+
+  ledger: {
+    list: (filters?: { entity_type?: string; asset_class?: string; tax_status?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.entity_type) params.set('entity_type', filters.entity_type);
+      if (filters?.asset_class) params.set('asset_class', filters.asset_class);
+      if (filters?.tax_status) params.set('tax_status', filters.tax_status);
+      const qs = params.toString();
+      return request<LedgerRow[]>(`/ledger${qs ? `?${qs}` : ''}`);
+    },
   },
 } as const;
