@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Download, Filter, Plus } from 'lucide-react';
+import { Download, Filter, Plus, Upload } from 'lucide-react';
 import { api } from '../api';
-import type { LedgerRow, AssetClass, TaxStatus, Asset } from '../types';
+import type { LedgerRow, AssetClass, TaxStatus, Asset, Entity, AssetLocation } from '../types';
 import type { EntityFilter } from '../layouts/AppShell';
 import AcquisitionModal from '../components/modals/AcquisitionModal';
+import Modal from '../components/modals/Modal';
+import ImportWizard from '../components/ImportWizard';
 
 // ─── Asset class labels ───────────────────────────────────────────────────────
 const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
@@ -103,16 +105,19 @@ interface Props {
 export default function LedgerPage({ entityFilter }: Props) {
   const [rows, setRows] = useState<LedgerRow[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [locations, setLocations] = useState<AssetLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [taxFilter, setTaxFilter] = useState<TaxStatus | 'all'>('all');
   const [classFilter, setClassFilter] = useState<AssetClass | 'all'>('all');
   const [addAcqAsset, setAddAcqAsset] = useState<Asset | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.ledger.list(), api.assets.list()])
-      .then(([r, a]) => { setRows(r); setAssets(a); })
+    Promise.all([api.ledger.list(), api.assets.list(), api.entities.list(), api.locations.list()])
+      .then(([r, a, e, l]) => { setRows(r); setAssets(a); setEntities(e); setLocations(l); })
       .catch(err => setError(String(err)))
       .finally(() => setLoading(false));
   }, []);
@@ -173,6 +178,14 @@ export default function LedgerPage({ entityFilter }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Import */}
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-sm text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Import
+          </button>
           {/* Add acquisition — user picks asset from inline select */}
           <div className="flex items-center gap-1.5">
             <select
@@ -326,6 +339,21 @@ export default function LedgerPage({ entityFilter }: Props) {
           setRows(updated);
         }}
       />
+    )}
+    {showImport && (
+      <Modal title="Import from Spreadsheet" onClose={() => setShowImport(false)} width="max-w-2xl">
+        <ImportWizard
+          entities={entities}
+          locations={locations}
+          onImportComplete={async count => {
+            if (count > 0) {
+              const updated = await api.ledger.list();
+              setRows(updated);
+            }
+            setShowImport(false);
+          }}
+        />
+      </Modal>
     )}
     </>
   );
