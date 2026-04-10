@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0b1326"/>
+  <rect x="40" y="40" width="432" height="432" rx="72" fill="#131b2e"/>
+  <!-- Diamond / vault gem -->
+  <polygon points="256,96 352,200 256,416 160,200" fill="none" stroke="#e9c349" stroke-width="12" stroke-linejoin="round"/>
+  <polygon points="256,96 352,200 256,280 160,200" fill="#e9c349" opacity="0.18"/>
+  <line x1="160" y1="200" x2="352" y2="200" stroke="#e9c349" stroke-width="8" opacity="0.5"/>
+</svg>

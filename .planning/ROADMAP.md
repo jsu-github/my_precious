@@ -20,8 +20,8 @@ Twelve phases, dependency-ordered: start with Docker infrastructure and database
 - [x] **Phase 8: Tax & Compliance** - Fiscal tagging + compliance score + report/VAT export
 - [x] **Phase 9: Business vs. Personal** - Dual-column entity comparison layout
 - [ ] **Phase 10: Data Entry Forms** - Add/edit/delete modals for all entities
-- [ ] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
-- [ ] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
+- [x] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
+- [x] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
 
 ## Phase Details
 
