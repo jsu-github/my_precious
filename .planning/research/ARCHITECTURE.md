@@ -442,3 +442,189 @@ services:
 ---
 *Architecture research for: Precious Dashboard*
 *Researched: April 9, 2026*
+
+---
+
+# Architecture Research — v1.1 Addendum
+## Dealer Price Management + Tier System Integration
+
+**Milestone:** MKTD-01–03, TIER-01–05  
+**Researched:** 2026-04-11  
+**Basis:** Live codebase inspection — App.tsx, api.ts, types.ts, routes/index.ts, routes/assets.ts, Sidebar.tsx  
+
+---
+
+## New Files
+
+| File | Purpose |
+|------|---------|
+| `api/migrations/010_dealers.ts` | Creates `dealers` table (id, name, notes, we_buy_price_per_gram NUMERIC) |
+| `api/migrations/011_asset_tier.ts` | Adds `tier` (smallint 0–3, nullable) + `weight_per_unit_grams` (NUMERIC, nullable) to `assets` |
+| `api/migrations/012_tier_config.ts` | Creates `tier_config` table (tier PK, target_pct, min_pct, max_pct) + seeds 4 default rows inline in `up()` |
+| `api/src/routes/dealers.ts` | Full CRUD router mounted at `/api/dealers` |
+| `api/src/routes/tierConfig.ts` | GET all rows + PUT single row router mounted at `/api/tier-config` |
+| `frontend/src/pages/TierPage.tsx` | New page: allocation table vs tier config, per-tier deviation view |
+
+---
+
+## Modified Files
+
+| File | Changes |
+|------|---------|
+| `frontend/src/components/Sidebar.tsx` | Add `'tier'` to `View` union literal type; add `{ id: 'tier', label: 'Tier Allocation', icon: Layers }` to `NAV_ITEMS` array |
+| `frontend/src/App.tsx` | Import `TierPage`; add `case 'tier': return <TierPage entityFilter={entityFilter} />` to the `renderPage()` switch |
+| `frontend/src/types.ts` | Add `Dealer`, `CreateDealer`, `UpdateDealer`; add `TierConfig`, `UpdateTierConfig`; add `TierHealth` + `TierHealthRow`; extend `Asset` interface with `tier?: number \| null` and `weight_per_unit_grams?: string \| null` |
+| `frontend/src/api.ts` | Add `api.dealers` namespace (list/create/update/delete); add `api.tierConfig` namespace (list/update); add `api.dashboard.tierHealth()` |
+| `api/src/routes/index.ts` | Import and mount `dealersRouter` at `/dealers`; import and mount `tierConfigRouter` at `/tier-config` |
+| `api/src/routes/dashboard.ts` | Add `GET /tier-health` endpoint — SQL GROUP BY assets on tier column, JOIN tier_config, return per-tier allocation vs target |
+| `frontend/src/components/modals/AssetModal.tsx` | Add `tier` select field (0 = Unassigned, 1–3 = tier labels) and `weight_per_unit_grams` number input; both optional/nullable |
+| `frontend/src/pages/LedgerPage.tsx` | Fetch `api.dealers.list()` alongside existing ledger data; render dealer We Buy price panel and per-row liquidation value |
+
+---
+
+## New API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/dealers` | List all dealers |
+| `POST` | `/api/dealers` | Create dealer |
+| `PUT` | `/api/dealers/:id` | Update dealer (name, notes, we_buy_price_per_gram) |
+| `DELETE` | `/api/dealers/:id` | Delete dealer |
+| `GET` | `/api/tier-config` | List all 4 tier config rows |
+| `PUT` | `/api/tier-config/:tier` | Update a single tier's target/min/max percentages |
+| `GET` | `/api/dashboard/tier-health` | Per-tier allocation summary vs config targets (server-computed aggregate) |
+
+No new asset endpoints are needed. `PUT /api/assets/:id` in `assets.ts` already spreads `req.body` into `knex.update()`; `tier` and `weight_per_unit_grams` columns flow through automatically once the migration runs.
+
+---
+
+## Data Flow
+
+### Liquidation value (per-acquisition row in Ledger)
+
+```
+DB:  assets.weight_per_unit_grams  →  included in existing GET /api/assets response
+DB:  acquisitions.quantity         →  already in LedgerRow from GET /api/ledger
+DB:  dealers.we_buy_price_per_gram →  new GET /api/dealers
+
+Frontend: LedgerPage fetches ledger rows + dealers list in parallel
+  → liquidation = parseFloat(row.quantity) * parseFloat(asset.weight_per_unit_grams) * parseFloat(dealer.we_buy_price_per_gram)
+  → computed inline in the component, not shipped from the API
+```
+
+Justification for frontend-side: this is a presentational cross-product of three already-fetched columns. No aggregation is required. Keeping it frontend avoids adding a new join to the ledger query while keeping the calculation visible next to the UI that uses it.
+
+### Tier health tile on Dashboard
+
+```
+DB: assets (tier, current_value) + tier_config (tier, target_pct, min_pct, max_pct)
+API: GET /api/dashboard/tier-health
+  → SQL: GROUP BY assets.tier, SUM(current_value), calculate pct of portfolio total
+  → JOIN tier_config on tier
+  → returns: { total_portfolio_value, rows: TierHealthRow[] }
+
+Frontend: DashboardPage fires api.dashboard.summary() AND api.dashboard.tierHealth() in parallel
+  → renders compact tile: 4 rows × (tier label, actual%, target%, status: ok/under/over)
+```
+
+Justification for server-side: the tile is a portfolio-wide aggregate sum. Computing it on the frontend would require shipping all asset rows to the browser solely for a summary widget. A single SQL `GROUP BY` + `JOIN` is the right tool.
+
+### TierPage: allocation table
+
+```
+API: GET /api/assets  →  full list, now includes tier + weight_per_unit_grams
+API: GET /api/tier-config  →  4 rows
+
+Frontend: TierPage — local useState<Asset[]> + useState<TierConfig[]>
+  → totalValue = sum of parseFloat(asset.current_value)
+  → per tier: actualValue, actualPct, targetPct, minPct, maxPct, deviation
+  → no server round-trip for derived numbers
+  → tier config editing: PUT /api/tier-config/:tier inline via api.tierConfig.update()
+```
+
+---
+
+## Build Order
+
+Dependencies flow downward — each phase requires everything above it.
+
+```
+Phase 1 — DB Foundation
+  ├── 010_dealers migration
+  ├── 011_asset_tier migration  (tier + weight_per_unit_grams columns on assets)
+  └── 012_tier_config migration (table + seed 4 default rows in up())
+
+Phase 2 — Types  (frontend/src/types.ts)
+  ├── Dealer, CreateDealer, UpdateDealer
+  ├── TierConfig, UpdateTierConfig
+  ├── TierHealth, TierHealthRow
+  └── Asset interface extended: tier?, weight_per_unit_grams?
+  NOTE: CreateAsset/UpdateAsset pick up new fields automatically via existing
+        Omit<>/Partial<> derivation — no manual Update type changes needed
+
+Phase 3 — Backend routes
+  ├── api/src/routes/dealers.ts       (full CRUD)
+  ├── api/src/routes/tierConfig.ts    (GET all + PUT :tier)
+  ├── api/src/routes/dashboard.ts     (add GET /tier-health)
+  └── api/src/routes/index.ts         (mount dealers + tierConfig routers)
+
+Phase 4 — Frontend API client  (frontend/src/api.ts)
+  ├── api.dealers  (list/create/update/delete)
+  ├── api.tierConfig  (list/update)
+  └── api.dashboard.tierHealth()
+
+Phase 5 — Navigation shell
+  ├── Sidebar.tsx: add 'tier' to View union + NAV_ITEMS entry
+  ├── App.tsx: import TierPage + add case 'tier'
+  └── TierPage.tsx: scaffold (renders but shows empty state)
+  VERIFY: AppShell.tsx re-exports View from Sidebar — recompile confirms no drift
+
+Phase 6 — Asset modal extensions
+  ├── AssetModal.tsx: tier select field (nullable, 0–3)
+  └── AssetModal.tsx: weight_per_unit_grams number input (nullable)
+  NOTE: PUT /api/assets/:id already handles these fields — zero backend change
+
+Phase 7 — Dealer management  (MKTD-01, MKTD-02, MKTD-03)
+  ├── DealerModal component  (create/edit)
+  └── LedgerPage: dealer panel + liquidation value column
+  DEPENDS ON: Phase 3 dealers route, Phase 4 api.dealers
+
+Phase 8 — TierPage content  (TIER-01, TIER-03, TIER-04, TIER-05)
+  ├── Fetch assets + tier_config
+  ├── Allocation table with deviation indicators
+  └── Inline tier_config editing
+  DEPENDS ON: Phase 3 tierConfig route, Phase 4 api.tierConfig, Phase 5 navigation
+
+Phase 9 — Dashboard tier health tile  (TIER-02 dashboard widget)
+  └── DashboardPage: fetch api.dashboard.tierHealth() + render tile
+  DEPENDS ON: Phase 3 dashboard extension, Phase 4 api client
+```
+
+---
+
+## Integration Notes
+
+### `View` type lives in `Sidebar.tsx`, not `types.ts`
+The `View` union is defined in `frontend/src/components/Sidebar.tsx` and re-exported via `AppShell.tsx`. When adding `'tier'`, change the union in **Sidebar.tsx only**. AppShell.tsx re-exports it transparently — no change there. Do not create a duplicate definition in types.ts.
+
+### `tier_config` rows must be seeded inside the migration `up()`
+The `PUT /api/tier-config/:tier` handler does an UPDATE, not an upsert. If the 4 rows don't exist, updates silently no-op. Seed them in `012_tier_config.ts up()` with safe defaults — e.g. `{ tier: 0, target_pct: 0, min_pct: 0, max_pct: 0 }` for "Unassigned" and a reasonable split (60/25/15) for tiers 1–3.
+
+### `PUT /api/assets/:id` is already column-agnostic
+`assets.ts` uses `knex('assets').update({ ...req.body, updated_at: knex.fn.now() })`. Once the migration adds `tier` and `weight_per_unit_grams`, those fields pass through the existing handler without any code change. This is the established pattern — exploit it.
+
+### Dealer We Buy prices are not ledger rows — keep types separate
+Do not add `we_buy_price_per_gram` to `LedgerRow`. Dealers have no per-acquisition relationship. LedgerPage should fetch `api.dealers.list()` independently and render them in a separate panel. Merging into the Ledger JOIN query would dirty the data model.
+
+### Crypto as Tier 3 — no schema change needed
+`asset_class = 'crypto'` already exists in the schema. Assigning `tier = 3` to crypto assets via the AssetModal is sufficient. The tier grouping query operates on the `tier` column regardless of asset class; no special-casing required.
+
+### Dashboard tier-health endpoint path
+Mount as `GET /api/dashboard/tier-health` (not under `/summary`). DashboardPage fires both `api.dashboard.summary()` and `api.dashboard.tierHealth()` in parallel. Keeping them as separate endpoints preserves the existing summary response shape and avoids coupling entity_id filter semantics to a portfolio-wide calculation.
+
+### TierPage and entity filter
+Tier allocation is a portfolio-wide view; applying an entity filter would make the percentage math misleading (percentages would no longer sum to 100% of the portfolio). TierPage accepts the `entityFilter` prop for prop-interface consistency with all other pages, but should either ignore it or display a dismissible notice when a filter is active.
+
+---
+*v1.1 architecture addendum for: Precious Dashboard*
+*Researched: April 11, 2026*
