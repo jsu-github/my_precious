@@ -254,7 +254,10 @@ Plans:
   3. `GET /api/assets` response objects include `tier` (null or integer) and `weight_per_unit_grams` (null or decimal string) on every asset
   4. `GET /api/ledger` response rows include a `weight_per_unit_grams` field — confirms SELECT list update in ledger.ts
   5. `npm run build` in the frontend container succeeds with zero TypeScript errors after types.ts and api.ts changes
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — DB migrations (010 dealers, 011 tier system) + Express route stubs (dealers, tierConfig) + routes/index.ts mount
+- [ ] 13-02-PLAN.md — TypeScript types (Dealer, TierConfig, Asset/LedgerRow extensions) + api.ts namespaces + ledger.ts SELECT + Sidebar/App View stub
 
 ### Phase 14: Dealer Price Management
 **Goal**: User can manage dealer entries with gold "We Buy" prices, set unit weights on precious metals assets, and immediately see per-row liquidation values in the Ledger — turning raw acquisition records into priced, sellable inventory
