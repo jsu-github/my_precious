@@ -31,10 +31,10 @@ const LOCKED_CLASSES: AssetClass[] = ['private_equity'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCurrency(value: number, compact = false): string {
-  if (compact && Math.abs(value) >= 1_000_000) return (value < 0 ? '-$' : '$') + (Math.abs(value) / 1_000_000).toFixed(2) + 'M';
-  if (compact && Math.abs(value) >= 1_000) return (value < 0 ? '-$' : '$') + (Math.abs(value) / 1_000).toFixed(1) + 'K';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  if (compact && Math.abs(value) >= 1_000_000) return (value < 0 ? '-€' : '€') + (Math.abs(value) / 1_000_000).toFixed(2) + 'M';
+  if (compact && Math.abs(value) >= 1_000) return (value < 0 ? '-€' : '€') + (Math.abs(value) / 1_000).toFixed(1) + 'K';
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(value);
 }
 
@@ -81,7 +81,7 @@ function MarketTicker() {
             </span>
             <span className="text-xs text-on-surface tabular-nums">
               {t.price >= 10_000
-                ? fmtCurrency(t.price).replace('$', '')
+                ? fmtCurrency(t.price).replace('€', '')
                 : t.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
           </div>

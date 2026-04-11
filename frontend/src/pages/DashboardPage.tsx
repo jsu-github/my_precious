@@ -31,12 +31,12 @@ const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatCurrency(value: number): string {
   if (value >= 1_000_000) {
-    return '$' + (value / 1_000_000).toFixed(2) + 'M';
+    return '€' + (value / 1_000_000).toFixed(2) + 'M';
   }
   if (value >= 1_000) {
-    return '$' + (value / 1_000).toFixed(1) + 'K';
+    return '€' + (value / 1_000).toFixed(1) + 'K';
   }
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(value);
 }
 
 function formatDate(iso: string | null | undefined): string {

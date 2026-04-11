@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Download, Filter, Plus, Upload } from 'lucide-react';
+import { Download, Filter, Plus, Upload, Store } from 'lucide-react';
 import { api } from '../api';
-import type { LedgerRow, AssetClass, TaxStatus, Asset, Entity, AssetLocation } from '../types';
+import type { LedgerRow, AssetClass, TaxStatus, Asset, Entity, AssetLocation, Dealer } from '../types';
 import type { EntityFilter } from '../layouts/AppShell';
 import AcquisitionModal from '../components/modals/AcquisitionModal';
 import Modal from '../components/modals/Modal';
 import ImportWizard from '../components/ImportWizard';
+import DealerManagementModal from '../components/modals/DealerManagementModal';
 
 // ─── Asset class labels ───────────────────────────────────────────────────────
 const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
@@ -26,9 +27,9 @@ const ALL_ASSET_CLASSES: AssetClass[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCurrency(value: number, compact = false): string {
-  if (compact && value >= 1_000_000) return '$' + (value / 1_000_000).toFixed(2) + 'M';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  if (compact && value >= 1_000_000) return '€' + (value / 1_000_000).toFixed(2) + 'M';
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(value);
 }
 
@@ -107,20 +108,39 @@ export default function LedgerPage({ entityFilter }: Props) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [entities, setEntities] = useState<Entity[]>([]);
   const [locations, setLocations] = useState<AssetLocation[]>([]);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [selectedDealerId, setSelectedDealerId] = useState<number | null>(null);
+  const [showDealerModal, setShowDealerModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [taxFilter, setTaxFilter] = useState<TaxStatus | 'all'>('all');
   const [classFilter, setClassFilter] = useState<AssetClass | 'all'>('all');
+  const [subClassFilter, setSubClassFilter] = useState<string>('all');
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
   const [addAcqAsset, setAddAcqAsset] = useState<Asset | null>(null);
   const [showImport, setShowImport] = useState(false);
 
+  function loadDealers() {
+    api.dealers.list().then(setDealers).catch(() => {});
+  }
+
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.ledger.list(), api.assets.list(), api.entities.list(), api.locations.list()])
-      .then(([r, a, e, l]) => { setRows(r); setAssets(a); setEntities(e); setLocations(l); })
+    Promise.all([api.ledger.list(), api.assets.list(), api.entities.list(), api.locations.list(), api.dealers.list()])
+      .then(([r, a, e, l, d]) => { setRows(r); setAssets(a); setEntities(e); setLocations(l); setDealers(d); })
       .catch(err => setError(String(err)))
       .finally(() => setLoading(false));
   }, []);
+
+  const selectedDealer = useMemo(
+    () => dealers.find(d => d.id === selectedDealerId) ?? null,
+    [dealers, selectedDealerId],
+  );
+
+  const pricedDealers = useMemo(
+    () => dealers.filter(d => d.we_buy_gold_per_gram),
+    [dealers],
+  );
 
   // ─── Filter pipeline ───────────────────────────────────────────────────────
   const filteredRows = useMemo(() => {
@@ -128,9 +148,28 @@ export default function LedgerPage({ entityFilter }: Props) {
       if (entityFilter !== 'global' && r.entity_type !== entityFilter) return false;
       if (taxFilter !== 'all' && r.tax_status !== taxFilter) return false;
       if (classFilter !== 'all' && r.asset_class !== classFilter) return false;
+      if (subClassFilter !== 'all' && r.sub_class !== subClassFilter) return false;
+      if (productTypeFilter !== 'all' && r.product_type !== productTypeFilter) return false;
       return true;
     });
-  }, [rows, entityFilter, taxFilter, classFilter]);
+  }, [rows, entityFilter, taxFilter, classFilter, subClassFilter, productTypeFilter]);
+
+  // Derive available sub_class / product_type options from current rows (respecting class filter)
+  const classFilteredRows = useMemo(() => rows.filter(r => {
+    if (entityFilter !== 'global' && r.entity_type !== entityFilter) return false;
+    if (classFilter !== 'all' && r.asset_class !== classFilter) return false;
+    return true;
+  }), [rows, entityFilter, classFilter]);
+
+  const availableSubClasses = useMemo(() => {
+    const vals = [...new Set(classFilteredRows.map(r => r.sub_class).filter(Boolean) as string[])];
+    return vals.sort();
+  }, [classFilteredRows]);
+
+  const availableProductTypes = useMemo(() => {
+    const vals = [...new Set(classFilteredRows.map(r => r.product_type).filter(Boolean) as string[])];
+    return vals.sort();
+  }, [classFilteredRows]);
 
   const enrichedRows = useMemo(() => buildEnrichedRows(filteredRows), [filteredRows]);
 
@@ -145,6 +184,10 @@ export default function LedgerPage({ entityFilter }: Props) {
   );
   const totalRoi = totalCurrentValue - totalCostBasis;
   const totalRoiPct = totalCostBasis > 0 ? (totalRoi / totalCostBasis) * 100 : 0;
+
+  // Whether any visible row has sub_class / product_type
+  const hasSubClass    = useMemo(() => enrichedRows.some(r => r.sub_class),    [enrichedRows]);
+  const hasProductType = useMemo(() => enrichedRows.some(r => r.product_type), [enrichedRows]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
   if (loading) {
@@ -178,6 +221,14 @@ export default function LedgerPage({ entityFilter }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Manage Dealers */}
+          <button
+            onClick={() => setShowDealerModal(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-sm text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+          >
+            <Store className="w-3.5 h-3.5" />
+            Dealers
+          </button>
           {/* Import */}
           <button
             onClick={() => setShowImport(true)}
@@ -234,12 +285,59 @@ export default function LedgerPage({ entityFilter }: Props) {
         <div className="relative">
           <select
             value={classFilter}
-            onChange={e => setClassFilter(e.target.value as AssetClass | 'all')}
+            onChange={e => {
+              setClassFilter(e.target.value as AssetClass | 'all');
+              setSubClassFilter('all');
+              setProductTypeFilter('all');
+            }}
             className={selectClass}
           >
             <option value="all">All Asset Classes</option>
             {ALL_ASSET_CLASSES.map(c => (
               <option key={c} value={c}>{ASSET_CLASS_LABELS[c]}</option>
+            ))}
+          </select>
+        </div>
+        {availableSubClasses.length > 0 && (
+          <div className="relative">
+            <select
+              value={subClassFilter}
+              onChange={e => setSubClassFilter(e.target.value)}
+              className={selectClass}
+            >
+              <option value="all">All Metals</option>
+              {availableSubClasses.map(s => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {availableProductTypes.length > 0 && (
+          <div className="relative">
+            <select
+              value={productTypeFilter}
+              onChange={e => setProductTypeFilter(e.target.value)}
+              className={selectClass}
+            >
+              <option value="all">All Types</option>
+              {availableProductTypes.map(t => (
+                <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {/* Dealer picker — drives Liquidation Value column */}
+        <div className="ml-auto relative">
+          <select
+            value={selectedDealerId ?? ''}
+            onChange={e => setSelectedDealerId(e.target.value ? Number(e.target.value) : null)}
+            className={selectClass}
+          >
+            <option value="">No dealer — Liq. Value hidden</option>
+            {pricedDealers.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.name} · €{parseFloat(d.we_buy_gold_per_gram!).toFixed(4)}/g
+              </option>
             ))}
           </select>
         </div>
@@ -257,9 +355,12 @@ export default function LedgerPage({ entityFilter }: Props) {
               <tr className="border-b border-outline-variant/20">
                 <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Date</th>
                 <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Asset</th>
+                {hasSubClass    && <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Metal</th>}
+                {hasProductType && <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Type</th>}
                 <th className="px-5 py-3 text-right text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Cost Basis</th>
                 <th className="px-5 py-3 text-right text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Current Value</th>
                 <th className="px-5 py-3 text-right text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Net ROI</th>
+                {selectedDealer && <th className="px-5 py-3 text-right text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Liq. Value</th>}
                 <th className="px-5 py-3 text-center text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
@@ -275,6 +376,20 @@ export default function LedgerPage({ entityFilter }: Props) {
                       {ASSET_CLASS_LABELS[r.asset_class]} · {r.entity_name}
                     </div>
                   </td>
+                  {hasSubClass && (
+                    <td className="px-5 py-3.5">
+                      {r.sub_class
+                        ? <span className="capitalize text-xs text-on-surface-variant">{r.sub_class}</span>
+                        : <span className="text-on-surface-variant/20">—</span>}
+                    </td>
+                  )}
+                  {hasProductType && (
+                    <td className="px-5 py-3.5">
+                      {r.product_type
+                        ? <span className="capitalize text-xs text-on-surface-variant">{r.product_type}</span>
+                        : <span className="text-on-surface-variant/20">—</span>}
+                    </td>
+                  )}
                   <td className="px-5 py-3.5 text-right tabular-nums text-on-surface-variant">
                     {fmtCurrency(parseFloat(r.cost_basis))}
                   </td>
@@ -289,6 +404,26 @@ export default function LedgerPage({ entityFilter }: Props) {
                       {fmtRoiPct(r.roiPct)}
                     </div>
                   </td>
+                  {selectedDealer && (() => {
+                    const price = selectedDealer.we_buy_gold_per_gram ? parseFloat(selectedDealer.we_buy_gold_per_gram) : null;
+                    const weight = r.weight_per_unit_grams ? parseFloat(r.weight_per_unit_grams) : null;
+                    const liqValue = price && weight
+                      ? parseFloat(r.quantity) * weight * price
+                      : null;
+                    const costBasis = parseFloat(r.cost_basis);
+                    const isProfit = liqValue !== null && liqValue > costBasis;
+                    return (
+                      <td className="px-5 py-3.5 text-right tabular-nums">
+                        {liqValue !== null ? (
+                          <span className={isProfit ? 'text-secondary' : 'text-error'}>
+                            {fmtCurrency(liqValue)}
+                          </span>
+                        ) : (
+                          <span className="text-on-surface-variant/25">—</span>
+                        )}
+                      </td>
+                    );
+                  })()}
                   <td className="px-5 py-3.5 text-center">
                     {r.tax_status === 'settled' ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-medium bg-secondary-container/20 border border-secondary/20 text-secondary">
@@ -354,6 +489,12 @@ export default function LedgerPage({ entityFilter }: Props) {
           }}
         />
       </Modal>
+    )}
+    {showDealerModal && (
+      <DealerManagementModal
+        onClose={() => setShowDealerModal(false)}
+        onDealersChanged={loadDealers}
+      />
     )}
     </>
   );

@@ -33,9 +33,9 @@ const CONTINENT_PATHS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCurrency(value: number): string {
-  if (value >= 1_000_000) return '$' + (value / 1_000_000).toFixed(2) + 'M';
-  if (value >= 1_000) return '$' + (value / 1_000).toFixed(1) + 'K';
-  return '$' + value.toFixed(0);
+  if (value >= 1_000_000) return '€' + (value / 1_000_000).toFixed(2) + 'M';
+  if (value >= 1_000) return '€' + (value / 1_000).toFixed(1) + 'K';
+  return '€' + value.toFixed(0);
 }
 
 const SECURITY_LABELS: Record<string, { label: string; color: string }> = {

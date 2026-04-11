@@ -6,9 +6,9 @@ import type { EntityFilter } from '../layouts/AppShell';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtCurrency(value: number): string {
-  if (value >= 1_000_000) return '$' + (value / 1_000_000).toFixed(2) + 'M';
-  if (value >= 1_000) return '$' + (value / 1_000).toFixed(1) + 'K';
-  return '$' + value.toFixed(0);
+  if (value >= 1_000_000) return '€' + (value / 1_000_000).toFixed(2) + 'M';
+  if (value >= 1_000) return '€' + (value / 1_000).toFixed(1) + 'K';
+  return '€' + value.toFixed(0);
 }
 
 const ASSET_CLASS_LABELS: Record<AssetClass, string> = {

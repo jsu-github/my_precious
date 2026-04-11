@@ -1,0 +1,13 @@
+asset_name,entity_name,asset_class,current_value,purchase_date,cost_basis,quantity,tax_status,description
+Swiss Gold Bars (200oz),Montana Family Trust,precious_metals,480000,2021-03-15,410000,200,settled,LBMA certified 200oz in Zurich vault
+Silver Bullion (5000oz),Montana Family Trust,precious_metals,155000,2022-06-01,140000,5000,settled,SilverMint rounds stored in London
+Alpine Chalet — Verbier,Montana Family Trust,real_estate,1200000,2019-08-20,850000,1,settled,4BR ski chalet freehold title
+Bitcoin Cold Storage,Apex Capital Holdings LLC,crypto,310000,2020-11-12,95000,5.05,settled,Hardware wallet — Ledger Nano X
+Ethereum Stake,Apex Capital Holdings LLC,crypto,42000,2021-04-18,28000,12.5,pending,Lido staked ETH
+S&P 500 Index Fund (IVV),Apex Capital Holdings LLC,equities,220000,2023-01-10,200000,500,settled,iShares Core S&P 500 ETF
+MSCI World ETF,Montana Family Trust,equities,95000,2022-09-05,90000,1200,settled,Vanguard MSCI World accumulating
+US Treasury Notes 2027,Montana Family Trust,fixed_income,150000,2023-07-01,148000,150,settled,4.25% coupon semi-annual
+Private Equity Fund III,Apex Capital Holdings LLC,private_equity,500000,2020-01-15,400000,1,pending,Closed-end PE fund — 10yr horizon
+USD Cash Reserve,Montana Family Trust,cash,75000,2024-01-01,75000,75000,settled,Sweep account at UBS
+Platinum Coins (100oz),Montana Family Trust,precious_metals,99000,2023-05-20,85000,100,settled,WPIC certified platinum
+Rare Watch Collection,Apex Capital Holdings LLC,exotics,180000,2021-11-30,120000,6,settled,Patek Philippe x4 Rolex x2

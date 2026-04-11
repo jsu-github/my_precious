@@ -63,7 +63,7 @@ export default function AcquisitionModal({ asset, acquisition, onSaved, onClose 
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Cost Basis (USD)" required>
+          <Field label="Cost Basis (EUR)" required>
             <Input
               required
               type="number"

@@ -148,6 +148,18 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
             />
           </Field>
         </div>
+        {form.asset_class === 'precious_metals' && (
+          <Field label="Weight per Unit (grams)">
+            <Input
+              type="number"
+              min="0"
+              step="0.0001"
+              placeholder="e.g. 31.1035 for 1 troy oz"
+              value={form.weight_per_unit_grams ?? ''}
+              onChange={e => setForm(f => ({ ...f, weight_per_unit_grams: e.target.value || null }))}
+            />
+          </Field>
+        )}
         <Field label="Description">
           <Textarea
             rows={2}
