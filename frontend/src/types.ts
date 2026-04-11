@@ -186,4 +186,13 @@ export interface DashboardSummary {
     total_value: string;
     count: number;
   }>;
+  tier_summary: {
+    tiers: Array<{
+      tier_id: number;
+      name: string;
+      current_pct: number;
+      status: 'green' | 'amber' | 'red';
+    }>;
+    in_range: number;
+  };
 }

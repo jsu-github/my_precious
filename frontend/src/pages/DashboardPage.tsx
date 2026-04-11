@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { TrendingUp, Shield, Layers, Plus } from 'lucide-react';
 import { api } from '../api';
-import type { Asset, AssetClass, AssetLocation, Entity } from '../types';
+import type { Asset, AssetClass, AssetLocation, Entity, TierConfig } from '../types';
 import type { EntityFilter } from '../layouts/AppShell';
+import type { View } from '../components/Sidebar';
 import AssetModal from '../components/modals/AssetModal';
 
 // ─── Asset class metadata ─────────────────────────────────────────────────────
@@ -47,23 +48,26 @@ function formatDate(iso: string | null | undefined): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 interface Props {
   entityFilter: EntityFilter;
+  onNavigate?: (view: View) => void;
 }
 
-export default function DashboardPage({ entityFilter }: Props) {
+export default function DashboardPage({ entityFilter, onNavigate }: Props) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [locations, setLocations] = useState<AssetLocation[]>([]);
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [tierConfigs, setTierConfigs] = useState<TierConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddAsset, setShowAddAsset] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.assets.list(), api.locations.list(), api.entities.list()])
-      .then(([a, l, e]) => {
+    Promise.all([api.assets.list(), api.locations.list(), api.entities.list(), api.tierConfig.list()])
+      .then(([a, l, e, tc]) => {
         setAssets(a);
         setLocations(l);
         setEntities(e);
+        setTierConfigs(tc);
       })
       .catch(err => setError(String(err)))
       .finally(() => setLoading(false));
@@ -80,6 +84,35 @@ export default function DashboardPage({ entityFilter }: Props) {
     () => filteredAssets.reduce((sum, a) => sum + parseFloat(a.current_value), 0),
     [filteredAssets],
   );
+
+  // ─── Tier health ───────────────────────────────────────────────────────────
+  const tierHealth = useMemo(() => {
+    if (tierConfigs.length === 0) return null;
+    const tierMap: Record<number, number> = {};
+    filteredAssets.forEach(a => {
+      if (a.tier != null) { // tier=0 is valid — guard with != null, not !tier
+        tierMap[a.tier] = (tierMap[a.tier] ?? 0) + parseFloat(a.current_value);
+      }
+    });
+    const tiers = tierConfigs
+      .sort((a, b) => a.tier_id - b.tier_id)
+      .map(tc => {
+        const tierValue = tierMap[tc.tier_id] ?? 0;
+        const currentPct = totalValue > 0 ? (tierValue / totalValue) * 100 : 0;
+        const min = parseFloat(tc.min_pct);
+        const max = parseFloat(tc.max_pct);
+        let status: 'green' | 'amber' | 'red';
+        if (currentPct >= min && currentPct <= max) {
+          status = 'green';
+        } else {
+          const distance = currentPct < min ? min - currentPct : currentPct - max;
+          status = distance <= 5 ? 'amber' : 'red';
+        }
+        return { tier_id: tc.tier_id, name: tc.tier_name, status };
+      });
+    const in_range = tiers.filter(t => t.status === 'green').length;
+    return { tiers, in_range };
+  }, [filteredAssets, tierConfigs, totalValue]);
 
   const byAssetClass = useMemo(() => {
     const map = new Map<AssetClass, number>();
@@ -285,6 +318,58 @@ export default function DashboardPage({ entityFilter }: Props) {
           )}
         </div>
       </div>
+
+
+      {/* ── Tier Health tile ────────────────────────────────────────────────── */}
+      {tierHealth && (
+        <button
+          onClick={() => onNavigate?.('tier')}
+          className="w-full text-left glass-panel rounded-xl p-6 border border-outline-variant/20 hover:border-primary/20 transition-colors group"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Layers className="w-4 h-4 text-primary/60" />
+                <span className="font-headline italic text-xl text-on-surface">Tier Health</span>
+              </div>
+              <p className="text-2xl font-light text-on-surface tabular-nums">
+                <span
+                  style={{
+                    color: tierHealth.in_range === 4
+                      ? '#4edea3'
+                      : tierHealth.in_range >= 2
+                        ? '#f59e0b'
+                        : '#ffb4ab',
+                  }}
+                >
+                  {tierHealth.in_range} of 4
+                </span>
+                <span className="text-on-surface-variant/50 text-lg ml-1">Tiers In Range</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 pt-1">
+              {tierHealth.tiers.map(t => {
+                const color = t.status === 'green' ? '#4edea3'
+                  : t.status === 'amber' ? '#f59e0b'
+                  : '#ffb4ab';
+                return (
+                  <div key={t.tier_id} className="text-center">
+                    <div
+                      className="w-3 h-3 rounded-full mx-auto mb-1"
+                      style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}60` }}
+                      title={t.name}
+                    />
+                    <div className="text-[9px] text-on-surface-variant/40">T{t.tier_id}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <p className="text-[11px] text-on-surface-variant/30 mt-3 group-hover:text-on-surface-variant/50 transition-colors">
+            Click to view full tier allocation →
+          </p>
+        </button>
+      )}
 
     </div>
     {showAddAsset && (

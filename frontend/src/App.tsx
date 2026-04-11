@@ -15,7 +15,7 @@ export default function App() {
 
   function renderPage() {
     switch (view) {
-      case 'dashboard':  return <DashboardPage entityFilter={entityFilter} />;
+      case 'dashboard':  return <DashboardPage entityFilter={entityFilter} onNavigate={setView} />;
       case 'ledger':     return <LedgerPage entityFilter={entityFilter} />;
       case 'analytics':  return <AnalyticsPage entityFilter={entityFilter} />;
       case 'locations':  return <LocationsPage entityFilter={entityFilter} />;
