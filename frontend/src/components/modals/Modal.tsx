@@ -15,7 +15,7 @@ export default function Modal({ title, onClose, children, width = 'max-w-lg' }: 
       style={{ background: 'rgba(11,19,38,0.82)', backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className={`w-full ${width} glass-panel rounded-xl border border-outline-variant/30 shadow-panel`}>
+      <div className={`w-full ${width} glass-panel rounded-xl border border-outline-variant/30 shadow-panel overflow-hidden`}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20">
           <h2 className="font-headline italic text-xl text-on-surface">{title}</h2>
