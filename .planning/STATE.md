@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Market Intelligence & Sovereign Tier System
 status: planning
-stopped_at: Defining requirements
+stopped_at: Roadmap created — Phase 13 is next
 last_updated: "2026-04-11T00:00:00.000Z"
 last_activity: 2026-04-11
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,16 +21,25 @@ progress:
 See: .planning/PROJECT.md (updated April 9, 2026)
 
 **Core value:** A single Global Net Worth Dashboard showing total financial position across all entities and asset classes — accurate enough to trust, fast enough to open daily
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 13 — Data Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 13 — Data Foundation (next to execute)
 Plan: —
-Status: Defining requirements for v1.1
-Last activity: 2026-04-11 — Milestone v1.1 started
+Status: Roadmap defined — ready to plan Phase 13
+Last activity: 2026-04-11 — v1.1 roadmap created (4 phases, 9 requirements mapped)
 
 Progress: [············] 0%
+
+### v1.1 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 13 | Data Foundation | (infrastructure) | Not started |
+| 14 | Dealer Price Management | DATA-01, MKTD-01, MKTD-02, MKTD-03 | Not started |
+| 15 | Sovereign Tier System | TIER-01, TIER-02, TIER-03, TIER-04 | Not started |
+| 16 | Dashboard Health Tile | TIER-05 | Not started |
 
 ## Performance Metrics
 

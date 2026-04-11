@@ -51,14 +51,14 @@ Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfo
 
 ## Traceability
 
-| REQ-ID  | Phase | Status |
-|---------|-------|--------|
-| DATA-01 | TBD   | —      |
-| MKTD-01 | TBD   | —      |
-| MKTD-02 | TBD   | —      |
-| MKTD-03 | TBD   | —      |
-| TIER-01 | TBD   | —      |
-| TIER-02 | TBD   | —      |
-| TIER-03 | TBD   | —      |
-| TIER-04 | TBD   | —      |
-| TIER-05 | TBD   | —      |
+| REQ-ID  | Phase    | Status  |
+|---------|----------|---------|
+| DATA-01 | Phase 14 | Pending |
+| MKTD-01 | Phase 14 | Pending |
+| MKTD-02 | Phase 14 | Pending |
+| MKTD-03 | Phase 14 | Pending |
+| TIER-01 | Phase 15 | Pending |
+| TIER-02 | Phase 15 | Pending |
+| TIER-03 | Phase 15 | Pending |
+| TIER-04 | Phase 15 | Pending |
+| TIER-05 | Phase 16 | Pending |

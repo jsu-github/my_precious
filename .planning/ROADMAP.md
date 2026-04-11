@@ -7,9 +7,11 @@
 
 ---
 
-## Current Milestone: v1.1 (Planning)
+## Current Milestone: v1.1 — Market Intelligence & Sovereign Tier System
 
-*No phases defined yet. Run `/gsd-new-milestone` to start planning.*
+**Goal:** Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfolio risk allocation system with configurable target/min/max bounds and visual status indicators.
+
+**Phases 13–16** — see Phase Details below.
 
 ---
 
@@ -49,6 +51,10 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [ ] **Phase 10: Data Entry Forms** - Add/edit/delete modals for all entities
 - [x] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
 - [x] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
+- [ ] **Phase 13: Data Foundation** - DB migrations (dealers + weight + tier + tier_config), TypeScript types, and api.ts namespaces — technical foundation for all v1.1 features
+- [ ] **Phase 14: Dealer Price Management** - Dealer CRUD + weight field in AssetModal + Ledger liquidation value column with active-dealer selector
+- [ ] **Phase 15: Sovereign Tier System** - Tier assignment in AssetModal + crypto asset support + tier_config CRUD + dedicated TierPage with allocation vs target and status indicators
+- [ ] **Phase 16: Dashboard Health Tile** - Extend dashboard summary API + add Tier health glass-panel tile to DashboardPage
 
 ## Phase Details
 
@@ -231,6 +237,85 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 13: Data Foundation
+**Goal**: All new DB schema for v1.1 is deployed, TypeScript types are extended, and API route stubs are wired — any v1.1 endpoint is callable before UI work begins in Phase 14
+**Depends on**: Phase 12
+**Requirements**: (none standalone — this phase is technical infrastructure that enables Phases 14–16)
+**Notes**:
+  - Migration 010: `dealers` table (`id`, `name`, `contact_notes TEXT`, `we_buy_gold_per_gram NUMERIC(10,4) NULL`, `updated_at`)
+  - Migration 011: `ALTER TABLE assets ADD COLUMN IF NOT EXISTS weight_per_unit_grams NUMERIC(10,4)` + `ALTER TABLE assets ADD COLUMN IF NOT EXISTS tier INT NULL` + `CREATE TABLE tier_config` with 4 seed rows seeded in `up()` using `ON CONFLICT DO NOTHING` — default bounds: (0, 2, 0, 5), (1, 8, 4, 12), (2, 70, 60, 80), (3, 20, 10, 30)
+  - `types.ts`: add `Dealer` + `TierConfig` interfaces; extend `Asset` with `tier: number | null` and `weight_per_unit_grams: string | null`; add `'tier'` to `View` union
+  - `api.ts`: add `api.dealers.*` and `api.tierConfig.*` namespaces **before** any component uses them
+  - `routes/index.ts`: mount dealers and tierConfig routers immediately after creating the route files
+  - `ledger.ts` explicit SELECT list (L18–36): add `'a.weight_per_unit_grams'`
+**Success Criteria** (what must be TRUE):
+  1. `GET /api/dealers` returns `[]` without error after `make dev` — confirms dealers table was created by migration 010
+  2. `GET /api/tier-config` returns exactly 4 rows with `tier_id` 0–3 and non-null `target_pct`, `min_pct`, `max_pct` — confirms seed data inserted by migration 011
+  3. `GET /api/assets` response objects include `tier` (null or integer) and `weight_per_unit_grams` (null or decimal string) on every asset
+  4. `GET /api/ledger` response rows include a `weight_per_unit_grams` field — confirms SELECT list update in ledger.ts
+  5. `npm run build` in the frontend container succeeds with zero TypeScript errors after types.ts and api.ts changes
+**Plans**: TBD
+
+### Phase 14: Dealer Price Management
+**Goal**: User can manage dealer entries with gold "We Buy" prices, set unit weights on precious metals assets, and immediately see per-row liquidation values in the Ledger — turning raw acquisition records into priced, sellable inventory
+**Depends on**: Phase 13
+**Requirements**: DATA-01, MKTD-01, MKTD-02, MKTD-03
+**Notes**:
+  - `tier = 0` is falsy in JS — any conditional on tier must use `tier != null` not `!tier`
+  - Liquidation value computed client-side: `quantity × weight_per_unit_grams × dealer.we_buy_gold_per_gram`; displays `—` when weight is null
+  - Show "Updated X days ago" from `updated_at` on each dealer card — stale prices are a trust signal
+  - Active dealer selection is client-state only (no DB persistence required)
+  - Weight field in AssetModal shown only when `asset_subclass === 'gold'` or `asset_class === 'precious_metals'`
+  - Gain/loss color on Liq. Value vs Cost Basis: green if `liq_value > cost_basis`, red if below
+**Success Criteria** (what must be TRUE):
+  1. User can create a new dealer (name + optional contact notes); the dealer appears in the dealers list immediately after save
+  2. User can set and edit a "We Buy" gold price per gram on any dealer; the value persists after page reload and shows "Updated X days ago" freshness indicator
+  3. User can delete a dealer; a confirmation is required; deleted dealer no longer appears in any list
+  4. User can set `weight_per_unit_grams` on a precious metals asset via the Edit Asset modal (e.g. 31.1 for a 1 troy oz coin); value persists after page reload
+  5. The Ledger shows a "Liquidation Value" column when a dealer with a gold price is selected in the Ledger filter bar; column computes `quantity × weight_per_unit_grams × dealer.we_buy_gold_per_gram`; shows `—` when weight is unset on an asset
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 15: Sovereign Tier System
+**Goal**: User can classify every asset into one of four named sovereign tiers, add crypto holdings as Tier 3 assets, configure per-tier target/min/max allocation bounds, and navigate to a dedicated Tier page that shows live allocation vs target with green/amber/red status per tier
+**Depends on**: Phase 14
+**Requirements**: TIER-01, TIER-02, TIER-03, TIER-04
+**Notes**:
+  - `tier = 0` is falsy — all tier checks must guard with `tier != null` (not `if (!tier)`)
+  - Tier allocation % denominator must be ALL assets (including unassigned), not just tier-tagged assets
+  - TierPage View type + App.tsx switch case + Sidebar nav item must be added atomically (all three or none — broken nav is worse than no nav)
+  - Tier names: 0 = Grid-Down, 1 = Digital Liquidity, 2 = The Vaults, 3 = Uncensorable Frontier (hardcoded labels in v1.1)
+  - `tier_config` seed rows already exist from Phase 13 — no "add tier" flow; user only edits existing 4 rows
+  - Status thresholds: GREEN = within [min, max]; AMBER = outside the bound by ≤5 percentage points; RED = outside by >5pp
+  - TierPage layout: single-column vertical list ordered Tier 0 → Tier 3 (not a 2×2 grid); each row has label, current %, range bar, status badge
+  - Range bar zones: below-min zone / in-range zone / above-max zone with a current-allocation dot and target tick
+  - Sum-not-100% warning shown in amber below the config table (non-blocking — do not prevent save)
+**Success Criteria** (what must be TRUE):
+  1. User can assign a Tier (0–3) to any asset via the Edit Asset modal using a labelled dropdown; "— Unassigned —" is the default; value persists after reload
+  2. User can add a new asset with `asset_class = 'crypto'` (e.g. BTC, XMR) with a manual EUR current value, then assign it to Tier 3; it appears in the asset list and contributes to Tier 3 allocation
+  3. On the Tier page, user can edit target %, min %, and max % for any of the 4 tiers inline; changes save on blur; a non-blocking amber warning appears if tier targets do not sum to 100%
+  4. Tier page shows each tier's current allocation %, a visual range bar, and a green/amber/red status badge — figures reflect live asset current values from the API
+  5. The Tier page is reachable from the Sidebar; navigating to it updates the active nav highlight and `App.tsx` View state to `'tier'`
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 16: Dashboard Health Tile
+**Goal**: The Dashboard shows a Tier health glass-panel tile that surfaces portfolio tier status at a glance without requiring navigation to the Tier page
+**Depends on**: Phase 15
+**Requirements**: TIER-05
+**Notes**:
+  - Extend `GET /api/dashboard/summary` to return a `tier_summary` object — do NOT add a new endpoint
+  - `tier_summary` shape: `{ tiers: Array<{ tier_id, name, current_pct, status: 'green' | 'amber' | 'red' }>, in_range: number }` where `in_range` is count of tiers with GREEN status
+  - Tile uses `.glass-panel` CSS utility; click navigates to TierPage using `onNavigate` callback (no inline `fetch`, no router)
+  - Headline pattern: "X of 4 Tiers In Range" with four status dots below
+**Success Criteria** (what must be TRUE):
+  1. Dashboard displays a "Tier Health" glass-panel tile showing "X of 4 Tiers In Range" computed from live tier_config and asset data
+  2. The tile shows four status dots (one per tier, Tier 0–3) with green/amber/red color matching the TierPage status logic
+  3. Clicking the tile navigates to the Tier page
+  4. The tile data updates when the entity toggle changes (same refresh pattern as other dashboard tiles)
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Name | Plans Complete | Status | Completed |
@@ -247,3 +332,7 @@ Plans:
 | 10 | Data Entry Forms | 0/TBD | Not started | - |
 | 11 | Excel Import | 0/TBD | Not started | - |
 | 12 | PWA & Polish | 0/TBD | Not started | - |
+| 13 | Data Foundation | 0/TBD | Not started | - |
+| 14 | Dealer Price Management | 0/TBD | Not started | - |
+| 15 | Sovereign Tier System | 0/TBD | Not started | - |
+| 16 | Dashboard Health Tile | 0/TBD | Not started | - |
