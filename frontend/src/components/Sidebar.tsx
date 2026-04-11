@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type View = 'dashboard' | 'ledger' | 'analytics' | 'locations' | 'tax' | 'entity';
+export type View = 'dashboard' | 'ledger' | 'analytics' | 'locations' | 'tax' | 'entity' | 'tier';
 
 interface NavItem {
   id: View;

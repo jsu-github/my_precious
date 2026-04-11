@@ -15,6 +15,7 @@ import type {
   ValuationSnapshot, CreateValuationSnapshot,
   DashboardSummary,
   LedgerRow,
+  Dealer, TierConfig,
 } from './types';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -123,5 +124,21 @@ export const api = {
       const qs = params.toString();
       return request<LedgerRow[]>(`/ledger${qs ? `?${qs}` : ''}`);
     },
+  },
+
+  dealers: {
+    list: () => request<Dealer[]>('/dealers'),
+    create: (data: Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram'>) =>
+      request<Dealer>('/dealers', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Partial<Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram'>>) =>
+      request<Dealer>(`/dealers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) =>
+      request<void>(`/dealers/${id}`, { method: 'DELETE' }),
+  },
+
+  tierConfig: {
+    list: () => request<TierConfig[]>('/tier-config'),
+    update: (tierId: number, data: Pick<TierConfig, 'target_pct' | 'min_pct' | 'max_pct'>) =>
+      request<TierConfig>(`/tier-config/${tierId}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 } as const;

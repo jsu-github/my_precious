@@ -20,6 +20,8 @@ export default function App() {
       case 'locations':  return <LocationsPage entityFilter={entityFilter} />;
       case 'tax':        return <TaxPage entityFilter={entityFilter} />;
       case 'entity':     return <EntityPage entityFilter={entityFilter} />;
+      case 'tier':
+        return <div />; // Phase 15
     }
   }
 

@@ -228,6 +228,10 @@ export default function ImportWizard({ entities, onImportComplete }: Props) {
             location_id: null,
             name: sample.asset_name,
             asset_class: sample.asset_class,
+            sub_class: null,
+            product_type: null,
+            weight_per_unit_grams: null,
+            tier: null,
             current_value: String(sample.current_value),
             security_class: 'standard',
             audit_frequency: 'annual',
@@ -395,7 +399,7 @@ export default function ImportWizard({ entities, onImportComplete }: Props) {
                     <td className="px-4 py-2 text-on-surface">{row.asset_name}</td>
                     <td className="px-4 py-2 text-on-surface-variant/70">{row.entity_name}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-on-surface-variant">
-                      ${row.cost_basis.toLocaleString()}
+                      €{row.cost_basis.toLocaleString('nl-NL')}
                     </td>
                     <td className="px-4 py-2">
                       {row.errors.length > 0 ? (

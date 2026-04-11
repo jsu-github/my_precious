@@ -50,6 +50,10 @@ export interface Asset {
   location_id: number | null;
   name: string;
   asset_class: AssetClass;
+  sub_class: string | null;     // e.g. 'gold', 'silver', 'platinum'
+  product_type: string | null;  // e.g. 'bar', 'coin'
+  weight_per_unit_grams: string | null; // NUMERIC(10,4) as string — null until set by user
+  tier: number | null;                  // 0=Grid-Down, 1=Digital, 2=Vaults, 3=Crypto; 0 is valid!
   current_value: string; // NUMERIC returned as string by pg driver
   security_class: SecurityClass;
   audit_frequency: AuditFrequency;
@@ -110,6 +114,23 @@ export interface ValuationSnapshot {
   created_at: string;
 }
 
+export interface Dealer {
+  id: number;
+  name: string;
+  contact_notes: string | null;
+  we_buy_gold_per_gram: string | null; // NUMERIC(10,4) returned as string by pg driver
+  updated_at: string;
+}
+
+export interface TierConfig {
+  tier_id: number;
+  tier_name: string;
+  target_pct: string;  // NUMERIC(5,2) as string
+  min_pct: string;     // NUMERIC(5,2) as string
+  max_pct: string;     // NUMERIC(5,2) as string
+  description: string | null;
+}
+
 // ─── Input types (for POST/PUT) ───────────────────────────────────────────────
 export type CreateEntity = Omit<Entity, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateEntity = Partial<CreateEntity>;
@@ -147,6 +168,9 @@ export interface LedgerRow {
   description: string | null;
   asset_name: string;
   asset_class: AssetClass;
+  sub_class: string | null;
+  product_type: string | null;
+  weight_per_unit_grams: string | null; // NUMERIC(10,4) as string — from assets join
   asset_current_value: string; // NUMERIC as string — total value of parent asset
   entity_name: string;
   entity_type: EntityType;

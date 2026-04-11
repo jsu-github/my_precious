@@ -30,6 +30,10 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
     location_id: asset?.location_id ?? null,
     name: asset?.name ?? '',
     asset_class: asset?.asset_class ?? 'precious_metals',
+    sub_class: asset?.sub_class ?? null,
+    product_type: asset?.product_type ?? null,
+    weight_per_unit_grams: asset?.weight_per_unit_grams ?? null,
+    tier: asset?.tier ?? null,
     current_value: asset?.current_value ?? '',
     security_class: asset?.security_class ?? 'standard',
     audit_frequency: asset?.audit_frequency ?? 'annual',
@@ -90,7 +94,7 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
               ))}
             </Select>
           </Field>
-          <Field label="Current Value (USD)" required>
+          <Field label="Current Value (EUR)" required>
             <Input
               required
               type="number"
