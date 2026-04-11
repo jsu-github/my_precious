@@ -14,8 +14,8 @@ Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfo
 
 ### Market Data Management
 
-- [ ] **MKTD-01**: User can create, edit, and delete dealers (name, optional notes)
-- [ ] **MKTD-02**: User can set a "We Buy" (bid) price per gram for gold on each dealer
+- [x] **MKTD-01**: User can create, edit, and delete dealers (name, optional notes)
+- [x] **MKTD-02**: User can set a "We Buy" (bid) price per gram for gold on each dealer
 - [ ] **MKTD-03**: Ledger shows a liquidation value column computed as `quantity × weight_per_unit_grams × dealer.we_buy_price_per_gram` using a user-selectable dealer
 
 ### Tier System
@@ -54,8 +54,8 @@ Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfo
 | REQ-ID  | Phase    | Status  |
 |---------|----------|---------|
 | DATA-01 | Phase 14 | Pending |
-| MKTD-01 | Phase 14 | Pending |
-| MKTD-02 | Phase 14 | Pending |
+| MKTD-01 | Phase 14 | Complete |
+| MKTD-02 | Phase 14 | Complete |
 | MKTD-03 | Phase 14 | Pending |
 | TIER-01 | Phase 15 | Pending |
 | TIER-02 | Phase 15 | Pending |

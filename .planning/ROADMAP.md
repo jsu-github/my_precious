@@ -336,6 +336,6 @@ Plans:
 | 11 | Excel Import | 0/TBD | Not started | - |
 | 12 | PWA & Polish | 0/TBD | Not started | - |
 | 13 | Data Foundation | 2/2 | Complete    | 2026-04-11 |
-| 14 | Dealer Price Management | 0/TBD | Not started | - |
+| 14 | Dealer Price Management | 1/1 | Complete   | 2026-04-11 |
 | 15 | Sovereign Tier System | 0/TBD | Not started | - |
 | 16 | Dashboard Health Tile | 0/TBD | Not started | - |
