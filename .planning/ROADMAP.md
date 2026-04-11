@@ -256,7 +256,7 @@ Plans:
   5. `npm run build` in the frontend container succeeds with zero TypeScript errors after types.ts and api.ts changes
 **Plans**: 2 plans
 Plans:
-- [ ] 13-01-PLAN.md — DB migrations (010 dealers, 011 tier system) + Express route stubs (dealers, tierConfig) + routes/index.ts mount
+- [x] 13-01-PLAN.md — DB migrations (010 dealers, 011 tier system) + Express route stubs (dealers, tierConfig) + routes/index.ts mount
 - [ ] 13-02-PLAN.md — TypeScript types (Dealer, TierConfig, Asset/LedgerRow extensions) + api.ts namespaces + ledger.ts SELECT + Sidebar/App View stub
 
 ### Phase 14: Dealer Price Management
@@ -335,7 +335,7 @@ Plans:
 | 10 | Data Entry Forms | 0/TBD | Not started | - |
 | 11 | Excel Import | 0/TBD | Not started | - |
 | 12 | PWA & Polish | 0/TBD | Not started | - |
-| 13 | Data Foundation | 0/TBD | Not started | - |
+| 13 | Data Foundation | 1/2 | In Progress|  |
 | 14 | Dealer Price Management | 0/TBD | Not started | - |
 | 15 | Sovereign Tier System | 0/TBD | Not started | - |
 | 16 | Dashboard Health Tile | 0/TBD | Not started | - |
