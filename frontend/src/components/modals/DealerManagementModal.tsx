@@ -5,6 +5,100 @@ import type { Dealer } from '../../types';
 import Modal from './Modal';
 import { Input, ErrorMessage } from './FormFields';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type PriceTab = 'gold-bars' | 'gold-coins' | 'silver-bars' | 'silver-coins' | 'pt-pd';
+
+const PRICE_TABS: { id: PriceTab; label: string }[] = [
+  { id: 'gold-bars',    label: 'Gold Bars' },
+  { id: 'gold-coins',   label: 'Gold Coins' },
+  { id: 'silver-bars',  label: 'Silver Bars' },
+  { id: 'silver-coins', label: 'Silver Coins' },
+  { id: 'pt-pd',        label: 'Platinum & Palladium' },
+];
+
+interface PriceFormValues {
+  we_buy_gold_per_gram: string;
+  we_buy_gold_coin_per_gram: string;
+  we_buy_silver_bar_per_gram: string;
+  we_buy_silver_coin_per_gram: string;
+  we_buy_platinum_per_gram: string;
+  we_buy_palladium_per_gram: string;
+}
+
+function tabHasPrice(tab: PriceTab, prices: PriceFormValues): boolean {
+  if (tab === 'gold-bars')    return !!prices.we_buy_gold_per_gram;
+  if (tab === 'gold-coins')   return !!prices.we_buy_gold_coin_per_gram;
+  if (tab === 'silver-bars')  return !!prices.we_buy_silver_bar_per_gram;
+  if (tab === 'silver-coins') return !!prices.we_buy_silver_coin_per_gram;
+  return !!(prices.we_buy_platinum_per_gram || prices.we_buy_palladium_per_gram);
+}
+
+// ─── Metal price tabs component ───────────────────────────────────────────────
+interface MetalPriceTabsProps {
+  prices: PriceFormValues;
+  activeTab: PriceTab;
+  onTabChange: (tab: PriceTab) => void;
+  onChange: (patch: Partial<PriceFormValues>) => void;
+}
+
+function MetalPriceTabs({ prices, activeTab, onTabChange, onChange }: MetalPriceTabsProps) {
+  const field = (key: keyof PriceFormValues, label: string, placeholder: string, hint: string) => (
+    <div className="space-y-1">
+      <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider">{label}</label>
+      <Input
+        type="number" min="0" step="0.0001"
+        placeholder={placeholder}
+        value={prices[key]}
+        onChange={e => onChange({ [key]: e.target.value })}
+      />
+      <p className="text-[11px] text-on-surface-variant/30 mt-0.5">{hint}</p>
+    </div>
+  );
+
+  const tabContent: Record<PriceTab, React.ReactNode> = {
+    'gold-bars':    field('we_buy_gold_per_gram',       'We Buy — Gold Bars (€/g)',    'e.g. 128.31', '€ per gram pure Au · typically 1.5% below spot'),
+    'gold-coins':   field('we_buy_gold_coin_per_gram',  'We Buy — Gold Coins (€/g)',   'e.g. 127.67', '€ per gram pure Au · typically 2.0% below spot'),
+    'silver-bars':  field('we_buy_silver_bar_per_gram', 'We Buy — Silver Bars (€/g)',  'e.g. 2.0477', '€ per gram pure Ag · typically 2.0% below spot'),
+    'silver-coins': field('we_buy_silver_coin_per_gram','We Buy — Silver Coins (€/g)', 'e.g. 2.0477', '€ per gram pure Ag · zakelijk excl. 21% BTW'),
+    'pt-pd': (
+      <div className="space-y-4">
+        {field('we_buy_platinum_per_gram',  'Platinum (€/g)',  'e.g. 55.07', '€ per gram pure Pt · typically 2.0% below spot')}
+        {field('we_buy_palladium_per_gram', 'Palladium (€/g)', 'e.g. 41.98', '€ per gram pure Pd · at or near spot')}
+      </div>
+    ),
+  };
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="flex border-b border-outline-variant/20 overflow-x-auto">
+        {PRICE_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onTabChange(t.id)}
+            className={[
+              'relative px-3.5 py-2.5 text-xs whitespace-nowrap shrink-0 transition-colors',
+              activeTab === t.id
+                ? 'text-primary font-medium after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary'
+                : 'text-on-surface-variant/50 hover:text-on-surface-variant',
+            ].join(' ')}
+          >
+            {t.label}
+            {tabHasPrice(t.id, prices) && (
+              <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-primary/60 align-middle" />
+            )}
+          </button>
+        ))}
+      </div>
+      {/* Content */}
+      <div className="pt-4 px-1">
+        {tabContent[activeTab]}
+      </div>
+    </div>
+  );
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function daysAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -22,16 +116,17 @@ interface DealerRowProps {
 
 function DealerRow({ dealer, onUpdate, onDelete }: DealerRowProps) {
   const [editing, setEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<PriceTab>('gold-bars');
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [form, setForm] = useState({
-    name: dealer.name,
-    contact_notes: dealer.contact_notes ?? '',
-    we_buy_gold_per_gram: dealer.we_buy_gold_per_gram ?? '',
-    we_buy_gold_coin_per_gram: dealer.we_buy_gold_coin_per_gram ?? '',
+  const [name, setName] = useState(dealer.name);
+  const [contactNotes, setContactNotes] = useState(dealer.contact_notes ?? '');
+  const [prices, setPrices] = useState<PriceFormValues>({
+    we_buy_gold_per_gram:       dealer.we_buy_gold_per_gram ?? '',
+    we_buy_gold_coin_per_gram:  dealer.we_buy_gold_coin_per_gram ?? '',
     we_buy_silver_bar_per_gram: dealer.we_buy_silver_bar_per_gram ?? '',
-    we_buy_silver_coin_per_gram: dealer.we_buy_silver_coin_per_gram ?? '',
-    we_buy_platinum_per_gram: dealer.we_buy_platinum_per_gram ?? '',
-    we_buy_palladium_per_gram: dealer.we_buy_palladium_per_gram ?? '',
+    we_buy_silver_coin_per_gram:dealer.we_buy_silver_coin_per_gram ?? '',
+    we_buy_platinum_per_gram:   dealer.we_buy_platinum_per_gram ?? '',
+    we_buy_palladium_per_gram:  dealer.we_buy_palladium_per_gram ?? '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +136,14 @@ function DealerRow({ dealer, onUpdate, onDelete }: DealerRowProps) {
     setError(null);
     try {
       const updated = await api.dealers.update(dealer.id, {
-        name: form.name,
-        contact_notes: form.contact_notes || null,
-        we_buy_gold_per_gram: form.we_buy_gold_per_gram || null,
-        we_buy_gold_coin_per_gram: form.we_buy_gold_coin_per_gram || null,
-        we_buy_silver_bar_per_gram: form.we_buy_silver_bar_per_gram || null,
-        we_buy_silver_coin_per_gram: form.we_buy_silver_coin_per_gram || null,
-        we_buy_platinum_per_gram: form.we_buy_platinum_per_gram || null,
-        we_buy_palladium_per_gram: form.we_buy_palladium_per_gram || null,
+        name,
+        contact_notes: contactNotes || null,
+        we_buy_gold_per_gram:       prices.we_buy_gold_per_gram || null,
+        we_buy_gold_coin_per_gram:  prices.we_buy_gold_coin_per_gram || null,
+        we_buy_silver_bar_per_gram: prices.we_buy_silver_bar_per_gram || null,
+        we_buy_silver_coin_per_gram:prices.we_buy_silver_coin_per_gram || null,
+        we_buy_platinum_per_gram:   prices.we_buy_platinum_per_gram || null,
+        we_buy_palladium_per_gram:  prices.we_buy_palladium_per_gram || null,
       });
       onUpdate(updated);
       setEditing(false);
@@ -72,87 +167,41 @@ function DealerRow({ dealer, onUpdate, onDelete }: DealerRowProps) {
 
   if (editing) {
     return (
-      <div className="p-4 bg-surface-high/40 rounded-xl border border-primary/20 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Name</label>
-            <Input
-              autoFocus
-              placeholder="Dealer name"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">
-              Contact Notes
-            </label>
-            <Input
-              placeholder="Address, phone, website…"
-              value={form.contact_notes}
-              onChange={e => setForm(f => ({ ...f, contact_notes: e.target.value }))}
-            />
+      <div className="rounded-xl border border-primary/20 overflow-hidden">
+        {/* Name + contact */}
+        <div className="p-4 bg-surface-high/40 border-b border-outline-variant/20 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Name</label>
+              <Input autoFocus placeholder="Dealer name" value={name}
+                onChange={e => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Contact Notes</label>
+              <Input placeholder="Address, phone, website…" value={contactNotes}
+                onChange={e => setContactNotes(e.target.value)} />
+            </div>
           </div>
         </div>
-        <p className="text-[11px] text-on-surface-variant/40 uppercase tracking-wider">Buy-back prices (€ per gram of pure metal content)</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Au Bars €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 128.31"
-              value={form.we_buy_gold_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_gold_per_gram: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Au Coins €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 127.67"
-              value={form.we_buy_gold_coin_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_gold_coin_per_gram: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Ag Bars €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 2.0477"
-              value={form.we_buy_silver_bar_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_silver_bar_per_gram: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Ag Coins €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 2.0477"
-              value={form.we_buy_silver_coin_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_silver_coin_per_gram: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Pt €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 55.07"
-              value={form.we_buy_platinum_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_platinum_per_gram: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Pd €/g</label>
-            <Input type="number" min="0" step="0.0001" placeholder="e.g. 41.98"
-              value={form.we_buy_palladium_per_gram}
-              onChange={e => setForm(f => ({ ...f, we_buy_palladium_per_gram: e.target.value }))}
-            />
-          </div>
+        {/* Metal tabs */}
+        <div className="p-4 bg-surface-high/20">
+          <MetalPriceTabs
+            prices={prices}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onChange={patch => setPrices(p => ({ ...p, ...patch }))}
+          />
         </div>
-        {error && <ErrorMessage message={error} />}
-        <div className="flex items-center gap-2 pt-1">
-          <button
-            onClick={handleSave}
-            disabled={saving || !form.name.trim()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary disabled:opacity-40 transition-colors"
-          >
+        {/* Footer */}
+        <div className="px-4 py-3 bg-surface-high/40 border-t border-outline-variant/20 flex items-center gap-2">
+          {error && <ErrorMessage message={error} />}
+          <button onClick={handleSave} disabled={saving || !name.trim()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary disabled:opacity-40 transition-colors">
             <Check className="w-3.5 h-3.5" />
             {saving ? 'Saving…' : 'Save'}
           </button>
-          <button
-            onClick={() => { setEditing(false); setError(null); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-xs text-on-surface-variant transition-colors"
-          >
+          <button onClick={() => { setEditing(false); setError(null); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-xs text-on-surface-variant transition-colors">
             <X className="w-3.5 h-3.5" />
             Cancel
           </button>
@@ -250,9 +299,10 @@ interface AddFormProps {
 }
 
 function AddDealerForm({ onAdd, onCancel }: AddFormProps) {
-  const [form, setForm] = useState({
-    name: '',
-    contact_notes: '',
+  const [activeTab, setActiveTab] = useState<PriceTab>('gold-bars');
+  const [name, setName] = useState('');
+  const [contactNotes, setContactNotes] = useState('');
+  const [prices, setPrices] = useState<PriceFormValues>({
     we_buy_gold_per_gram: '',
     we_buy_gold_coin_per_gram: '',
     we_buy_silver_bar_per_gram: '',
@@ -269,14 +319,14 @@ function AddDealerForm({ onAdd, onCancel }: AddFormProps) {
     setError(null);
     try {
       const created = await api.dealers.create({
-        name: form.name,
-        contact_notes: form.contact_notes || null,
-        we_buy_gold_per_gram: form.we_buy_gold_per_gram || null,
-        we_buy_gold_coin_per_gram: form.we_buy_gold_coin_per_gram || null,
-        we_buy_silver_bar_per_gram: form.we_buy_silver_bar_per_gram || null,
-        we_buy_silver_coin_per_gram: form.we_buy_silver_coin_per_gram || null,
-        we_buy_platinum_per_gram: form.we_buy_platinum_per_gram || null,
-        we_buy_palladium_per_gram: form.we_buy_palladium_per_gram || null,
+        name,
+        contact_notes: contactNotes || null,
+        we_buy_gold_per_gram:       prices.we_buy_gold_per_gram || null,
+        we_buy_gold_coin_per_gram:  prices.we_buy_gold_coin_per_gram || null,
+        we_buy_silver_bar_per_gram: prices.we_buy_silver_bar_per_gram || null,
+        we_buy_silver_coin_per_gram:prices.we_buy_silver_coin_per_gram || null,
+        we_buy_platinum_per_gram:   prices.we_buy_platinum_per_gram || null,
+        we_buy_palladium_per_gram:  prices.we_buy_palladium_per_gram || null,
       });
       onAdd(created);
     } catch (err) {
@@ -287,88 +337,41 @@ function AddDealerForm({ onAdd, onCancel }: AddFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-surface-high/40 rounded-xl border border-primary/20 space-y-3">
-      <p className="text-xs text-on-surface-variant/50 uppercase tracking-wider pb-1">New Dealer</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Name *</label>
-          <Input
-            autoFocus
-            required
-            placeholder="Dealer name"
-            value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">
-            Contact Notes
-          </label>
-          <Input
-            placeholder="Address, phone, website…"
-            value={form.contact_notes}
-            onChange={e => setForm(f => ({ ...f, contact_notes: e.target.value }))}
-          />
+    <form onSubmit={handleSubmit} className="rounded-xl border border-primary/20 overflow-hidden">
+      {/* Name + contact */}
+      <div className="p-4 bg-surface-high/40 border-b border-outline-variant/20 space-y-3">
+        <p className="text-[11px] text-on-surface-variant/40 uppercase tracking-wider">New Dealer</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Name *</label>
+            <Input autoFocus required placeholder="Dealer name" value={name}
+              onChange={e => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Contact Notes</label>
+            <Input placeholder="Address, phone, website…" value={contactNotes}
+              onChange={e => setContactNotes(e.target.value)} />
+          </div>
         </div>
       </div>
-      <p className="text-[11px] text-on-surface-variant/40 uppercase tracking-wider">Buy-back prices (€ per gram of pure metal content)</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Au Bars €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 128.31"
-            value={form.we_buy_gold_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_gold_per_gram: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Au Coins €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 127.67"
-            value={form.we_buy_gold_coin_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_gold_coin_per_gram: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Ag Bars €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 2.0477"
-            value={form.we_buy_silver_bar_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_silver_bar_per_gram: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Ag Coins €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 2.0477"
-            value={form.we_buy_silver_coin_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_silver_coin_per_gram: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Pt €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 55.07"
-            value={form.we_buy_platinum_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_platinum_per_gram: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-on-surface-variant/50 uppercase tracking-wider mb-1">Pd €/g</label>
-          <Input type="number" min="0" step="0.0001" placeholder="e.g. 41.98"
-            value={form.we_buy_palladium_per_gram}
-            onChange={e => setForm(f => ({ ...f, we_buy_palladium_per_gram: e.target.value }))}
-          />
-        </div>
+      {/* Metal tabs */}
+      <div className="p-4 bg-surface-high/20">
+        <MetalPriceTabs
+          prices={prices}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onChange={patch => setPrices(p => ({ ...p, ...patch }))}
+        />
       </div>
-      {error && <ErrorMessage message={error} />}
-      <div className="flex items-center gap-2 pt-1">
-        <button
-          type="submit"
-          disabled={saving || !form.name.trim()}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary disabled:opacity-40 transition-colors"
-        >
+      {/* Footer */}
+      <div className="px-4 py-3 bg-surface-high/40 border-t border-outline-variant/20 flex items-center gap-2">
+        {error && <ErrorMessage message={error} />}
+        <button type="submit" disabled={saving || !name.trim()}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 border border-primary/25 rounded text-xs text-primary disabled:opacity-40 transition-colors">
           <Plus className="w-3.5 h-3.5" />
           {saving ? 'Adding…' : 'Add Dealer'}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
+        <button type="button" onClick={onCancel}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-xs text-on-surface-variant transition-colors"
         >
           Cancel
