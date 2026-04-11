@@ -8,6 +8,20 @@ A private, self-hosted financial command center for managing physical precious m
 
 A single **Global Net Worth Dashboard** showing total financial position across all entities and asset classes — accurate enough to trust, fast enough to open daily.
 
+## Current Milestone: v1.1 — Market Intelligence & Sovereign Tier System
+
+**Goal:** Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfolio risk allocation system with configurable target/min/max bounds and status indicators.
+
+**Target features:**
+- Dealer price management ("We Buy" bid prices per dealer for gold)
+- Tier tagging per asset (Tier 0–3)
+- Crypto holdings (BTC/XMR) as Tier 3 assets with manual value entry
+- Tier configuration (target %, min %, max % per tier — 4 tiers, editable bounds)
+- Dedicated Tier page with allocation vs target and status indicators
+- Tier health tile on Dashboard
+
+---
+
 ## Requirements
 
 ### Validated (v1.0)
@@ -25,9 +39,16 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 - ✓ Docker Compose local deployment with hot-reload dev workflow — v1.0
 - ✓ PWA installable on desktop/mobile — v1.0
 
-### Active (v1.1 — TBD)
+### Active (v1.1 — Market Intelligence & Sovereign Tier System)
 
-*No active requirements yet. Run `/gsd-new-milestone` to define v1.1.*
+- [ ] User can create, edit, and delete dealers (company name, contact notes) — MKTD-01
+- [ ] User can set a "We Buy" (bid) price per dealer for gold (price per gram) — MKTD-02
+- [ ] Ledger shows current dealer buy price alongside acquisitions (selectable dealer) — MKTD-03
+- [ ] User can assign a Tier (0–3) to each asset via Edit Asset modal — TIER-01
+- [ ] User can add crypto holdings (BTC/XMR) as Tier 3 assets with manual EUR value — TIER-02
+- [ ] User can configure target %, minimum %, and maximum % per tier — TIER-03
+- [ ] Dedicated Tier page shows current allocation vs targets with green/amber/red status per tier — TIER-04
+- [ ] Dashboard shows a Tier health summary tile — TIER-05
 
 ### Out of Scope
 
@@ -94,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 after v1.0 milestone*
+*Last updated: 2026-04-11 — v1.1 milestone started*
