@@ -12,9 +12,9 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { name, contact_notes, we_buy_gold_per_gram } = req.body;
+    const { name, contact_notes, we_buy_gold_per_gram, we_buy_gold_coin_per_gram, we_buy_silver_bar_per_gram, we_buy_silver_coin_per_gram, we_buy_platinum_per_gram, we_buy_palladium_per_gram } = req.body;
     const [row] = await db('dealers')
-      .insert({ name, contact_notes, we_buy_gold_per_gram, updated_at: db.fn.now() })
+      .insert({ name, contact_notes, we_buy_gold_per_gram, we_buy_gold_coin_per_gram, we_buy_silver_bar_per_gram, we_buy_silver_coin_per_gram, we_buy_platinum_per_gram, we_buy_palladium_per_gram, updated_at: db.fn.now() })
       .returning('*');
     res.status(201).json(row);
   } catch (e) { next(e); }
@@ -22,10 +22,10 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const { name, contact_notes, we_buy_gold_per_gram } = req.body;
+    const { name, contact_notes, we_buy_gold_per_gram, we_buy_gold_coin_per_gram, we_buy_silver_bar_per_gram, we_buy_silver_coin_per_gram, we_buy_platinum_per_gram, we_buy_palladium_per_gram } = req.body;
     const [row] = await db('dealers')
       .where({ id: req.params.id })
-      .update({ name, contact_notes, we_buy_gold_per_gram, updated_at: db.fn.now() })
+      .update({ name, contact_notes, we_buy_gold_per_gram, we_buy_gold_coin_per_gram, we_buy_silver_bar_per_gram, we_buy_silver_coin_per_gram, we_buy_platinum_per_gram, we_buy_palladium_per_gram, updated_at: db.fn.now() })
       .returning('*');
     if (!row) return res.status(404).json({ error: { message: 'Not found', status: 404 } });
     res.json(row);

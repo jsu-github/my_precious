@@ -138,7 +138,11 @@ export default function LedgerPage({ entityFilter }: Props) {
   );
 
   const pricedDealers = useMemo(
-    () => dealers.filter(d => d.we_buy_gold_per_gram),
+    () => dealers.filter(d =>
+      d.we_buy_gold_per_gram || d.we_buy_gold_coin_per_gram ||
+      d.we_buy_silver_bar_per_gram || d.we_buy_silver_coin_per_gram ||
+      d.we_buy_platinum_per_gram || d.we_buy_palladium_per_gram
+    ),
     [dealers],
   );
 
@@ -336,7 +340,15 @@ export default function LedgerPage({ entityFilter }: Props) {
             <option value="">No dealer — Liq. Value hidden</option>
             {pricedDealers.map(d => (
               <option key={d.id} value={d.id}>
-                {d.name} · €{parseFloat(d.we_buy_gold_per_gram!).toFixed(4)}/g
+                {(() => {
+                  const metals = [
+                    d.we_buy_gold_per_gram && 'Au',
+                    d.we_buy_silver_bar_per_gram && 'Ag',
+                    d.we_buy_platinum_per_gram && 'Pt',
+                    d.we_buy_palladium_per_gram && 'Pd',
+                  ].filter(Boolean).join('/');
+                  return metals ? `${d.name} · ${metals}` : d.name;
+                })()}
               </option>
             ))}
           </select>
@@ -405,7 +417,23 @@ export default function LedgerPage({ entityFilter }: Props) {
                     </div>
                   </td>
                   {selectedDealer && (() => {
-                    const price = selectedDealer.we_buy_gold_per_gram ? parseFloat(selectedDealer.we_buy_gold_per_gram) : null;
+                    // Pick buy-back price based on sub_class + product_type
+                    const sc = r.sub_class?.toLowerCase();
+                    const pt = r.product_type?.toLowerCase();
+                    let price: number | null = null;
+                    if (sc === 'gold') {
+                      price = pt === 'coin' && selectedDealer.we_buy_gold_coin_per_gram
+                        ? parseFloat(selectedDealer.we_buy_gold_coin_per_gram)
+                        : selectedDealer.we_buy_gold_per_gram ? parseFloat(selectedDealer.we_buy_gold_per_gram) : null;
+                    } else if (sc === 'silver') {
+                      price = pt === 'coin' && selectedDealer.we_buy_silver_coin_per_gram
+                        ? parseFloat(selectedDealer.we_buy_silver_coin_per_gram)
+                        : selectedDealer.we_buy_silver_bar_per_gram ? parseFloat(selectedDealer.we_buy_silver_bar_per_gram) : null;
+                    } else if (sc === 'platinum') {
+                      price = selectedDealer.we_buy_platinum_per_gram ? parseFloat(selectedDealer.we_buy_platinum_per_gram) : null;
+                    } else if (sc === 'palladium') {
+                      price = selectedDealer.we_buy_palladium_per_gram ? parseFloat(selectedDealer.we_buy_palladium_per_gram) : null;
+                    }
                     const weight = r.weight_per_unit_grams ? parseFloat(r.weight_per_unit_grams) : null;
                     const liqValue = price && weight
                       ? parseFloat(r.quantity) * weight * price

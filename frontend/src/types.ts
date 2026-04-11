@@ -118,7 +118,12 @@ export interface Dealer {
   id: number;
   name: string;
   contact_notes: string | null;
-  we_buy_gold_per_gram: string | null; // NUMERIC(10,4) returned as string by pg driver
+  we_buy_gold_per_gram: string | null;       // Au bars €/g
+  we_buy_gold_coin_per_gram: string | null;  // Au coins €/g
+  we_buy_silver_bar_per_gram: string | null; // Ag bars €/g
+  we_buy_silver_coin_per_gram: string | null;// Ag coins €/g
+  we_buy_platinum_per_gram: string | null;   // Pt €/g
+  we_buy_palladium_per_gram: string | null;  // Pd €/g
   updated_at: string;
 }
 

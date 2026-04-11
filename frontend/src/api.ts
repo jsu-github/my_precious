@@ -128,9 +128,9 @@ export const api = {
 
   dealers: {
     list: () => request<Dealer[]>('/dealers'),
-    create: (data: Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram'>) =>
+    create: (data: Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>) =>
       request<Dealer>('/dealers', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: Partial<Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram'>>) =>
+    update: (id: number, data: Partial<Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>>) =>
       request<Dealer>(`/dealers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: number) =>
       request<void>(`/dealers/${id}`, { method: 'DELETE' }),
