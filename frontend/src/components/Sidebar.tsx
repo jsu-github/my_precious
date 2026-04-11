@@ -7,6 +7,7 @@ import {
   Building2,
   ArrowLeftRight,
   ChevronRight,
+  Layers,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -25,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'locations', label: 'Locations',            icon: MapPin          },
   { id: 'tax',       label: 'Tax & Compliance',     icon: ShieldCheck     },
   { id: 'entity',    label: 'Business vs Personal', icon: Building2       },
+  { id: 'tier',      label: 'Tier System',          icon: Layers          },
 ];
 
 interface SidebarProps {

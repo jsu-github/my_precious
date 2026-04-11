@@ -160,6 +160,21 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
             />
           </Field>
         )}
+        <Field label="Sovereign Tier">
+          <Select
+            value={form.tier != null ? String(form.tier) : ''}
+            onChange={e => setForm(f => ({
+              ...f,
+              tier: e.target.value !== '' ? Number(e.target.value) : null,
+            }))}
+          >
+            <option value="">— Unassigned —</option>
+            <option value="0">Tier 0 — Grid-Down Baseline</option>
+            <option value="1">Tier 1 — Digital Liquidity</option>
+            <option value="2">Tier 2 — The Vaults</option>
+            <option value="3">Tier 3 — Uncensorable Frontier</option>
+          </Select>
+        </Field>
         <Field label="Description">
           <Textarea
             rows={2}

@@ -7,6 +7,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import LocationsPage from './pages/LocationsPage';
 import TaxPage from './pages/TaxPage';
 import EntityPage from './pages/EntityPage';
+import TierPage from './pages/TierPage';
 
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -21,7 +22,7 @@ export default function App() {
       case 'tax':        return <TaxPage entityFilter={entityFilter} />;
       case 'entity':     return <EntityPage entityFilter={entityFilter} />;
       case 'tier':
-        return <div />; // Phase 15
+        return <TierPage entityFilter={entityFilter} />;
     }
   }
 
