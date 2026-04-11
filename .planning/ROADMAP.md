@@ -51,7 +51,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [ ] **Phase 10: Data Entry Forms** - Add/edit/delete modals for all entities
 - [x] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
 - [x] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
-- [ ] **Phase 13: Data Foundation** - DB migrations (dealers + weight + tier + tier_config), TypeScript types, and api.ts namespaces — technical foundation for all v1.1 features
+- [x] **Phase 13: Data Foundation** - DB migrations (dealers + weight + tier + tier_config), TypeScript types, and api.ts namespaces — technical foundation for all v1.1 features (completed 2026-04-11)
 - [ ] **Phase 14: Dealer Price Management** - Dealer CRUD + weight field in AssetModal + Ledger liquidation value column with active-dealer selector
 - [ ] **Phase 15: Sovereign Tier System** - Tier assignment in AssetModal + crypto asset support + tier_config CRUD + dedicated TierPage with allocation vs target and status indicators
 - [ ] **Phase 16: Dashboard Health Tile** - Extend dashboard summary API + add Tier health glass-panel tile to DashboardPage
@@ -257,7 +257,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 13-01-PLAN.md — DB migrations (010 dealers, 011 tier system) + Express route stubs (dealers, tierConfig) + routes/index.ts mount
-- [ ] 13-02-PLAN.md — TypeScript types (Dealer, TierConfig, Asset/LedgerRow extensions) + api.ts namespaces + ledger.ts SELECT + Sidebar/App View stub
+- [x] 13-02-PLAN.md — TypeScript types (Dealer, TierConfig, Asset/LedgerRow extensions) + api.ts namespaces + ledger.ts SELECT + Sidebar/App View stub
 
 ### Phase 14: Dealer Price Management
 **Goal**: User can manage dealer entries with gold "We Buy" prices, set unit weights on precious metals assets, and immediately see per-row liquidation values in the Ledger — turning raw acquisition records into priced, sellable inventory
@@ -335,7 +335,7 @@ Plans:
 | 10 | Data Entry Forms | 0/TBD | Not started | - |
 | 11 | Excel Import | 0/TBD | Not started | - |
 | 12 | PWA & Polish | 0/TBD | Not started | - |
-| 13 | Data Foundation | 1/2 | In Progress|  |
+| 13 | Data Foundation | 2/2 | Complete   | 2026-04-11 |
 | 14 | Dealer Price Management | 0/TBD | Not started | - |
 | 15 | Sovereign Tier System | 0/TBD | Not started | - |
 | 16 | Dashboard Health Tile | 0/TBD | Not started | - |
