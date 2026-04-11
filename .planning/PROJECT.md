@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A private, self-hosted financial command center for a single high-net-worth individual managing wealth across personal investments, a business entity (Sovereign-LLC), and multiple international jurisdictions. It replaces fragmented spreadsheets with a single source of truth — purpose-built for legal entity separation, jurisdictional custody tracking, and batch-level performance visibility. No auth, no cloud, no external dependencies in v1.
+A private, self-hosted financial command center for managing physical precious metals, cash, and multi-entity wealth across vault locations and jurisdictions. Replaces fragmented spreadsheets with a single source of truth — six working screens, EUR-denominated, fully local, no auth, no cloud. Shipped as a PWA with Excel/CSV import for bulk data loading and in-app CRUD for ongoing management.
 
 ## Core Value
 
@@ -10,48 +10,47 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 
 ## Requirements
 
-### Validated
+### Validated (v1.0)
 
-(None yet — ship to validate)
+- ✓ Global net worth view showing total combined valuation across all entities and asset classes — v1.0
+- ✓ Entity toggle: switch between Personal / Business / Combined views (all screens respond) — v1.0
+- ✓ Transaction Ledger with filterable acquisition history (asset class, entity, audit status) — v1.0
+- ✓ Performance & Analytics with batch-level P&L and ROI drill-down — v1.0
+- ✓ Asset Locations & Inventory with jurisdictional custody tracking and audit status — v1.0
+- ✓ Tax & Compliance Center with fiscal tagging and compliance score — v1.0
+- ✓ Business vs. Personal Breakdown with strict entity separation and consolidated view — v1.0
+- ✓ Excel/CSV bulk import for initial asset/acquisition data loading — v1.0
+- ✓ In-app CRUD forms for ongoing asset and acquisition management — v1.0
+- ✓ Manual asset valuations (no live price feeds in v1) — v1.0
+- ✓ Docker Compose local deployment with hot-reload dev workflow — v1.0
+- ✓ PWA installable on desktop/mobile — v1.0
 
-### Active
+### Active (v1.1 — TBD)
 
-- [ ] Global net worth view showing total combined valuation across all entities and asset classes
-- [ ] Entity toggle: switch between Personal / Business / Combined views (all screens respond)
-- [ ] Transaction Ledger with filterable acquisition history (asset class, entity, jurisdiction, audit status)
-- [ ] Performance & Analytics with batch-level P&L and ROI drill-down
-- [ ] Asset Locations & Inventory with jurisdictional custody tracking and audit status
-- [ ] Tax & Compliance Center with fiscal tagging and compliance score
-- [ ] Business vs. Personal Breakdown with strict entity separation and consolidated view
-- [ ] Excel bulk import for initial asset/acquisition data loading
-- [ ] In-app CRUD forms for ongoing asset and acquisition management
-- [ ] Manual asset valuations (no live price feeds in v1)
-- [ ] CSV/PDF export for ledger and fiscal reports
-- [ ] Docker Compose local deployment with hot-reload dev workflow
+*No active requirements yet. Run `/gsd-new-milestone` to define v1.1.*
 
 ### Out of Scope
 
-- Live price feeds (precious metals, crypto, equities) — deferred post-v1; all values entered manually
+- Live price feeds (precious metals, crypto, equities) — deferred; all values entered manually
 - Multi-user access / authentication — single-user personal tool, backend trusts all requests
 - Mobile native app — PWA only
 - Automated broker/exchange integrations — manual entry and import only
 - Notifications / market threshold alerts — deferred
 - i18n / localization — English only
 - Multi-tenancy — single user, fully local
+- CSV/PDF export for ledger (CSV implemented, PDF deferred to v1.1)
 
 ## Context
 
-**Design system is complete.** The `.stitch/` directory contains full-fidelity HTML mockups for all 6 screens and a machine-readable `midnight-sovereign.json` design token file. The visual language ("The Sovereign Vault") is defined and non-negotiable: dark-first, editorial, Newsreader serif headlines, Inter tabular data, gold/emerald/slate accents, no 1px borders, surface nesting for depth.
+**v1.0 shipped** — 12 phases, ~4,400 LOC TypeScript, 70 files. Running at `http://10.11.12.27:4000` (host IP; not localhost — server is accessed from another machine).
 
-**Architecture is specified.** The stack (React 18 + TypeScript + Vite, Express + TypeScript, PostgreSQL 16 + Knex.js, Docker Compose) and all major conventions are documented in `.github/copilot-instructions.md`. Navigation uses a discriminated union `View` state in `App.tsx` — no React Router. All API calls through a single `request()` helper in `api.ts`. All types in `types.ts`.
+**Real portfolio loaded.** Seed data replaced with actual Dutch precious metals holdings for J. Suijker Beheer B.V. and J. Suijker Privé: 20 assets, 31 acquisitions across gold/silver/platinum bars and coins at 11 vault locations (Hollandgold NL/CH, Nederlandse Kluis Gouda, Thuis, ABN AMRO, Kluis Amsterdam, Goudverzekerd).
 
-**Codebase map exists.** `.planning/codebase/` documents the pre-implementation state — stack, architecture, conventions, concerns. Key concern to resolve: API port conflict between PRD (3040) and copilot-instructions (3001).
+**Currency is EUR throughout.** All `Intl.NumberFormat` calls use `'nl-NL'` locale and `'EUR'` currency. Sub-class (gold/silver/platinum) and product-type (bar/coin) columns added via migration 009, with filtering in LedgerPage.
 
-**Legal entity model.** The user manages two entities: personal holdings and Sovereign-LLC (corporate). Entity separation is legally significant — data must never commingle in reports or exports.
+**Design system complete.** Midnight Sovereign tokens in `tailwind.config.ts`, self-hosted fonts, `.glass-panel` / `.gold-gradient` / `tabular-nums` CSS utilities, no external component library.
 
-**Asset classes in scope:** Precious metals, Real estate, Public equities, Private equity, Crypto/digital, Fixed income, Exotics/collectibles.
-
-**Jurisdictions in scope:** CH (Switzerland), NL (Netherlands), SG (Singapore), domestic.
+**Legal entities:** J. Suijker Beheer B.V. (business) and J. Suijker Privé (personal). Entity separation is legally significant.
 
 ## Constraints
 
@@ -67,11 +66,13 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Manual valuations in v1 | Ship faster; live feeds add integration complexity without changing core UX | — Pending |
-| Excel as import format | User's existing data is in Excel; bulk import needed before app is usable | — Pending |
-| No React Router | Deliberate architectural choice; discriminated union is simpler at this scale | — Pending |
-| Global Net Worth as v1 core | If one thing works perfectly, it's the dashboard — everything else feeds it | — Pending |
-| API port (3001 vs 3040) | Conflict between PRD and copilot-instructions — must resolve before Docker wiring | — Pending |
+| Manual valuations in v1 | Ship faster; live feeds add integration complexity without changing core UX | ✓ Good — correct for v1 |
+| Excel/CSV import | User's existing data is in Excel; bulk import needed before app is usable | ✓ Good — SheetJS wizard shipped |
+| No React Router | Deliberate architectural choice; discriminated union is simpler at this scale | ✓ Good — zero routing complexity |
+| Global Net Worth as v1 core | If one thing works perfectly, it's the dashboard — everything else feeds it | ✓ Good — dashboard is the anchor |
+| API port 3001 (not 3040) | copilot-instructions spec took precedence over PRD; 3040 was stale | ✓ Good — host ports 4000/4001 to avoid local conflicts |
+| EUR currency (not USD) | Real portfolio is in EUR; all display formatting switched to nl-NL locale | ✓ Good — correct for actual use case |
+| sub_class + product_type columns | Gold/silver/platinum and bar/coin differentiation needed for filtering | ✓ Good — migration 009 added cleanly |
 
 ---
 
@@ -93,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: April 9, 2026 after initialization*
+*Last updated: 2026-04-11 after v1.0 milestone*
