@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–12 (shipped 2026-04-10) — see [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-- 📋 **v1.1** — TBD
+- ✅ **v1.1** — Phases 13–16 (shipped 2026-04-11) — Market Intelligence & Sovereign Tier System
 
 ---
 
@@ -52,9 +52,9 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 11: Excel Import** - File upload + SheetJS column mapping + validated bulk insert
 - [x] **Phase 12: PWA & Polish** - Service worker + manifest + self-hosted fonts + Lighthouse pass
 - [x] **Phase 13: Data Foundation** - DB migrations (dealers + weight + tier + tier_config), TypeScript types, and api.ts namespaces — technical foundation for all v1.1 features (completed 2026-04-11)
-- [ ] **Phase 14: Dealer Price Management** - Dealer CRUD + weight field in AssetModal + Ledger liquidation value column with active-dealer selector
-- [ ] **Phase 15: Sovereign Tier System** - Tier assignment in AssetModal + crypto asset support + tier_config CRUD + dedicated TierPage with allocation vs target and status indicators
-- [ ] **Phase 16: Dashboard Health Tile** - Extend dashboard summary API + add Tier health glass-panel tile to DashboardPage
+- [x] **Phase 14: Dealer Price Management** - Dealer CRUD + weight field in AssetModal + Ledger liquidation value column with active-dealer selector (completed 2026-04-11)
+- [x] **Phase 15: Sovereign Tier System** - Tier assignment in AssetModal + crypto asset support + tier_config CRUD + dedicated TierPage with allocation vs target and status indicators (completed 2026-04-11)
+- [x] **Phase 16: Dashboard Health Tile** - Extend dashboard summary API + add Tier health glass-panel tile to DashboardPage (completed 2026-04-11)
 
 ## Phase Details
 
