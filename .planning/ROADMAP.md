@@ -3,15 +3,13 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–12 (shipped 2026-04-10) — see [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-- ✅ **v1.1** — Phases 13–16 (shipped 2026-04-11) — Market Intelligence & Sovereign Tier System
+- ✅ **v1.1** — Phases 13–16 (shipped 2026-04-11) — Market Intelligence & Sovereign Tier System — see [.planning/milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 
 ---
 
-## Current Milestone: v1.1 — Market Intelligence & Sovereign Tier System
+## Current Milestone: v1.2 — TBD
 
-**Goal:** Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfolio risk allocation system with configurable target/min/max bounds and visual status indicators.
-
-**Phases 13–16** — see Phase Details below.
+(Start with `/gsd-new-milestone` to define v1.2 requirements and roadmap.)
 
 ---
 
@@ -335,7 +333,7 @@ Plans:
 | 10 | Data Entry Forms | 0/TBD | Not started | - |
 | 11 | Excel Import | 0/TBD | Not started | - |
 | 12 | PWA & Polish | 0/TBD | Not started | - |
-| 13 | Data Foundation | 2/2 | Complete    | 2026-04-11 |
-| 14 | Dealer Price Management | 1/1 | Complete   | 2026-04-11 |
-| 15 | Sovereign Tier System | 0/TBD | Not started | - |
-| 16 | Dashboard Health Tile | 0/TBD | Not started | - |
+| 13 | Data Foundation | 2/2 | Complete ✓ | 2026-04-11 |
+| 14 | Dealer Price Management | 1/1 | Complete ✓ | 2026-04-11 |
+| 15 | Sovereign Tier System | — | Complete ✓ | 2026-04-11 |
+| 16 | Dashboard Health Tile | — | Complete ✓ | 2026-04-11 |

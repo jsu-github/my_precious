@@ -8,17 +8,20 @@ A private, self-hosted financial command center for managing physical precious m
 
 A single **Global Net Worth Dashboard** showing total financial position across all entities and asset classes — accurate enough to trust, fast enough to open daily.
 
-## Current Milestone: v1.1 — Market Intelligence & Sovereign Tier System
+## Current State: v1.1 ✅ SHIPPED 2026-04-11
 
-**Goal:** Add manually-maintained dealer buy prices for gold and a 4-tier sovereign portfolio risk allocation system with configurable target/min/max bounds and status indicators.
+**Shipped features:**
+- Dealer price management — multi-metal We Buy prices (gold bar/coin, silver bar/coin, platinum, palladium)
+- `weight_per_unit` + `weight_unit` on precious metal assets (supports grams and troy-oz)
+- Ledger liquidation value column — qty × toGrams(weight) × getDealerRate() per row
+- Tier assignment (0–3) on all assets via AssetModal
+- Crypto as `asset_class = 'crypto'`, manually assignable to Tier 3
+- TierPage — allocation % vs target/min/max bounds, RangeBar + StatusBadge (green/amber/red)
+- Dashboard Tier Health tile — X/4 in-range score, mini-bars, clickable to TierPage
 
-**Target features:**
-- Dealer price management ("We Buy" bid prices per dealer for gold)
-- Tier tagging per asset (Tier 0–3)
-- Crypto holdings (BTC/XMR) as Tier 3 assets with manual value entry
-- Tier configuration (target %, min %, max % per tier — 4 tiers, editable bounds)
-- Dedicated Tier page with allocation vs target and status indicators
-- Tier health tile on Dashboard
+## Next Milestone: v1.2 — TBD
+
+Run `/gsd-new-milestone` to define requirements and roadmap for v1.2.
 
 ---
 
@@ -39,16 +42,20 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 - ✓ Docker Compose local deployment with hot-reload dev workflow — v1.0
 - ✓ PWA installable on desktop/mobile — v1.0
 
-### Active (v1.1 — Market Intelligence & Sovereign Tier System)
+### Shipped (v1.1 — Market Intelligence & Sovereign Tier System)
 
-- [ ] User can create, edit, and delete dealers (company name, contact notes) — MKTD-01
-- [ ] User can set a "We Buy" (bid) price per dealer for gold (price per gram) — MKTD-02
-- [ ] Ledger shows current dealer buy price alongside acquisitions (selectable dealer) — MKTD-03
-- [ ] User can assign a Tier (0–3) to each asset via Edit Asset modal — TIER-01
-- [ ] User can add crypto holdings (BTC/XMR) as Tier 3 assets with manual EUR value — TIER-02
-- [ ] User can configure target %, minimum %, and maximum % per tier — TIER-03
-- [ ] Dedicated Tier page shows current allocation vs targets with green/amber/red status per tier — TIER-04
-- [ ] Dashboard shows a Tier health summary tile — TIER-05
+- [x] User can create, edit, and delete dealers (company name, contact notes) — MKTD-01
+- [x] User can set a "We Buy" (bid) price per dealer for gold (price per gram, extended to 6 metals) — MKTD-02
+- [x] Ledger shows liquidation value column (selectable dealer, qty × weight × rate) — MKTD-03
+- [x] User can assign a Tier (0–3) to each asset via Edit Asset modal — TIER-01
+- [x] User can add crypto holdings as Tier 3 assets with manual EUR value — TIER-02 (partial: no auto-constraint)
+- [x] User can configure target %, minimum %, and maximum % per tier — TIER-03
+- [x] Dedicated Tier page shows current allocation vs targets with green/amber/red status per tier — TIER-04
+- [x] Dashboard shows a Tier health summary tile — TIER-05
+
+### Active (v1.2 — TBD)
+
+(To be defined — run `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -115,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 — Phase 13 complete (data-foundation: dealers + tier_config DB schema, route stubs, frontend types)*
+*Last updated: 2026-04-13 — v1.1 complete (phases 13–16: dealer pricing, sovereign tier system, dashboard health tile)*

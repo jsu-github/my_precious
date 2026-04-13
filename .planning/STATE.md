@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: — Market Intelligence & Sovereign Tier System
-status: All v1.1 phases shipped
-stopped_at: Completed 14-01-PLAN.md dealer modal redesign
-last_updated: "2026-04-11T19:19:06.598Z"
-last_activity: 2026-04-11
+status: ARCHIVED — milestone complete
+stopped_at: v1.1 archived 2026-04-13
+last_updated: "2026-04-13T00:00:00Z"
+last_activity: 2026-04-13
 progress:
   total_phases: 16
   completed_phases: 2
