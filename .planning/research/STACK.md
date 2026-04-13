@@ -430,3 +430,312 @@ The LedgerPage fetches `/api/ledger` which joins assets + acquisitions. To show 
 ---
 
 *v1.1 stack additions researched: April 11, 2026*
+
+---
+
+# Stack Research — v1.2 Additions
+
+**Date:** 2026-04-13
+**Milestone:** v1.2 — Portfolio Valuation (spot prices, derived valuations, value/premium decomposition, Valuation screen)
+**Confidence:** HIGH — all four feature areas are data-CRUD + arithmetic display. No novel tech required.
+
+## Recommended Stack
+
+### Core Technologies
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| PostgreSQL NUMERIC | (existing) | All valuation arithmetic | Compute `liquidation_value`, `metal_value`, and `premium` in SQL using exact NUMERIC operands — not in JS. Three-way multiplication (`price_per_gram × toGrams(weight) × qty`) using NUMERIC columns avoids float accumulation by database guarantee. |
+| Knex.js | (existing ^3.1) | New `spot_prices` migration + query builder | One new migration file. `DISTINCT ON (metal) ORDER BY metal, price_date DESC` for latest-price-per-metal query supported via raw Knex or `.distinctOn(['metal'])`. |
+| Node.js `parseFloat()` | (existing) | Surfaces computed NUMERIC results from pg into TypeScript | PostgreSQL returns NUMERIC columns as strings. Existing pattern: `parseFloat(row.price_per_gram)` → `Intl.NumberFormat('nl-NL', {style:'currency', currency:'EUR'})` is correct — storage is exact, display is rounded. No change needed. |
+
+### Supporting Libraries
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| **recharts** | ^2.12 | Cash flow timeline bar chart | **Conditional — add only if** the cash flow section requires a time-series bar chart (e.g. capital deployed grouped by acquisition month). If the section is KPI cards only (3 numbers: deployed / returned / P&L), skip entirely. Zero deps with Recharts: custom SVG `<path>` arcs suffice for simple visual comparisons. |
+| **big.js** | ^6.2 | Multi-step decimal arithmetic in the browser | **Conditional — add only if** live "preview before save" math must run entirely in React (e.g. an inline premium calculator in the acquisition modal). 3 kB gzip. API: `new Big(price).times(weight).times(qty).toFixed(2)`. Skip if all arithmetic stays in PostgreSQL. |
+
+**Both conditionals are likely unnecessary for v1.2 scope.** Verify against requirements before adding either.
+
+## What NOT to Add
+
+| Library | Reason to Exclude |
+|---------|------------------|
+| **decimal.js** | 15 kB for features this app will never use (trigonometric functions, arbitrary exponents, configurable rounding modes). If a decimal lib is ever needed, `big.js` (3 kB) is the correct scope. |
+| **dinero.js v2** | Designed for multi-currency monetary semantics and allocation splits. This app is EUR-only and already uses `Intl.NumberFormat('nl-NL', 'EUR')`. Adds ~12 kB and a paradigm shift for zero gain. |
+| **date-fns / dayjs** | Spot prices use ISO date strings (`YYYY-MM-DD`) from a PostgreSQL `DATE` column. No timezone math, no duration arithmetic, no relative-time display is required. `new Date().toISOString().split('T')[0]` for "today" and `<input type="date">` for UI input is sufficient. |
+| **Chart.js / react-chartjs-2** | Canvas-based, imperative API — harder to theme with Tailwind CSS variables than SVG-based Recharts. Not worth the paradigm switch if a chart is ever needed. |
+| **Nivo / Victory / visx** | Nivo (~1 MB) and Victory are oversized. visx requires composing low-level SVG primitives — correct for bespoke data art, overkill for a single portfolio bar chart. |
+| **Tanstack Query / SWR** | Spot prices follow the existing dealer pattern: fetch on mount, store in local useState. No polling, no cache invalidation, no optimistic updates. Adding a caching layer for a single-user local tool adds indirection with no reliability benefit. |
+| **Zod / yup** | Manual spot-price entry has 3 fields: metal (enum select), price (number input), date (date input). Inline validation guards in the component and API layer are proportionate and already the established convention. |
+| **Redux / Zustand** | No cross-page shared mutable state. Spot prices can be fetched locally in ValuationPage or passed from App.tsx — same as how `dealers` and `tierConfig` are handled now. |
+
+## Integration Notes
+
+### New DB migration: `spot_prices` table
+
+Follows the exact conventions from migrations 001–020. New file: `migrations/021_spot_prices.ts`.
+
+```typescript
+import type { Knex } from 'knex';
+
+// Manually-entered spot prices per metal per day.
+// UNIQUE(metal, price_date) — one price per metal per day (upsert semantics).
+// price_per_gram NUMERIC(10,4) — matches dealer price column precision.
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTableIfNotExists('spot_prices', (table) => {
+    table.increments('id').primary();
+    table.string('metal', 3).notNullable();              // 'XAU' | 'XAG' | 'XPT' | 'XPD'
+    table.decimal('price_per_gram', 10, 4).notNullable();
+    table.date('price_date').notNullable();
+    table.timestamps(true, true);
+    table.unique(['metal', 'price_date']);
+  });
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('spot_prices');
+}
+```
+
+Latest-price-per-metal query (pure Knex, no raw SQL):
+
+```typescript
+knex('spot_prices')
+  .distinctOn(['metal'])
+  .orderBy([{ column: 'metal' }, { column: 'price_date', order: 'desc' }])
+  .select('metal', 'price_per_gram', 'price_date')
+```
+
+### New API route: `/api/spot-prices`
+
+Follows pattern of `routes/dealers.ts`. Mount in `routes/index.ts`.
+
+```
+GET  /api/spot-prices           → latest price per metal (4 rows max)
+GET  /api/spot-prices/history   → all rows, desc date (for admin table)
+POST /api/spot-prices           → upsert { metal, price_per_gram, price_date }
+```
+
+Upsert pattern using Knex `onConflict`:
+
+```typescript
+await knex('spot_prices')
+  .insert({ metal, price_per_gram, price_date })
+  .onConflict(['metal', 'price_date'])
+  .merge(['price_per_gram', 'updated_at']);
+```
+
+### Derived valuation arithmetic — push to PostgreSQL
+
+All three value dimensions should be returned pre-computed from a single API endpoint (e.g. `GET /api/valuation/summary`). Doing this in SQL means NUMERIC exact arithmetic; no JS decimal lib is needed.
+
+Conceptual shape (adapt to actual column names):
+
+```sql
+SELECT
+  a.id,
+  a.name,
+  -- Liquidation: dealer We Buy price × weight × qty
+  COALESCE(
+    d.we_buy_gold_per_gram * toGrams(a.weight_per_unit, a.weight_unit) * SUM(acq.quantity),
+    0
+  ) AS liquidation_value,
+  -- Cost basis: sum of all acquisition cost_basis for this asset
+  SUM(acq.cost_basis) AS total_cost,
+  -- Metal value: latest spot price × weight × qty
+  COALESCE(
+    sp.price_per_gram * toGrams(a.weight_per_unit, a.weight_unit) * SUM(acq.quantity),
+    0
+  ) AS metal_value
+  -- Premium (computed client-side): total_cost - metal_value
+FROM assets a
+LEFT JOIN acquisitions acq ON acq.asset_id = a.id
+LEFT JOIN dealers d ON d.id = a.preferred_dealer_id
+LEFT JOIN (
+  SELECT DISTINCT ON (metal) metal, price_per_gram
+  FROM spot_prices ORDER BY metal, price_date DESC
+) sp ON sp.metal = a.sub_class -- 'gold'/'silver'/... mapped to 'XAU'/'XAG'
+GROUP BY a.id, d.we_buy_gold_per_gram, sp.price_per_gram
+```
+
+> `toGrams()` — implement as a SQL CASE expression or call it in JS after fetching weight + weight_unit. Since `weight_unit` is either `'g'` or `'oz'` and the conversion factor (31.1035) is a constant, a SQL expression is simple: `CASE WHEN a.weight_unit = 'oz' THEN a.weight_per_unit * 31.1035 ELSE a.weight_per_unit END`.
+
+### Decimal precision — definitive decision table
+
+| Scenario | Approach | Reason |
+|----------|----------|--------|
+| Valuation totals in API response | Compute in SQL with NUMERIC operands | Exact by database guarantee |
+| Per-row display in React (from API string) | `parseFloat(row.value)` → `Intl.NumberFormat` | Rounding to 2 dp at display eliminates float noise from string→number conversion |
+| Live preview in modal (before API save) | `Math.round(parseFloat(p) * parseFloat(w) * qty * 100) / 100` | Fast, no library, correct for EUR×grams at this precision |
+| Running sum across many acquisitions | SQL `SUM()` on NUMERIC columns | Avoids accumulation error across N rows — never sum in JS |
+
+**No decimal library needed** if the above dispatch is followed.
+
+### New types (append to `frontend/src/types.ts`)
+
+```typescript
+export interface SpotPrice {
+  id: number;
+  metal: 'XAU' | 'XAG' | 'XPT' | 'XPD';
+  price_per_gram: string;   // NUMERIC as string — parseFloat() at use site
+  price_date: string;       // ISO date: '2026-04-13'
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ValuationSummary {
+  total_liquidation_value: string;  // NUMERIC as string
+  total_cost_basis: string;
+  total_metal_value: string;
+  // premium computed client-side: parseFloat(total_cost_basis) - parseFloat(total_metal_value)
+  by_asset: AssetValuationRow[];
+}
+
+export interface AssetValuationRow {
+  asset_id: number;
+  asset_name: string;
+  sub_class: string | null;
+  liquidation_value: string;
+  total_cost: string;
+  metal_value: string;
+  // quantity + weight surfaced from asset for display
+  total_quantity: string;
+  weight_per_unit: string | null;
+  weight_unit: string | null;
+}
+```
+
+### Navigation: ValuationPage mount point
+
+No React Router. Add `'valuation'` to the discriminated union `View` type in `App.tsx` and render `<ValuationPage>` conditionally. Follow identical pattern to `TierPage` (added in v1.1). Pass `onNavigate` callback as a prop — no import coupling between pages.
+
+---
+
+*v1.2 stack research completed: 2026-04-13*
+
+---
+
+## v1.3 Stack Addendum — Crypto Asset Tracking
+
+**Researched:** 2026-04-13  
+**Scope:** What stack additions or changes are needed for crypto quantity tracking, manual spot prices per coin, and crypto storage location types?
+
+### Verdict: No New Libraries
+
+Every v1.3 requirement is satisfied by **schema migrations alone**. The existing stack has all required capabilities. This is a data model extension, not a capability gap.
+
+| Requirement | Satisfied By | Action |
+|-------------|-------------|--------|
+| Crypto quantity (2.5 XMR, 3 PAXG) | `acquisitions.quantity DECIMAL(20,6)` (migration 005) | No change |
+| Coin type (XMR, PAXG, XAUT sub_class) | `assets.sub_class VARCHAR(50)` (migration 009) | No change |
+| Manual spot price per coin | Extend the v1.2 `spot_prices` table with crypto rows | Migration or rows only |
+| Spot price math (qty × price) | Plain JS — same as metals | No library |
+| Gold-backed token metadata (PAXG = 1 oz gold) | Reuse `assets.weight_per_unit` + `weight_unit` | Convention only |
+| Crypto storage location types | Add `location_type` column to `asset_locations` | Migration only |
+| Precision arithmetic | PostgreSQL DECIMAL; `Intl.NumberFormat('nl-NL')` for display | No library |
+
+### spot_prices table coordination
+
+v1.2 ships a `spot_prices` table for metals (XAU/XAG/XPT/XPD). Verify its schema before writing a v1.3 migration.
+
+**If v1.2 `spot_prices` uses a `metal` column typed as `'XAU' | 'XAG' | 'XPT' | 'XPD'`** (as shown in the v1.2 TypeScript types above), v1.3 needs one migration to rename/generalize the key column:
+
+```sql
+-- Option A: rename 'metal' → 'asset_key', widen to VARCHAR(20)
+ALTER TABLE spot_prices RENAME COLUMN metal TO asset_key;
+-- existing rows: 'XAU', 'XAG', 'XPT', 'XPD'
+-- new rows: 'XMR', 'PAXG', 'XAUT', 'BTC', etc.
+
+-- Option B: if the column is already VARCHAR with no enum DB constraint, just insert crypto rows
+INSERT INTO spot_prices (asset_key, price_per_gram, price_date) VALUES ('XMR', 145.00, NOW());
+```
+
+Check whether `price_per_gram` is semantically correct for crypto (`price_per_gram` is misleading for XMR/BTC). Rename to `price_per_unit` and add a `base_unit` column (`'gram'` for metals, `'token'` for crypto) if the v1.2 column has that name embedded:
+
+```sql
+ALTER TABLE spot_prices RENAME COLUMN price_per_gram TO price_per_unit;
+ALTER TABLE spot_prices ADD COLUMN base_unit VARCHAR(20) NOT NULL DEFAULT 'gram';
+UPDATE spot_prices SET base_unit = 'gram' WHERE asset_key IN ('XAU','XAG','XPT','XPD');
+```
+
+**If v1.2 already uses a generic `price_per_unit` / `asset_key` naming**, just insert crypto rows. Zero migration needed.
+
+**Why DECIMAL(20,8) for crypto prices?** XMR at ~€150 and PAXG at ~€2,800 don't need 8dp for the price, but it future-proofs against sub-euro tokens without a schema change. Storage cost: negligible (< 20 rows total, ever).
+
+### location_type on asset_locations
+
+```sql
+-- Migration 022 (or next available number after v1.2 migrations)
+ALTER TABLE asset_locations ADD COLUMN location_type VARCHAR(30);
+```
+
+Valid values — enforced by frontend enum, not a DB constraint (consistent with rest of schema):
+
+| Value | Display |
+|-------|---------|
+| `vault` | Vault |
+| `bank` | Bank |
+| `home` | Home / Safe |
+| `exchange` | Exchange |
+| `software_wallet` | Software Wallet |
+| `hardware_wallet` | Hardware Wallet |
+| `cold_storage` | Cold Storage |
+| `on_chain` | On-Chain |
+
+Existing rows default to `null`; UI falls back to displaying `name`/`custodian_name` as before.
+
+### Gold-backed token classification (PAXG, XAUT)
+
+No new DB column needed. Use existing fields:
+
+| Field | PAXG / XAUT | Pure crypto (XMR) |
+|-------|-------------|-------------------|
+| `asset_class` | `'crypto'` | `'crypto'` |
+| `sub_class` | `'paxg'` or `'xaut'` | `'xmr'` |
+| `product_type` | `'gold_token'` | `'coin'` |
+| `weight_per_unit` | `1` | `null` |
+| `weight_unit` | `'oz'` | `null` |
+
+**Pricing path for v1.3:** Enter PAXG/XAUT spot in EUR/token directly in `spot_prices` (same as XMR). The `product_type = 'gold_token'` field is metadata for a UI badge ("gold-backed") without driving any pricing logic from it. If a future phase wants PAXG to auto-track XAU price, the `weight_per_unit = 1oz` field is already there — no schema change required.
+
+### What NOT to Add
+
+| Library | Reason to reject |
+|---------|-----------------|
+| `ethers.js` / `viem` / `web3.js` | No RPC calls. Manual entry only. ~2MB bundle for zero benefit. |
+| `bignumber.js` / `decimal.js` | PostgreSQL DECIMAL handles precision. No financial math in JS. |
+| CoinGecko / Binance / any price API | Hard constraint from PROJECT.md: "Live price feeds — deferred." |
+| `crypto-js` / `bitcoinjs-lib` | Not a wallet. No address generation or key ops. |
+| `zod` / runtime validation | Not used elsewhere; stay consistent with existing route-level checks. |
+| Any new React data-fetching library | Existing `api.ts` + component state covers all patterns. |
+
+### New TypeScript types for types.ts
+
+```typescript
+// Extend SpotPrice (if v1.2 named it for metals only, generalize)
+export interface SpotPrice {
+  id: number;
+  asset_key: string;            // 'XAU' | 'XAG' | 'XMR' | 'PAXG' | 'XAUT' | ...
+  price_per_unit: string;       // NUMERIC as string
+  base_unit: 'gram' | 'token' | 'troy_oz';
+  price_date: string;
+  updated_at: string;
+}
+
+// Extend AssetLocation
+export interface AssetLocation {
+  // ... existing fields ...
+  location_type: 'vault' | 'bank' | 'home' | 'exchange' | 'software_wallet' |
+                 'hardware_wallet' | 'cold_storage' | 'on_chain' | null;
+}
+```
+
+### Migration numbering
+
+v1.2 ends at migration 019 (backfill_snapshots). The v1.2 valuation work likely adds 020–02x. Coordinate with v1.2 completion before writing v1.3 migration numbers. Acquire the next available file prefix at implementation time.
+
+---
+
+*v1.3 crypto stack addendum completed: 2026-04-13*

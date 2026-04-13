@@ -1,219 +1,252 @@
-# Features Research — v1.1
+# Feature Landscape — v1.3 Crypto Asset Tracking
 
-**Domain:** Precious metals wealth management — market intelligence + sovereign tier allocation
-**Researched:** 2026-04-11
-**Overall confidence:** HIGH (grounded in actual codebase data + real import files)
-
----
-
-## Dealer Price Management
-
-### Context
-
-User maintains 3–7 dealers (Hollandgold NL, Hollandgold CH, DNK, etc.) that quote "We Buy" (bid)
-prices for gold per gram. Goal: see each acquisition's current liquidation value in the Ledger
-so the user can instantly compare "what did I pay" vs "what can I get today."
-
-**Critical data finding:** `acquisitions.quantity` is stored in **pieces**, not grams.
-Confirmed from `hollandgold-beheer.csv`: a "Umicore 50 gram goudbaar" has `quantity=1` (one bar).
-To compute liquidation value the system needs gram weight per unit — this does not currently
-exist in the schema. This is the primary complexity risk for this feature area.
-
-### Table Stakes
-
-| Feature | Why | Complexity | Notes |
-|---------|-----|-----------|-------|
-| Dealers CRUD (name, contact notes) | Without it nothing works | Low | New `dealers` table + route + modal or inline form |
-| `we_buy_gold` price per dealer (EUR/gram) | Core ask | Low | Single NUMERIC column, updated manually |
-| Freshness indicator (`updated_at`) on dealer price | Without it user cannot trust whether the number is current | Low | Auto-updated by API on save; display as "Updated X days ago" |
-| `weight_per_unit_grams` field on Asset | Required to compute liquidation value; `quantity` is pieces not grams | Medium | New nullable NUMERIC column on `assets` via migration; shown in AssetModal for precious_metals only |
-| Global "Active Dealer" selector in Ledger filter bar | User needs to pick which dealer's price to apply | Low | React component state only — no DB persistence needed |
-| "Liq. Value" column in Ledger when a dealer is selected | Core display requirement — only appears when dealer is active | Low | Computed client-side: `qty_pieces × weight_per_unit_grams × dealer.we_buy_gold`; shows "—" if weight is null |
-| Gain/loss color on Liq. Value vs Cost Basis | Immediate signal: is this acquisition above or below purchase price? | Low | Green if `liq_value > cost_basis`, red if below |
-
-### Differentiators
-
-| Feature | Value | Complexity | Notes |
-|---------|-------|-----------|-------|
-| Best-price badge | Immediately shows which dealer offers most value — useful when comparing Hollandgold vs DNK | Low | Sort dealers by `we_buy_gold` desc; mark top row with a gold accent in the dealer panel |
-| Dynamic column header showing dealer name | "Liq. Value (Hollandgold NL)" — prevents confusion when switching dealers | Low | Single string interpolation in column header |
-| Liquidation total in Ledger footer | Aggregate "what is my gold worth today at dealer X" in one number | Low | One additional `useMemo` reduce in LedgerPage |
-| Liq. Value column in CSV export | Capture the the number on screen when exporting | Low | Extend existing `exportCSV()` function when a dealer is active |
-| Per-metal pricing: silver + platinum | Hollandgold and DNK quote silver/platinum separately | Medium | Add `we_buy_silver`, `we_buy_platinum` to dealers; compute by `sub_class`; deferred to v1.2 — gold is sufficient for v1.1 |
-
-### Anti-features (don't build)
-
-| Anti-feature | Why Not |
-|-------------|---------|
-| Per-acquisition dealer selection (dropdown on every row) | 30+ rows × dropdown = unusable noise. Global selector is sufficient — user switches it when comparing. |
-| Automatic price scraping from dealer websites | Requires live integration. Hard-blocked by PROJECT.md constraint: "No live price feeds in v1.x." |
-| Price history / log of past we_buy prices | Valuable in v1.2 alongside valuation snapshots. Adds table + chart + query complexity now for marginal gain. |
-| Spread vs spot price calculation | Requires live spot feed. Cannot compute without it. |
-| Dealer rating / scoring | Personal tool — user knows their 3–7 dealers. No need. |
-| Separate full-page "Dealers" nav item | Too heavyweight for a list of 3–7 rows. A panel or settings section is correct. |
-| Multiple simultaneous dealer price columns | Showing all dealers as columns clutters the Ledger. One active dealer at a time is enough. |
-
-### UX Recommendation
-
-**Dealer management location:** A compact panel accessible from a "Dealers" button in the Ledger
-filter bar. NOT a full nav page. The list is small enough to live inline.
-
-**Interaction model:** Dealer panel shows a compact table — Name | We Buy (€/g) | Updated | Delete.
-Clicking the price cell turns it into an in-place `<input>` (inline edit). Blur or Enter saves via
-PATCH `/api/dealers/:id`. Append-row for new dealers inline. No separate create modal needed.
-
-**Active dealer in Ledger:**
-1. A "Dealers ▾" select in the Ledger filter bar (next to existing filter pills).
-2. When a dealer is active, a new rightmost column appears: "Liq. Value (Dealer Name)".
-3. Formula: `qty_pieces × asset.weight_per_unit_grams × dealer.we_buy_gold`
-4. If `weight_per_unit_grams` is null on an asset → show "—" in that row (not an error state).
-5. Ledger footer row shows total liquidation value for all visible rows.
-
-**Weight field in AssetModal:** Add "Weight per unit (g)" numeric field, rendered only when
-`asset_class === 'precious_metals'`. Position after Asset Class. Null by default on existing
-assets — user fills in via Edit. Standard weights for reference: Maple Leaf 1oz = 31.10 g,
-Umicore 50 g bar = 50.00 g, 100 g bar = 100.00 g.
+**Domain:** Crypto asset tracking within a precious metals portfolio dashboard (no live feeds, single-user, manual entry)
+**Researched:** 2026-04-13
+**Confidence:** HIGH — PAXG/XAUT mechanics from official sources; wallet taxonomy from industry standards; existing codebase read directly
 
 ---
 
-## Tier System
+## Existing Infrastructure (do not re-build)
 
-### Context
+The codebase already has the following, which v1.3 extends rather than replaces:
 
-4-tier sovereign wealth allocation framework for a Dutch private investor hedging against bank
-insolvency, bail-in, CBDC mandates, and physical/cyber catastrophe:
-
-| Tier | Label | Target | Description |
-|------|-------|--------|-------------|
-| 0 | Cash at Home | ~2% | Physical EUR notes, directly accessible, no counterparty |
-| 1 | Digital Bank | ~8% | Current/savings accounts; exposed to bail-in risk |
-| 2 | Physical Gold Vaults | ~70% | Vault-custodied precious metals (Hollandgold, DNK, etc.) |
-| 3 | Crypto | ~20% | BTC, XMR; self-custodied, censorship-resistant |
-
-Each asset belongs to exactly one tier. User configures target/min/max % per tier. Status
-reflects whether actual allocation is within the configured band.
-
-### Table Stakes
-
-| Feature | Why | Complexity | Notes |
-|---------|-----|-----------|-------|
-| `tier` INT column on `assets` (0–3, nullable) | Foundation for everything else | Low | New migration; add Select to AssetModal with tier labels |
-| Tier config table: `target_pct`, `min_pct`, `max_pct` per tier | Without bounds, status is meaningless | Low | New `tier_config` table with 4 seed rows; PATCH endpoint |
-| Tier config UI: 4-row editable table | User needs to adjust bounds without touching code | Low | Inline numeric inputs; auto-save on blur; warn if targets ≠ 100% |
-| TierPage: current % vs target per tier + status badges | Core deliverable of this milestone | Medium | New `TierPage.tsx`; nav entry in App.tsx + Sidebar |
-| Status indicators: GREEN / AMBER / RED per tier | Immediate "is this okay?" signal without reading numbers | Low | GREEN = in [min, max]; AMBER = outside by ≤5pp; RED = outside by >5pp |
-| Dashboard health tile | User opens dashboard daily — needs quick tier pulse | Low | New tile in DashboardPage using existing glass-panel tile pattern |
-| Tier assignment works for crypto assets | PROJECT.md TIER-02: BTC/XMR as Tier 3 | Low | `asset_class = 'crypto'` already exists; tier assignment falls out from TIER-01 |
-
-### Differentiators
-
-| Feature | Value | Complexity | Notes |
-|---------|-------|-----------|-------|
-| Per-tier asset list (expandable section) | User wants to know which specific assets are in Tier 2 and their values | Medium | Expandable bottom section on each tier card; filter of assets by tier value |
-| Rebalancing hint text | "Tier 3 is 4% over target (~€8,200). Consider moving funds to Tier 1." — contextual guidance without a recommendation engine | Low | `(current_pct - target_pct) × total_portfolio_value`; shown as muted helper text when tier is amber/red |
-| Range bar visualization | Shows min──●──max zone with current position marker — more information density than a plain progress bar | Low | CSS-only: position current-value dot on a normalized scale between 0–100%; three-zone coloring |
-| Sum-to-100% warning on tier config | Without it, incoherent targets are silently accepted | Low | Amber badge "Targets sum to X%, not 100%" — advisory only, never blocking |
-| Tier icon in AssetModal select | Visual anchoring: house, bank, vault, ₿ — enforces the mental model at point of entry | Low | lucide-react icons prefixed in option labels |
-
-### Anti-features (don't build)
-
-| Anti-feature | Why Not |
-|-------------|---------|
-| Custom / renaming tier labels | The 4-tier sovereign framework is intentional and fixed for this user. Renaming adds schema + UI complexity with no benefit. |
-| More than 4 tiers | The model is specifically 4-tier. Extensibility here is unused complexity. |
-| Lock targets to force-sum to 100% (block save) | Too rigid — user may be mid-edit; actual allocation is dynamic. Warn, never block. |
-| Historical tier allocation tracking (time series) | Requires snapshot mechanism already out of scope. Defer to v1.2 alongside valuation snapshots. |
-| Drag-to-rebalance visualization | Over-engineered for a personal tool. Hint text with a EUR amount is sufficient action guidance. |
-| Tier axis on the Location map | The map already encodes jurisdiction/custody. Overlaying tier creates conflicting signal. |
-| Risk scoring within a tier | Asset-level SecurityClass already exists. Tier-level risk score duplicates it. |
-| Automated rebalancing actions | Requires live prices + brokerage APIs. Manual tool only. |
-| Currency exposure breakdown by tier | Interesting analytically; all positions are EUR-denominated already. v1.2 territory. |
-
-### UX Recommendation
-
-**Tier assignment in AssetModal:** Add one `<Field label="Sovereign Tier">` with a Select below
-Asset Class. Options: `— Unassigned —`, `0: Cash at Home`, `1: Digital Bank`,
-`2: Physical Gold Vault`, `3: Crypto`. Muted monochrome tier number prefix enforces the numbering
-without colored noise in a form context.
-
-**Tier config panel:** Collapsible section at the top of TierPage. Four rows in a compact inline-
-editable table: Tier | Name | Target % | Min % | Max %. Each numeric cell is an `<input type="number">`.
-Auto-save on blur via PATCH. Show sum of targets below with amber highlight if ≠ 100%.
-No separate Save button — reduces friction for frequent adjustments.
-
-**TierPage layout:** Four tier cards in a single-column vertical list (not a 2×2 grid — tiers
-are hierarchical and should read top-to-bottom in order 0→3). Each card:
-
-```
-┌──────────────────────────────────────────────────────────┐
-│ TIER 2  Physical Gold Vault              ● IN RANGE       │
-│                                                          │
-│  Current: 72.4%   Target: 70%   Range: 65% – 75%        │
-│                                                          │
-│  [below-min zone][░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓][above-max]  │
-│                  65%      ▲70%     ●72.4%   75%          │
-│                                                          │
-│  €482,000 · 12 assets                                    │
-│  ▸ Show assets                                           │
-└──────────────────────────────────────────────────────────┘
-```
-
-The range bar has three CSS zones: below-min (muted), in-range (primary/gold fill), above-max
-(amber). A tick mark for target; a dot for current position. Pure CSS — no canvas, no chart lib.
-
-**Status thresholds (deterministic):**
-- GREEN: `current_pct >= min_pct AND current_pct <= max_pct`
-- AMBER: outside range but delta ≤ 5 percentage points in either direction
-- RED: outside range by > 5 percentage points
-
-Hardcode 5pp in v1.1. If configurable tolerance is wanted, add it in v1.2.
-
-**Dashboard health tile:** Use existing `.glass-panel` tile pattern. Content:
-- Headline: "3 of 4 Tiers In Range" (or "All Tiers In Range" / "2 Tiers Off Target")
-- Four status dots + tier short-labels in two rows
-- No supplemental charts — dots are sufficient at health-tile scale
-- Click/tap navigates to TierPage
+| Already Present | Location | Notes |
+|----------------|----------|-------|
+| `asset_class = 'crypto'` enum value | `assets` table / `AssetClass` type | Valid, used by Tier 3 |
+| `quantity` DECIMAL(20,6) | `acquisitions` table | 6 decimals — may need 8 for crypto precision |
+| `sub_class`, `product_type` | `assets` columns | Re-usable for crypto categorisation |
+| `current_value` (manual EUR) | `assets.current_value` | Current crypto approach; replaced by computed value |
+| `spot_prices` table | migration 021 (v1.2) | `(metal, price_per_gram, recorded_at)` — append-only, XAU already here |
+| Tier assignment | `assets.tier` | Crypto → Tier 3 |
+| Map pins + location model | `asset_locations` table | `custodian_name`, `country_code` — extensible |
 
 ---
 
-## Dependencies on Existing Features
+## Table Stakes
 
-| New Feature | Depends On | Change Required |
-|-------------|-----------|----------------|
-| Dealer liquidation column in Ledger | `acquisitions.quantity` (pieces) + new `assets.weight_per_unit_grams` | **Migration 010** adds `weight_per_unit_grams NUMERIC(10,4) nullable` to `assets`; update `Asset` + `CreateAsset` in `types.ts`; add field to `AssetModal` |
-| Dealer API | Nothing existing — new resource | New `dealers` table; `api/routes/dealers.ts`; mount in `routes/index.ts`; new `api.dealers.*` methods in `api.ts` |
-| Ledger dealer column display | Existing `LedgerRow` type + `buildEnrichedRows()` | `LedgerRow` needs no server changes; liquidation computed entirely client-side; LedgerPage gets: dealer state hook + conditional column + footer sum |
-| Tier assignment on assets | `Asset` + `CreateAsset` types | **Migration 011** adds `tier INT nullable` to `assets`; update `Asset` + `CreateAsset`; add field to `AssetModal` |
-| Tier config | Nothing existing | **Migration 011** also creates `tier_config` with 4 seed rows; new GET + PATCH endpoint; new `api.tierConfig.*` in `api.ts` |
-| TierPage | `assets` list + new tier_config endpoint | New `TierPage.tsx`; nav entry in discriminated union in `App.tsx`; new sidebar nav item in `Sidebar.tsx` |
-| Dashboard health tile | Tier totals derivable from assets list | Extend `/api/dashboard` route to return tier summary, OR compute from assets in DashboardPage. Prefer server-side: keeps component logic thin. |
-| Crypto as Tier 3 assets | `asset_class = 'crypto'` (already exists); `tier` field (TIER-01) | No additional work beyond TIER-01 — falls out naturally |
+Features a precious-metals tracker user expects when crypto is added. Missing = crypto tracking feels broken.
 
-### Recommended migration sequence
+### 1. Coin Identification Fields
 
-```
-010_dealer_prices.ts      → create dealers table
-                            (id, name, contact_notes, we_buy_gold, we_buy_silver,
-                             we_buy_platinum, updated_at, created_at)
+| Field | Type | Example | Notes |
+|-------|------|---------|-------|
+| `coin_symbol` | VARCHAR(20) | `XMR`, `PAXG`, `XAUT`, `BTC` | Primary lookup key for spot prices |
+| `coin_name` | VARCHAR(100) | `Monero`, `Pax Gold`, `Tether Gold` | Display name; distinct from asset `name` |
 
-011_weight_and_tier.ts    → ALTER assets ADD weight_per_unit_grams NUMERIC(10,4)
-                            ALTER assets ADD tier INT
-                            CREATE tier_config (tier_id PK, target_pct, min_pct, max_pct)
-                            INSERT 4 default tier_config rows (0,2,0,5), (1,8,4,12),
-                              (2,70,60,80), (3,20,10,30)
-```
+**Why:** Every portfolio tracker (CoinTracker, Koinly, Delta, Rotki) uses symbol as the canonical identifier. The asset `name` field is user-freeform (e.g. "My Ledger XMR"); `coin_symbol` is the standardised ticker used to lookup prices. Without it, the spot price ↔ asset link requires fragile name-matching.
 
-Combining weight + tier into one migration (011) is efficient — both touch `assets`, no interdependency.
+**Complexity:** Low — two VARCHAR columns on `assets` via migration.
+
+**Sub-class usage (reuse existing field):**
+- PAXG, XAUT → `sub_class = 'gold'` (gold-backed ERC-20/TRC-20 tokens)
+- XMR → `sub_class = 'privacy'` (or leave null in v1.3)
+- BTC/ETH → `sub_class = null` or per discretion
+
+**Product type usage (reuse existing field):**
+- Native coins (XMR, BTC, ETH) → `product_type = 'native_coin'`
+- ERC-20/TRC-20 tokens (PAXG, XAUT) → `product_type = 'token'`
 
 ---
 
-## Confidence Assessment
+### 2. Quantity × Spot Price Valuation Model
 
-| Area | Confidence | Basis |
-|------|-----------|-------|
-| Dealer price UX | HIGH | Grounded in actual LedgerPage code + real CSV data |
-| Quantity-is-pieces finding | HIGH | Direct inspection of `hollandgold-beheer.csv` and `acquisitions` migration confirms |
-| Weight field necessity | HIGH | Cannot compute EUR/gram liquidation without it given current schema |
-| Tier UX patterns | HIGH | Standard portfolio allocation patterns; no novel technology required |
-| Status threshold (5pp buffer) | MEDIUM | Pragmatic; common in financial tooling; configurable in v1.2 if needed |
-| Migration sequence | HIGH | Follows existing sequential convention in `api/migrations/`; verified pattern from 001–009 |
+**Current state:** `assets.current_value` is a manually typed integer. Users enter "my XMR is worth €4,200" by hand with no quantity breakdown.
+
+**Table-stakes model:** `value = total_quantity × spot_price_per_unit_eur`
+
+| Component | Details |
+|-----------|---------|
+| Quantity source | Sum of `acquisitions.quantity` per asset (already stored at acquisition time) |
+| Spot price source | New `crypto_spot_prices` table (see below) |
+| Precision | Acquisitions `quantity` should be DECIMAL(20,8) for crypto (upgrade from 20,6) |
+| Trigger for update | User manually updates spot price via UI (same workflow as precious metals spot prices in v1.2) |
+
+**`crypto_spot_prices` table:**
+```sql
+CREATE TABLE crypto_spot_prices (
+  id             SERIAL PRIMARY KEY,
+  symbol         VARCHAR(20) NOT NULL,        -- 'XMR', 'BTC', 'ETH' (NOT PAXG/XAUT — see gold-backed section)
+  price_per_unit NUMERIC(20,8) NOT NULL,       -- EUR per 1 full token/coin
+  recorded_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+  created_at     TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_crypto_spot_symbol_recorded ON crypto_spot_prices(symbol, recorded_at DESC);
+```
+
+Design: append-only, same pattern as `spot_prices`. "Latest price per symbol" = `DISTINCT ON (symbol) ORDER BY recorded_at DESC`.
+
+**Complexity:** Low — one new table + UI form + aggregation query. Structurally identical to metals spot prices being built in v1.2.
+
+---
+
+### 3. Gold-Backed Token Handling (PAXG, XAUT)
+
+**What these tokens are:**
+
+| Token | Issuer | Network | Backing | Precision | Vaults |
+|-------|--------|---------|---------|-----------|--------|
+| PAXG | Paxos Trust (OCC-regulated, US) | Ethereum ERC-20 | 1 token = 1 fine troy ounce (31.1035g) LBMA gold | Fractional ok | LBMA London |
+| XAUT | Tether / TG Commodities (Swiss) | Ethereum ERC-20 + Tron TRC-20 | 1 token = 1 fine troy ounce of gold | Min 0.000001 oz | Swiss vaults |
+
+Both tokens track XAU spot price closely (small premium, typically <1%). Both are physically redeemable for gold bars. XAUT's "Scudo" sub-unit = 1/1000 XAUT (internal Tether unit, not relevant to tracking).
+
+**How portfolio trackers handle them:**
+- **Generic approach (CoinTracker, Koinly):** Treat as ordinary crypto tokens (qty × token market price). No gold-specific treatment.
+- **Precious-metals-aware approach (Rotki, power-user spreadsheets):** Dual-class: crypto position + gold oz exposure. Value comes from `qty × XAU_spot` not from a separate token spot price, because XAU is already tracked.
+
+**Recommendation for Precious Dashboard — use the gold-backed path:**
+
+Since XAU spot prices already exist in `spot_prices` (v1.2) and the dashboard models gold by troy oz, PAXG/XAUT can derive their EUR value from the shared XAU spot table:
+
+```
+PAXG / XAUT valuation:
+  quantity_oz = sum(acquisitions.quantity)    -- stored as troy oz; 1 token = 1 troy oz
+  value_eur   = quantity_oz × 31.1035 × xau_spot_per_gram
+```
+
+This means:
+- PAXG/XAUT do **not** need an entry in `crypto_spot_prices`
+- Their `coin_symbol` ('PAXG' / 'XAUT') is used for display only
+- Their `sub_class = 'gold'` is the branch condition in valuation logic
+- Acquisitions `quantity` is stored as **troy oz** (matching 1 token = 1 oz convention)
+
+**Why this is correct:** It keeps gold exposure consolidated. A user holding 2 PAXG + 100g physical gold sees the true combined gold position rather than two isolated figures across separate price feeds.
+
+**Complexity:** Medium — valuation aggregation route needs a conditional branch: if `asset_class='crypto'` AND `sub_class='gold'` → use XAU spot path; else use `crypto_spot_prices` path.
+
+---
+
+### 4. Wallet / Custody Type Classification
+
+**What precision-minded crypto holders need:** Know at a glance whether each holding is in self-custody vs. counterparty custody vs. exchange.
+
+**Industry-standard taxonomy** (used consistently across CoinTracker, Koinly, Rotki, Delta, Ledger Live):
+
+| Enum Value | Display Label | Description | Risk Profile |
+|------------|--------------|-------------|--------------|
+| `exchange` | Exchange | Custodial exchange (Kraken, Bitvavo, Coinbase, Binance) | Counterparty risk — not your keys |
+| `hot_wallet` | Software Wallet | Non-custodial, internet-connected (MetaMask, Exodus, Monero GUI/CLI) | Self-custody, exposed to online attacks |
+| `hardware_wallet` | Hardware Wallet | Non-custodial, air-gapped device (Ledger, Trezor, Coldcard, Passport) | Best self-custody practice |
+| `paper_wallet` | Paper Wallet | Printed/written private keys, fully offline | High security if stored correctly |
+| `custodian` | Custodian | Institutional third-party custody (BitGo, Casa, Coinbase Custody) | Professional custody, not an exchange |
+
+**Where to store it:** New `custody_type` field on `assets` (not `asset_locations`), because:
+- A location can mix physical vault and crypto (e.g. a hardware wallet stored in the same safe as bullion)
+- Custody type is a property of *how the asset is held*, not *where the physical location is*
+- It maps directly to Tier 3 sovereign risk scoring
+
+**Complexity:** Low — one VARCHAR column on `assets` via migration + dropdown in AssetModal.
+
+**XMR-specific note:** Monero is a privacy coin — on-chain addresses cannot be publicly tracked by third parties (no transparent ledger). Custody type is the only meaningful custodian identifier for XMR. No on-chain address field needed.
+
+---
+
+### 5. Computed Value Propagation
+
+Replacing manual `current_value` with derived crypto value must propagate to all consuming screens:
+
+| Screen | Impact |
+|--------|--------|
+| Dashboard net worth tile | Must include `sum(qty) × spot` for crypto assets |
+| Ledger value column | Show computed EUR value per row |
+| Analytics page allocation | Crypto % of total must use computed values |
+| Tier allocation calculation | Tier 3 total weight must reflect real computed value |
+
+**Fallback rule:** If no matching `crypto_spot_prices` entry exists for a symbol (and asset is not gold-backed), fall back to `assets.current_value`. This preserves backwards compatibility with existing manual crypto entries.
+
+**Complexity:** Medium — multi-screen change; touches valuation aggregation API endpoint + multiple frontend components.
+
+---
+
+## Differentiators
+
+Features that add value beyond the baseline. Build after table stakes are solid.
+
+| Feature | Value Proposition | Complexity | Priority |
+|---------|-------------------|------------|----------|
+| **Gold oz equivalent display** | PAXG/XAUT rows show "2.5 oz gold equivalent" alongside EUR — reveals true gold exposure | Low (derived from qty) | High — aligns uniquely with PM dashboard theme |
+| **Combined gold exposure summary** | Analytics: physical gold oz + PAXG oz + XAUT oz = total gold oz position | Low (sum of `sub_class='gold'` assets) | High — unique differentiator vs generic crypto trackers |
+| **Network / chain field** | `network` VARCHAR(30): 'Ethereum', 'Tron', 'Monero' — relevant for custody categorisation | Low | Medium |
+| **Contract address storage** | Read-only reference field for ERC-20 address (PAXG: `0x45804880...`, XAUT: `0x68749665...`) — for manual Etherscan verification | Low | Low |
+| **Custody risk indicator** | Visual badge on LocationsPage and asset rows: self-custody (hardware/paper) vs. custodial (exchange/custodian) | Low (derive from `custody_type`) | Medium |
+
+---
+
+## Anti-Features
+
+Features to explicitly **not** build in v1.3.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Live price feeds | Explicitly out of scope per PROJECT.md v1 constraints; adds API dependencies, failure modes | Manual spot price entry — established UX pattern |
+| Exchange API connections (Kraken, Bitvavo, etc.) | Auth complexity, rate limits, secret management; out of scope for single-user local tool | CSV import from exchange if bulk data needed |
+| On-chain address → balance sync | Blockchain node/API dependency; fundamentally broken for XMR (privacy coin, no transparent ledger) | Manual quantity entry at acquisition time |
+| DeFi / staking position tracking | Entirely different data model (locked positions, yield accrual, impermanent loss) | Not applicable to XMR, PAXG, XAUT |
+| FIFO/LIFO crypto tax-lot calculation | Requires per-transaction accounting engine; duplicates future Tax page work | Defer to dedicated Tax milestone |
+| NFT tracking | Non-fungible asset model; not a sovereign risk instrument | Not applicable |
+| Portfolio performance vs BTC/ETH benchmark | Feature creep; this is a sovereign risk tool, not a trading terminal | Keep EUR total return focus |
+
+---
+
+## Feature Dependencies
+
+```
+coin_symbol field
+  → crypto_spot_prices table       (symbol lookup for XMR etc.)
+  → gold-backed valuation path     (PAXG/XAUT: symbol used for display; XAU spot used for value)
+
+sub_class = 'gold' on crypto asset
+  → gold-backed valuation path     (conditional branch in valuation logic)
+  → gold oz equivalent display     (differentiator)
+  → combined gold exposure summary (differentiator)
+
+custody_type field
+  → custody risk indicator badge   (differentiator)
+  → LocationsPage custody display  (differentiator)
+
+computed value derivation
+  → Dashboard net worth tile
+  → Ledger value column
+  → Analytics allocation data
+  → Tier 3 allocation calculation
+```
+
+---
+
+## MVP Recommendation
+
+Build in this order:
+
+1. **`coin_symbol` + `coin_name` + `custody_type` on assets** — DB migration only; enables everything else
+2. **`crypto_spot_prices` table + manual entry UI** — parallels v1.2 metals spot UX; low effort
+3. **Gold-backed token valuation** (PAXG/XAUT → XAU spot path) — unique to this dashboard; key correctness win
+4. **Computed value propagation** — Dashboard, Ledger, Analytics, Tier
+5. **Gold oz equivalent display + combined gold summary** — high value, low effort differentiators
+
+Defer to v1.4+:
+- Network/chain field
+- Contract address storage
+- Custody risk indicator badge (unless it's just CSS on fields already present)
+
+---
+
+## What Precious Metals + Crypto Users Expect
+
+Based on portfolio profile (Dutch physical gold/silver/platinum → adding XMR, PAXG, XAUT):
+
+1. **Quantity precision matters.** User expects to see "14.75 XMR @ €127.40 = €1,879.15", not just "€1,879". Physical metals users are trained on weight precision; the same expectation transfers directly to crypto.
+
+2. **PAXG/XAUT should feel like gold, not like bitcoin.** They were purchased as a gold exposure instrument. Surfacing them under gold oz equivalent rather than in a crypto token pile aligns with the user's mental model and sovereign risk framing.
+
+3. **Custody classification is table stakes for this audience.** A user who tracks whether their gold is at a Swiss vault vs. home vs. ABN AMRO will absolutely want to know whether their XMR is on Kraken vs. a Ledger. The sovereign risk theme demands it.
+
+4. **Spot prices entered manually, used everywhere.** Consistent with established metals UX (v1.2). No expectation of live feeds; a 24-hour-old XMR price is fine for a wealth overview tool, not a trading terminal.
+
+---
+
+## Sources
+
+- PAXG mechanics: https://paxos.com/paxg/ — HIGH confidence (official Paxos issuer page)
+- XAUT mechanics: https://gold.tether.to/ — HIGH confidence (official Tether Gold page)
+- Wallet custody taxonomy: consistent across CoinTracker, Koinly, Rotki, Delta, Ledger Live — MEDIUM confidence (industry convergence)
+- Codebase analysis (direct read): `migrations/004_assets.ts`, `migrations/005_acquisitions.ts`, `migrations/009_asset_subclass.ts`, `migrations/015_asset_brand.ts`, `migrations/003_asset_locations.ts`, `frontend/src/types.ts` — HIGH confidence

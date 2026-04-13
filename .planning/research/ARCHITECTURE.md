@@ -1,630 +1,502 @@
 # Architecture Research
+**Domain:** Precious Metals + Crypto Portfolio Dashboard
+**Researched:** 2026-04-13
+**Milestone scope:** v1.2 (established foundation) + v1.3 (Crypto Asset Tracking extension)
+**Confidence:** HIGH — all findings derived directly from reading the live codebase
 
-**Domain:** Sovereign wealth management dashboard — React + Express + PostgreSQL monorepo
-**Researched:** April 9, 2026
-**Confidence:** HIGH (architecture fully specified via copilot-instructions + all 6 screens analyzed + PRD reviewed)
+---
 
-## Recommended Architecture
+## v1.2 Foundation (Already Researched — Do Not Re-Derive)
 
-### System Layers
+The v1.2 research established the following architecture. v1.3 builds on top of it.
+
+### v1.2 Adds
+
+| What | Location | Notes |
+|------|----------|-------|
+| `spot_prices` table | migration `021_spot_prices.ts` | Append-only time-series; `(metal, price_per_gram, recorded_at)`; `DISTINCT ON (metal)` for latest |
+| `GET /api/spot-prices/latest` | `api/src/routes/spotPrices.ts` | One row per metal |
+| `POST /api/spot-prices` | same | Manual spot price entry |
+| `GET /api/valuation/summary` | `api/src/routes/valuation.ts` | Portfolio totals |
+| `GET /api/valuation/breakdown` | same | Per-asset valuation rows with metal / premium decomposition |
+| `POST /api/valuation/recalculate` | same | Batch-updates `assets.current_value` for precious_metals, then snapshots |
+| `ValuationPage.tsx` | `frontend/src/pages/ValuationPage.tsx` | New page — value summary + decomposition table |
+
+### v1.2 Hybrid Valuation Pattern (canonical)
+
+`assets.current_value` remains the single stored field read by dashboard, ledger, tiers, and history.
+Recalculate computes fresh values from spot prices, writes them back to `current_value`, and inserts
+`valuation_snapshots` rows — exactly as the existing `PUT /api/assets/:id` does on manual edit.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Browser — PWA (localhost:3000)                                              │
-│  React 18 + TypeScript + Vite 5 + Tailwind CSS (Midnight Sovereign tokens)  │
-│  ─────────────────────────────────────────────────────────────────────────  │
-│  App.tsx ── View discriminated union ──► Page Components ──► Shared Layout  │
-│  api.ts ── single request() helper ── all fetch calls                       │
-│  types.ts ── single source of truth for all shared types                    │
-└─────────────────────────────┬───────────────────────────────────────────────┘
-                              │ REST /api/*
-                              ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Express API — Node.js + TypeScript (localhost:3001)                         │
-│  ─────────────────────────────────────────────────────────────────────────  │
-│  index.ts ── runMigrations() → app.listen()                                 │
-│  db.ts ── Knex singleton                                                    │
-│  routes/ ── one file per resource                                           │
-│  middleware/errorHandler.ts ── last middleware                               │
-└─────────────────────────────┬───────────────────────────────────────────────┘
-                              │ Knex.js queries
-                              ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PostgreSQL 16 (Docker container)                                            │
-│  data/db/ ── Docker volume (persistent local)                               │
-│  migrations/ ── auto-run at API startup                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+User enters spot prices → POST /api/spot-prices (append)
+User triggers recalculate → POST /api/valuation/recalculate
+  → UPDATE assets.current_value WHERE asset_class = 'precious_metals'
+  → INSERT valuation_snapshots for changed rows
+All consumers (dashboard, ledger, tier, analytics) read updated current_value
 ```
 
 ---
 
-## Frontend Architecture
+## v1.3 Architecture — Crypto Asset Tracking
 
-### Navigation Pattern (Discriminated Union — Required)
+### Problem Statement
 
-No React Router. `App.tsx` holds a single `View` discriminated union state:
+Crypto assets currently exist as `asset_class = 'crypto'` with a manually typed `current_value`.
+v1.3 replaces that with quantity × spot price computation — consistent with the metals pattern
+established in v1.2. Three asset types must be handled:
 
-```typescript
-// types.ts
-type View =
-  | { kind: 'dashboard' }
-  | { kind: 'ledger' }
-  | { kind: 'analytics' }
-  | { kind: 'locations' }
-  | { kind: 'tax' }
-  | { kind: 'breakdown' };
-```
+| Type | Example | Valuation Source |
+|------|---------|-----------------|
+| Native crypto | XMR | `crypto_spot_prices`: EUR per coin × qty |
+| Gold-backed token | PAXG, XAUT | `spot_prices` XAU path: qty_oz × 31.1035 × xau_per_gram |
+| Manual fallback | Anything without a spot entry | `current_value` unchanged (backwards compat) |
 
-Pages receive `onNavigateToX` callback props. `App.tsx` conditionally renders the active page. All navigation is through these callbacks — pages must not import other pages.
+---
 
-This pattern matches the sidebar HTML across all 6 screens, where each `<a>` link maps directly to a view kind:
-- `dashboard` → `global-net-worth-dashboard`
-- `ledger` → `transaction-ledger`  
-- `analytics` → `performance-analytics`
-- `locations` → `asset-locations-inventory`
-- `tax` → `tax-compliance-center`
-- `breakdown` → `business-vs-personal-breakdown`
+## Database Changes (v1.3)
 
-### Shared Layout Components
+### Migration 022 — `crypto_asset_fields` (ALTER TABLE assets)
 
-Extracted from all 6 screen HTMLs — identical structure repeated:
-
-```
-components/
-  layout/
-    Sidebar.tsx        — Fixed w-64 aside; wordmark "The Vault" italic Newsreader;
-                         gold active state: border-l-2 border-[#e9c349];
-                         Transfer Funds CTA at bottom; Security Status + Support links
-    TopHeader.tsx      — Sticky h-16 header; bg-[#0b1326]/70 backdrop-blur-xl;
-                         search input; Personal/Business/Global nav;
-                         Market Connected indicator; notifications bell; avatar
-    AppShell.tsx       — Wraps Sidebar + TopHeader + main content area
-```
-
-**Sidebar active state (from screens):**
-```html
-class="flex items-center gap-3 py-3 bg-[#222a3d]/50 text-[#e9c349] 
-       font-semibold border-l-2 border-[#e9c349] pl-4"
-```
-
-**Top header shared markup (from screens):**
-```html
-<header class="sticky top-0 z-40 flex items-center justify-between px-8 h-16 
-               bg-[#0b1326]/70 backdrop-blur-xl border-b border-[#45464d]/20">
-```
-
-### Entity Filter State
-
-The Personal/Business/Global entity toggle appears in:
-- Top header nav (inline links on all screens)
-- Dashboard hero sub-toggle chips (Combined/Personal/Business)
-
-This filter must live in `App.tsx` or a top-level context — all pages share it. Pass as `currentEntity` prop to all pages.
+Adds three nullable columns to `assets`. Nullable because existing precious metals rows must
+not break. No backfill required — new rows fill them on creation via AssetModal.
 
 ```typescript
-type Entity = 'personal' | 'business' | 'combined';
+// api/migrations/022_crypto_asset_fields.ts
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.table('assets', (table) => {
+    table.string('coin_symbol', 20).nullable();   // 'XMR', 'PAXG', 'XAUT', 'BTC'
+    table.string('coin_name', 100).nullable();    // 'Monero', 'Pax Gold', 'Tether Gold'
+    table.string('custody_type', 30).nullable();  // 'exchange'|'hot_wallet'|'hardware_wallet'|'paper_wallet'|'custodian'
+  });
+}
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.table('assets', (table) => {
+    table.dropColumn('coin_symbol');
+    table.dropColumn('coin_name');
+    table.dropColumn('custody_type');
+  });
+}
 ```
 
-### API Layer
+**Why `custody_type` on `assets` not `asset_locations`:**
+- A location can hold mixed physical + crypto (e.g. Ledger device in the same safe as bullion)
+- Custody type is "how this asset is held", not "where the physical location is"
+- Directly maps to Tier 3 sovereign risk scoring
 
-All API calls go through a single `request()` helper in `api.ts`:
+### Migration 023 — `crypto_spot_prices` (CREATE TABLE)
+
+Separate table from `spot_prices` because:
+- Different unit: EUR per *coin* (whole unit, variable price) vs EUR per *gram* (weight-derived)
+- Different symbol space: tickers ('XMR', 'BTC') vs metal names ('gold', 'silver')
+- PAXG/XAUT intentionally excluded — they use the `spot_prices` XAU path
 
 ```typescript
-// api.ts
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, options);
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error.message);
+// api/migrations/023_crypto_spot_prices.ts
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTableIfNotExists('crypto_spot_prices', (table) => {
+    table.increments('id').primary();
+    table.string('symbol', 20).notNullable();              // 'XMR', 'BTC', 'ETH' — NOT PAXG/XAUT
+    table.decimal('price_per_unit', 20, 8).notNullable();  // EUR per 1 full coin
+    table.timestamp('recorded_at').notNullable().defaultTo(knex.fn.now());
+    table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+  });
+  await knex.raw(
+    'CREATE INDEX idx_crypto_spot_symbol_recorded ON crypto_spot_prices(symbol, recorded_at DESC)'
+  );
+}
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('crypto_spot_prices');
+}
+```
+
+**"Latest price per symbol" canonical query** (mirrors `spot_prices` pattern):
+```sql
+SELECT DISTINCT ON (symbol) symbol, price_per_unit, recorded_at
+FROM crypto_spot_prices
+ORDER BY symbol, recorded_at DESC;
+```
+
+### Migration Sequence Summary
+
+| # | File | Type | Milestone |
+|---|------|------|-----------|
+| 020 | `020_location_insurance.ts` | ALTER asset_locations | ✅ v1.1 shipped |
+| 021 | `021_spot_prices.ts` | CREATE spot_prices | v1.2 planned |
+| 022 | `022_crypto_asset_fields.ts` | ALTER assets | v1.3 new |
+| 023 | `023_crypto_spot_prices.ts` | CREATE crypto_spot_prices | v1.3 new |
+
+**Note on acquisition quantity precision:** Acquisitions currently use `DECIMAL(20,6)`. Crypto
+quantities like XMR are commonly traded to 4–5 decimal places (e.g. 14.75280 XMR). DECIMAL(20,6)
+is sufficient — no migration needed. If sub-milliunit precision ever becomes required, add
+`024_acquisition_qty_precision.ts` as an ALTER COLUMN, but do not add it speculatively.
+
+---
+
+## API Changes (v1.3)
+
+### New File: `api/src/routes/cryptoSpotPrices.ts`
+
+Prefix: `/api/crypto-spot-prices`
+
+Structurally mirrors `spotPrices.ts` established in v1.2.
+
+```
+GET  /api/crypto-spot-prices/latest     — DISTINCT ON (symbol) per symbol
+GET  /api/crypto-spot-prices            — full history, optional ?symbol= filter
+POST /api/crypto-spot-prices            — insert { symbol, price_per_unit }
+```
+
+No DELETE / UPDATE endpoints — append-only, same pattern as `spot_prices`.
+
+### Modified File: `api/src/routes/valuation.ts` (v1.2 file, extended in v1.3)
+
+Extend `POST /api/valuation/recalculate` with two additional branches.
+
+**Complete branch logic (all four branches):**
+
+```typescript
+// POST /api/valuation/recalculate
+
+await knex.transaction(async trx => {
+
+  // ── Branch 1: Precious metals ─────────────────────────────────────────────
+  // value = SUM(qty) × toGrams(weight_per_unit, weight_unit) × spot_per_gram
+  // spot_per_gram: DISTINCT ON metal FROM spot_prices WHERE metal = sub_class
+  // (existing v1.2 logic — unchanged)
+
+  // ── Branch 2: Gold-backed tokens (PAXG, XAUT) ────────────────────────────
+  // Condition: asset_class = 'crypto' AND sub_class = 'gold'
+  // Convention: acquisitions.quantity stored as troy oz (1 token = 1 troy oz)
+  // value = SUM(qty_oz) × 31.1035 × xau_spot_per_gram
+  const xauSpot = await trx('spot_prices')
+    .where('metal', 'gold')
+    .orderBy('recorded_at', 'desc')
+    .first();
+
+  if (xauSpot) {
+    const goldCryptoAssets = await trx('assets')
+      .where({ asset_class: 'crypto', sub_class: 'gold' });
+    for (const asset of goldCryptoAssets) {
+      const [{ total_qty }] = await trx('acquisitions')
+        .where('asset_id', asset.id).sum({ total_qty: 'quantity' });
+      const value = parseFloat(total_qty ?? '0') * 31.1035 * parseFloat(xauSpot.price_per_gram);
+      await trx('assets').where('id', asset.id).update({ current_value: value });
+      await trx('valuation_snapshots').insert({ asset_id: asset.id, value });
+    }
   }
-  return res.json();
+  // Guard: if no XAU spot price yet, gold-backed assets silently skipped (value preserved)
+
+  // ── Branch 3: Native crypto (XMR, BTC, ETH, etc.) ────────────────────────
+  // Condition: asset_class = 'crypto' AND sub_class != 'gold' AND coin_symbol IS NOT NULL
+  // value = SUM(qty) × price_per_unit from crypto_spot_prices (latest per symbol)
+  // Fallback: if no spot entry for symbol → skip (preserve existing current_value)
+  const latestCryptoPrices = await trx.raw(`
+    SELECT DISTINCT ON (symbol) symbol, price_per_unit
+    FROM crypto_spot_prices
+    ORDER BY symbol, recorded_at DESC
+  `);
+  const priceMap: Record<string, string> = Object.fromEntries(
+    latestCryptoPrices.rows.map((r: any) => [r.symbol, r.price_per_unit])
+  );
+
+  const nativeCryptoAssets = await trx('assets')
+    .where('asset_class', 'crypto')
+    .whereNot('sub_class', 'gold')
+    .whereNotNull('coin_symbol');
+
+  for (const asset of nativeCryptoAssets) {
+    const spotPrice = priceMap[asset.coin_symbol];
+    if (!spotPrice) continue;  // No price entry — NEVER zero out; leave current_value unchanged
+    const [{ total_qty }] = await trx('acquisitions')
+      .where('asset_id', asset.id).sum({ total_qty: 'quantity' });
+    const value = parseFloat(total_qty ?? '0') * parseFloat(spotPrice);
+    await trx('assets').where('id', asset.id).update({ current_value: value });
+    await trx('valuation_snapshots').insert({ asset_id: asset.id, value });
+  }
+
+  // ── Branch 4: Everything else ─────────────────────────────────────────────
+  // Skip — current_value managed manually (real estate, cash, exotics, etc.)
+});
+```
+
+### Modified File: `api/src/routes/index.ts`
+
+```typescript
+import cryptoSpotPricesRouter from './cryptoSpotPrices';
+app.use('/api/crypto-spot-prices', cryptoSpotPricesRouter);
+```
+
+### Unchanged API Files (v1.3)
+
+| File | Why untouched |
+|------|--------------|
+| `api/src/routes/assets.ts` | Generic `insert(req.body)` / `update(req.body)` already accepts any columns; new fields pass through automatically |
+| `api/src/routes/dashboard.ts` | Reads `current_value` from assets — recalculate keeps this field current |
+| `api/src/routes/ledger.ts` | Same |
+| `api/src/routes/tierConfig.ts` | Same |
+
+---
+
+## Frontend Changes (v1.3)
+
+### Modified File: `frontend/src/types.ts`
+
+```typescript
+// Add CustodyType union
+export type CustodyType =
+  | 'exchange'
+  | 'hot_wallet'
+  | 'hardware_wallet'
+  | 'paper_wallet'
+  | 'custodian';
+
+// Extend Asset interface (add 3 fields)
+export interface Asset {
+  // ... all existing fields ...
+  coin_symbol: string | null;      // 'XMR', 'PAXG', 'XAUT', 'BTC'
+  coin_name: string | null;        // 'Monero', 'Pax Gold', 'Tether Gold'
+  custody_type: CustodyType | null;
 }
 
-export const api = {
-  assets: {
-    list: () => request<Asset[]>('/assets'),
-    create: (body: CreateAsset) => request('/assets', { method: 'POST', body: JSON.stringify(body) }),
-    update: (id: number, body: Partial<Asset>) => request(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-    delete: (id: number) => request(`/assets/${id}`, { method: 'DELETE' }),
-  },
-  // ... one namespace per entity
+// New type: CryptoSpotPrice
+export interface CryptoSpotPrice {
+  id: number;
+  symbol: string;
+  price_per_unit: string;   // NUMERIC as string (pg driver)
+  recorded_at: string;
+  created_at: string;
+}
+export type CreateCryptoSpotPrice = Pick<CryptoSpotPrice, 'symbol' | 'price_per_unit'>;
+```
+
+`LedgerRow` does not need changes — it joins `assets.*` which will automatically include new columns once the migration runs.
+
+### Modified File: `frontend/src/api.ts`
+
+```typescript
+export const cryptoSpotPrices = {
+  latest: () => request<CryptoSpotPrice[]>('/api/crypto-spot-prices/latest'),
+  list:   () => request<CryptoSpotPrice[]>('/api/crypto-spot-prices'),
+  create: (body: CreateCryptoSpotPrice) =>
+    request<CryptoSpotPrice>('/api/crypto-spot-prices', { method: 'POST', body }),
 };
 ```
 
----
+### Modified File: `frontend/src/components/modals/AssetModal.tsx`
 
-## Data Model
+Show crypto-specific fields conditionally when `asset_class === 'crypto'`:
 
-### Core Entities (derived from all 6 screens)
+| Field | Type | Behavior |
+|-------|------|----------|
+| `coin_symbol` | text input | Uppercase; e.g. "XMR", "PAXG" |
+| `coin_name` | text input | Display name; e.g. "Monero", "Pax Gold" |
+| `custody_type` | select | exchange / hot_wallet / hardware_wallet / paper_wallet / custodian |
+| `sub_class` (existing) | select or text | For crypto: label "Token type"; gold-backed → 'gold', native → leave null |
 
-```sql
--- Entity: Personal or Business legal entity for asset ownership
-entities
-  id SERIAL PRIMARY KEY
-  name TEXT NOT NULL          -- "Sovereign-LLC", "Personal"
-  type TEXT NOT NULL          -- 'business' | 'personal'
-  created_at TIMESTAMPTZ DEFAULT now()
+Auto-hint logic:
+- If `coin_symbol` is 'PAXG' or 'XAUT': auto-set `sub_class = 'gold'` + show "Uses XAU spot price"
+- Otherwise: show "Uses crypto spot price (enter EUR/coin in spot prices section)"
+- Acquisition form hint for PAXG/XAUT: "Quantity in troy oz — 1 token = 1 troy oz"
 
--- Asset: A wealth-holding instrument
-assets
-  id SERIAL PRIMARY KEY
-  entity_id INT REFERENCES entities(id)
-  name TEXT NOT NULL          -- "Alpine Real Estate Fund", "Gold Bullion Reserve"
-  asset_class TEXT NOT NULL   -- 'real_estate' | 'equities' | 'metals' | 'crypto' | 'cash' | 'private_equity'
-  current_value NUMERIC(20,2) NOT NULL
-  currency TEXT NOT NULL DEFAULT 'USD'
-  location_id INT REFERENCES asset_locations(id)
-  security_class TEXT         -- 'CERTIFIED', 'RESTRICTED', etc.
-  audit_frequency TEXT        -- 'Semiannual', 'Annual'
-  last_audit_date DATE
-  notes TEXT
-  created_at TIMESTAMPTZ DEFAULT now()
-  updated_at TIMESTAMPTZ DEFAULT now()
+### New UI Section: Crypto Spot Price Management
 
--- Asset Locations: Jurisdictional custody — drives world map pins
-asset_locations
-  id SERIAL PRIMARY KEY
-  name TEXT NOT NULL          -- "Zurich, CH" / "Singapore, SG"
-  country_code CHAR(2) NOT NULL
-  custodian TEXT              -- "Swiss Custodian" / "Singapore Vault"
-  map_x_pct NUMERIC(5,2)     -- 0–100 pin position on world map (% from left)
-  map_y_pct NUMERIC(5,2)     -- 0–100 pin position on world map (% from top)
-  created_at TIMESTAMPTZ DEFAULT now()
+**Location:** Inside the v1.2 spot price management screen (ValuationPage or dedicated section),
+not a standalone page. Add a "Crypto Prices" panel beneath the metals panel.
 
--- Acquisitions: A batch purchase — drives ledger rows and P&L
-acquisitions
-  id SERIAL PRIMARY KEY
-  asset_id INT REFERENCES assets(id)
-  purchase_date DATE NOT NULL
-  cost_basis NUMERIC(20,2) NOT NULL
-  quantity NUMERIC(20,8)      -- for countable assets (BTC, gold oz)
-  description TEXT            -- "Series A Investment - Alpine Properties"
-  tax_status TEXT             -- 'taxable' | 'tax_deferred' | 'exempt'
-  created_at TIMESTAMPTZ DEFAULT now()
+```
+[Metals Spot Prices] panel  (v1.2)
+  XAU  €82.00/g  [last updated: 2026-04-10]
+  XAG  €0.91/g   [last updated: 2026-04-10]
+  ...
 
--- Fiscal Tags: Tax categorization for compliance screen
-fiscal_tags
-  id SERIAL PRIMARY KEY
-  asset_id INT REFERENCES assets(id)
-  fiscal_year INT NOT NULL
-  fiscal_category TEXT        -- "Investment Property", "Personal Holding", "Business Asset"
-  jurisdiction TEXT
-  notes TEXT
-  created_at TIMESTAMPTZ DEFAULT now()
-
--- Transfers: Cross-entity fund movements (deferred v1.1 but schema should exist)
-transfers
-  id SERIAL PRIMARY KEY
-  from_entity_id INT REFERENCES entities(id)
-  to_entity_id INT REFERENCES entities(id)
-  amount NUMERIC(20,2) NOT NULL
-  transfer_date DATE NOT NULL
-  description TEXT
-  created_at TIMESTAMPTZ DEFAULT now()
+[Crypto Spot Prices] panel  (v1.3)
+  XMR  €127.40/coin  [last updated: 2026-04-13]  ← new
+  [+ Add price]  [symbol input] [EUR/coin input] [Save]
 ```
 
-### Calculated Values (business logic layer, not stored)
+### Screens Gaining Crypto Values (Zero Code Changes)
 
-| Value | Calculation | Used In |
-|-------|-------------|---------|
-| Current unrealized P&L | `asset.current_value - SUM(acquisition.cost_basis)` | Ledger, Analytics |
-| ROI % | `(current_value - cost_basis) / cost_basis * 100` | Ledger, Analytics |
-| Total net worth | `SUM(asset.current_value) WHERE entity_id = ?` | Dashboard hero |
-| Fiscal compliance score | `COUNT tagged assets / COUNT total assets * 100` | Tax screen |
-| Asset class allocation % | `asset_class_total / grand_total * 100` | Dashboard donut/list |
+After `POST /api/valuation/recalculate` propagates `current_value`, the following screens
+automatically reflect correct crypto values — no code changes needed:
+
+| Screen | Mechanism |
+|--------|-----------|
+| `DashboardPage.tsx` — net worth | `dashboard.ts /summary` sums `current_value` across all assets |
+| `DashboardPage.tsx` — by-class | `by_asset_class` groups include the `crypto` class row |
+| `LedgerPage.tsx` — value column | reads `asset_current_value` (joined `current_value`) |
+| `TierPage.tsx` — Tier 3 weight | tier math sums `current_value` per tier |
+| `AnalyticsPage.tsx` — allocation % | reads same `current_value` |
 
 ---
 
-## Backend Architecture
-
-### Express Routes (one file per resource, nested under `assetsRouter`)
+## PAXG / XAUT Valuation Branch — Fully Defined
 
 ```
-api/src/routes/
-  index.ts              — mounts all routers at /api/*
-  entities.ts           — GET /entities, POST, PATCH /:id, DELETE /:id
-  assets.ts             — GET /assets, POST, PATCH /:id, DELETE /:id
-                          sub-routes: /assets/:id/acquisitions, /assets/:id/fiscal-tags
-  acquisitions.ts       — mounted as sub-router under assetsRouter
-  locations.ts          — GET /locations, POST, PATCH /:id, DELETE /:id
-  fiscal-tags.ts        — sub-router under assetsRouter
-  transfers.ts          — GET /transfers, POST
-  import.ts             — POST /import (multipart Excel file upload)
-  dashboard.ts          — GET /dashboard/summary (aggregated stats)
-  analytics.ts          — GET /analytics/batches (batch-level P&L)
+Asset record fields for PAXG or XAUT:
+  asset_class     = 'crypto'        (existing enum value)
+  sub_class       = 'gold'          ← BRANCH TRIGGER for the gold-backed path
+  coin_symbol     = 'PAXG'|'XAUT'   (display only; NOT used for price lookup)
+  coin_name       = 'Pax Gold'|'Tether Gold'
+  weight_per_unit = NULL             (not used; token-to-oz is fixed at 1:1)
+  weight_unit     = NULL             (not used)
+  custody_type    = user's choice    ('exchange'|'hot_wallet'|'hardware_wallet'...)
+
+Acquisition records:
+  quantity   = troy oz held          ← 1 token = 1 troy oz = 31.1035 g
+  cost_basis = EUR paid at purchase
+
+Valuation formula:
+  quantity_oz  = SUM(acquisitions.quantity) WHERE asset_id = ?
+  xau_per_gram = latest row FROM spot_prices WHERE metal = 'gold'
+  current_value = quantity_oz × 31.1035 × xau_per_gram
+
+Example (2 PAXG, XAU spot = €82.00/g):
+  current_value = 2 × 31.1035 × 82.00 = €5,101.17
+
+Branch discriminator in code:
+  asset_class === 'crypto' && sub_class === 'gold'
+  → use spot_prices WHERE metal = 'gold'
+  → PAXG/XAUT NEVER appear in crypto_spot_prices table
 ```
 
-### Migrations Pattern
+**Disambiguation by sub_class:**
 
-All migrations use `createTableIfNotExists` / `dropTableIfExists`. Auto-run at API startup:
-
-```typescript
-// db.ts
-export async function runMigrations() {
-  await knex.migrate.latest();
-}
-```
-
-Sequential numbered files:
-```
-migrations/
-  001_create_entities.ts
-  002_create_asset_locations.ts
-  003_create_assets.ts
-  004_create_acquisitions.ts
-  005_create_fiscal_tags.ts
-  006_create_transfers.ts
-```
-
-### Excel Import Architecture
-
-```
-POST /api/import
-  ├─ multer: receive .xlsx file in memory
-  ├─ xlsx.read(buffer): parse to workbook
-  ├─ extract sheet as JSON rows
-  ├─ validate schema: required columns check
-  ├─ transaction: BEGIN
-  │   ├─ upsert entities
-  │   ├─ upsert locations
-  │   ├─ insert assets
-  │   └─ insert acquisitions
-  └─ COMMIT / ROLLBACK on any error
-```
-
-Returns `{ imported: number, errors: string[] }` for client display.
+| sub_class value | Path | Example assets |
+|----------------|------|---------------|
+| `'gold'` | Gold-backed: spot_prices(gold) × 31.1035 × qty_oz | PAXG, XAUT |
+| `NULL` | Native crypto: crypto_spot_prices(coin_symbol) × qty | XMR (no sub_class set) |
+| any other value | Native crypto: crypto_spot_prices(coin_symbol) × qty | BTC, ETH |
 
 ---
 
-## Component Architecture
-
-### Page-Level Component Structure (derived from screen layouts)
-
-```typescript
-// Each page follows this structure (from screen HTML analysis)
-export default function TransactionLedger({ entity, onNavigate }) {
-  return (
-    <AppShell currentView="ledger" entity={entity}>
-      {/* page header: font-headline text-5xl */}
-      <PageHeader title="Acquisition Ledger" subtitle="...">
-        <button>Export Ledger</button>
-      </PageHeader>
-      
-      {/* filter bar: bg-surface-container-low rounded-xl */}
-      <FilterBar>
-        <Select name="taxStatus" />
-        <Select name="assetClass" />
-      </FilterBar>
-      
-      {/* data table: divide-y divide-outline-variant/10 */}
-      <DataTable columns={columns} data={acquisitions} />
-    </AppShell>
-  );
-}
-```
-
-### Reusable UI Components
-
-| Component | Source Screen | Implementation Notes |
-|-----------|--------------|---------------------|
-| `GlassPanel` | All screens | `background: rgba(34,42,61,0.7); backdrop-filter: blur(24px)` |
-| `GoldGradientButton` | All screens (sidebar CTA) | `background: linear-gradient(135deg, #e9c349 0%, #9d7d00 100%)` |
-| `StatusChip` | Ledger, Locations, Tax | `rounded-full bg-X-container/20 text-X border border-X/20` |
-| `DataTable` | Ledger, Locations, Analytics, Tax | `divide-y divide-outline-variant/10`; no solid borders |
-| `FilterBar` | Ledger, Locations, Analytics | `bg-surface-container-low rounded-xl p-4` |
-| `EntityBadge` | Business/Personal | `bg-primary/10 text-primary rounded-full border border-primary/20` |
-| `AtmosphericSpotlight` | Business/Personal | `w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]` |
-| `MarketTicker` | Analytics | Animated marquee scrolling bar; horizontal auto-scroll |
-| `WorldMapPin` | Locations | `w-4 h-4 bg-primary rounded-full animate-pulse shadow-[0_0_15px_rgba(233,195,73,0.8)]` |
-| `SparklineBar` | Dashboard | Flex row of `<div>` bars with `bg-primary/20`, last bar `bg-primary` |
-
----
-
-## File Structure
+## Data Flow Diagram (v1.3 Complete)
 
 ```
-precious_dashboard/
-├── api/
-│   ├── src/
-│   │   ├── index.ts              # app setup + runMigrations() + listen
-│   │   ├── db.ts                 # Knex singleton + runMigrations export
-│   │   ├── routes/
-│   │   │   ├── index.ts          # mount all routers at /api/*
-│   │   │   ├── entities.ts
-│   │   │   ├── assets.ts         # includes mounted sub-routes
-│   │   │   ├── acquisitions.ts
-│   │   │   ├── locations.ts
-│   │   │   ├── fiscal-tags.ts
-│   │   │   ├── transfers.ts
-│   │   │   ├── import.ts
-│   │   │   ├── dashboard.ts
-│   │   │   └── analytics.ts
-│   │   └── middleware/
-│   │       └── errorHandler.ts   # { error: { message, status } } shape
-│   ├── migrations/
-│   │   ├── 001_create_entities.ts
-│   │   ├── 002_create_asset_locations.ts
-│   │   ├── 003_create_assets.ts
-│   │   ├── 004_create_acquisitions.ts
-│   │   ├── 005_create_fiscal_tags.ts
-│   │   └── 006_create_transfers.ts
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx               # View discriminated union + entity toggle state
-│   │   ├── api.ts                # ALL fetch calls via request() helper
-│   │   ├── types.ts              # ALL shared types
-│   │   ├── index.css             # Tailwind directives + global utilities
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   │   ├── Sidebar.tsx
-│   │   │   │   ├── TopHeader.tsx
-│   │   │   │   └── AppShell.tsx
-│   │   │   └── ui/
-│   │   │       ├── GlassPanel.tsx
-│   │   │       ├── StatusChip.tsx
-│   │   │       ├── DataTable.tsx
-│   │   │       ├── FilterBar.tsx
-│   │   │       ├── EntityBadge.tsx
-│   │   │       ├── SparklineBar.tsx
-│   │   │       ├── WorldMapPin.tsx
-│   │   │       ├── MarketTicker.tsx
-│   │   │       └── AtmosphericSpotlight.tsx
-│   │   └── pages/
-│   │       ├── Dashboard.tsx
-│   │       ├── TransactionLedger.tsx
-│   │       ├── PerformanceAnalytics.tsx
-│   │       ├── AssetLocations.tsx
-│   │       ├── TaxCompliance.tsx
-│   │       └── BusinessPersonalBreakdown.tsx
-│   ├── public/
-│   │   └── manifest.webmanifest  # PWA manifest
-│   ├── index.html
-│   ├── vite.config.ts
-│   ├── tailwind.config.ts        # Midnight Sovereign tokens
-│   └── tsconfig.json
-├── data/
-│   ├── db/                       # Docker volume mount (PostgreSQL data)
-│   └── import/                   # Drop-zone for Excel files (optional)
-├── docker-compose.yml
-├── Makefile
-└── .planning/
+Manual input via UI
+        │
+        ├──► POST /api/spot-prices            ──► spot_prices table
+        │    (metals: XAU, XAG, XPT, XPD)         (metal, price_per_gram)
+        │
+        └──► POST /api/crypto-spot-prices     ──► crypto_spot_prices table
+             (native crypto: XMR, BTC, ETH)        (symbol, price_per_unit)
+             NOT PAXG/XAUT
+
+POST /api/valuation/recalculate
+        │
+        ├── Branch 1: asset_class = 'precious_metals'
+        │   value = qty × to_grams(weight) × spot_prices(sub_class)
+        │
+        ├── Branch 2: asset_class = 'crypto' AND sub_class = 'gold'   ← PAXG, XAUT
+        │   value = qty_oz × 31.1035 × spot_prices(metal='gold')
+        │   Guard: no XAU entry → skip (preserve current_value)
+        │
+        ├── Branch 3: asset_class = 'crypto' AND sub_class ≠ 'gold' AND coin_symbol set
+        │   value = qty × crypto_spot_prices(symbol)                   ← XMR, BTC
+        │   Guard: no symbol entry → skip (preserve current_value)
+        │
+        └── Branch 4: all other asset classes → skip (manual current_value)
+                │
+                ▼
+      UPDATE assets.current_value  +  INSERT valuation_snapshots
+                │
+                ▼
+  All existing consumers read updated field:
+    /api/dashboard/summary   → net worth total, by-class breakdown
+    /api/dashboard/history   → history chart (via valuation_snapshots)
+    /api/ledger              → value column
+    /api/tier-config         → Tier 3 allocation %
+    /api/valuation/summary   → total + premium decomp (v1.2)
+    /api/valuation/breakdown → per-asset detail (v1.2)
 ```
 
 ---
 
-## Docker Compose Architecture
+## Build Order (Dependency Graph)
 
-```yaml
-# docker-compose.yml
-services:
-  db:
-    image: postgres:16
-    volumes:
-      - ./data/db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: precious
-      POSTGRES_USER: precious
-      POSTGRES_PASSWORD: precious
+Each wave can be parallelised internally. Waves must be sequential.
 
-  api:
-    build: ./api
-    ports:
-      - "3001:3001"
-    depends_on:
-      - db
-    environment:
-      DATABASE_URL: postgres://precious:precious@db:5432/precious
-    volumes:
-      - ./api:/app             # dev hot-reload
+```
+Wave 1 — Database (no dependencies on anything else)
+  022_crypto_asset_fields.ts     ADD coin_symbol, coin_name, custody_type to assets
+  023_crypto_spot_prices.ts      CREATE TABLE crypto_spot_prices
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-    volumes:
-      - ./frontend:/app        # dev hot-reload
+Wave 2 — API (depends on Wave 1 migrations)
+  api/src/routes/cryptoSpotPrices.ts  (new)    GET latest, GET list, POST create
+  api/src/routes/valuation.ts         (extend) Add Branch 2 + Branch 3 to recalculate
+  api/src/routes/index.ts             (modify) Mount cryptoSpotPricesRouter
+
+Wave 3 — TypeScript Types + API Client (depends on Wave 2 API contracts)
+  frontend/src/types.ts  (modify)    CustodyType, CryptoSpotPrice; extend Asset
+  frontend/src/api.ts    (modify)    cryptoSpotPrices.* namespace
+
+Wave 4 — Asset Management UI (depends on Wave 3 types)
+  frontend/src/components/modals/AssetModal.tsx  (modify)
+    coin_symbol, coin_name, custody_type fields (crypto-conditional)
+    PAXG/XAUT auto-sets sub_class='gold' + shows XAU hint
+
+Wave 5 — Crypto Spot Price UI (depends on Wave 3 types)
+  New "Crypto Prices" panel inside v1.2 spot price management section
+  Trigger: POST /api/valuation/recalculate includes crypto branches
+
+Wave 6 — Verification
+  Create XMR asset → enter XMR spot → recalculate → verify Dashboard + Ledger + Tier
+  Create PAXG asset (sub_class='gold') → verify XAU spot is used, not crypto_spot_prices
+  Existing PM assets: verify recalculate still works correctly (no regression)
 ```
 
----
+**Critical ordering constraint:** AssetModal (Wave 4) must not ship before types.ts (Wave 3).
+The `CustodyType` type must exist in `Asset` before the modal compiles cleanly.
 
-## Sources
-
-- `.stitch/screens/*.html` — all 6 screens; actual markup extracted for layout, component, and class patterns
-- `.stitch/design-system/midnight-sovereign.json` — token values
-- `.stitch/design-system/DESIGN_SYSTEM.md` — design philosophy
-- `.github/copilot-instructions.md` — architecture constraints (required patterns)
-- `PRD.md` — stack specification and data model outline
-
----
-*Architecture research for: Precious Dashboard*
-*Researched: April 9, 2026*
+**DashboardPage, LedgerPage, TierPage, AnalyticsPage: zero dedicated waves needed.**
+They become passively correct after Wave 2 recalculate extension + first user-triggered
+recalculate. No code changes, no sprint allocation.
 
 ---
 
-# Architecture Research — v1.1 Addendum
-## Dealer Price Management + Tier System Integration
+## Integration Points — Exact File Paths
 
-**Milestone:** MKTD-01–03, TIER-01–05  
-**Researched:** 2026-04-11  
-**Basis:** Live codebase inspection — App.tsx, api.ts, types.ts, routes/index.ts, routes/assets.ts, Sidebar.tsx  
-
----
-
-## New Files
+### New Files (v1.3)
 
 | File | Purpose |
 |------|---------|
-| `api/migrations/010_dealers.ts` | Creates `dealers` table (id, name, notes, we_buy_price_per_gram NUMERIC) |
-| `api/migrations/011_asset_tier.ts` | Adds `tier` (smallint 0–3, nullable) + `weight_per_unit_grams` (NUMERIC, nullable) to `assets` |
-| `api/migrations/012_tier_config.ts` | Creates `tier_config` table (tier PK, target_pct, min_pct, max_pct) + seeds 4 default rows inline in `up()` |
-| `api/src/routes/dealers.ts` | Full CRUD router mounted at `/api/dealers` |
-| `api/src/routes/tierConfig.ts` | GET all rows + PUT single row router mounted at `/api/tier-config` |
-| `frontend/src/pages/TierPage.tsx` | New page: allocation table vs tier config, per-tier deviation view |
+| `api/migrations/022_crypto_asset_fields.ts` | ADD COLUMN coin_symbol, coin_name, custody_type to assets |
+| `api/migrations/023_crypto_spot_prices.ts` | CREATE TABLE crypto_spot_prices |
+| `api/src/routes/cryptoSpotPrices.ts` | GET/POST route for crypto_spot_prices |
+
+### Modified Files (v1.3)
+
+| File | Change summary |
+|------|---------------|
+| `api/src/routes/valuation.ts` | Extend recalculate with Branch 2 (PAXG/XAUT) + Branch 3 (XMR/BTC) |
+| `api/src/routes/index.ts` | Mount `cryptoSpotPricesRouter` at `/api/crypto-spot-prices` |
+| `frontend/src/types.ts` | Add `CustodyType`, `CryptoSpotPrice`, `CreateCryptoSpotPrice`; extend `Asset` |
+| `frontend/src/api.ts` | Add `cryptoSpotPrices` namespace |
+| `frontend/src/components/modals/AssetModal.tsx` | Crypto-conditional fields + PAXG/XAUT hint logic |
+| v1.2 spot price UI section | Add Crypto Prices panel (sub-section addition, not a new file) |
+
+### Untouched Files (v1.3)
+
+| File | Reason |
+|------|--------|
+| `api/src/routes/assets.ts` | `insert(req.body)` / `update(req.body)` are already column-agnostic |
+| `api/src/routes/dashboard.ts` | Reads `current_value` — passively correct after recalculate |
+| `api/src/routes/ledger.ts` | Same |
+| `api/src/routes/tierConfig.ts` | Same |
+| `frontend/src/pages/DashboardPage.tsx` | Gets crypto values automatically |
+| `frontend/src/pages/LedgerPage.tsx` | Same |
+| `frontend/src/pages/TierPage.tsx` | Same |
+| `frontend/src/pages/AnalyticsPage.tsx` | Same |
+| All migrations 001–021 | Never modify existing migrations |
 
 ---
 
-## Modified Files
+## Architecture Risks
 
-| File | Changes |
-|------|---------|
-| `frontend/src/components/Sidebar.tsx` | Add `'tier'` to `View` union literal type; add `{ id: 'tier', label: 'Tier Allocation', icon: Layers }` to `NAV_ITEMS` array |
-| `frontend/src/App.tsx` | Import `TierPage`; add `case 'tier': return <TierPage entityFilter={entityFilter} />` to the `renderPage()` switch |
-| `frontend/src/types.ts` | Add `Dealer`, `CreateDealer`, `UpdateDealer`; add `TierConfig`, `UpdateTierConfig`; add `TierHealth` + `TierHealthRow`; extend `Asset` interface with `tier?: number \| null` and `weight_per_unit_grams?: string \| null` |
-| `frontend/src/api.ts` | Add `api.dealers` namespace (list/create/update/delete); add `api.tierConfig` namespace (list/update); add `api.dashboard.tierHealth()` |
-| `api/src/routes/index.ts` | Import and mount `dealersRouter` at `/dealers`; import and mount `tierConfigRouter` at `/tier-config` |
-| `api/src/routes/dashboard.ts` | Add `GET /tier-health` endpoint — SQL GROUP BY assets on tier column, JOIN tier_config, return per-tier allocation vs target |
-| `frontend/src/components/modals/AssetModal.tsx` | Add `tier` select field (0 = Unassigned, 1–3 = tier labels) and `weight_per_unit_grams` number input; both optional/nullable |
-| `frontend/src/pages/LedgerPage.tsx` | Fetch `api.dealers.list()` alongside existing ledger data; render dealer We Buy price panel and per-row liquidation value |
-
----
-
-## New API Endpoints
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| `GET` | `/api/dealers` | List all dealers |
-| `POST` | `/api/dealers` | Create dealer |
-| `PUT` | `/api/dealers/:id` | Update dealer (name, notes, we_buy_price_per_gram) |
-| `DELETE` | `/api/dealers/:id` | Delete dealer |
-| `GET` | `/api/tier-config` | List all 4 tier config rows |
-| `PUT` | `/api/tier-config/:tier` | Update a single tier's target/min/max percentages |
-| `GET` | `/api/dashboard/tier-health` | Per-tier allocation summary vs config targets (server-computed aggregate) |
-
-No new asset endpoints are needed. `PUT /api/assets/:id` in `assets.ts` already spreads `req.body` into `knex.update()`; `tier` and `weight_per_unit_grams` columns flow through automatically once the migration runs.
-
----
-
-## Data Flow
-
-### Liquidation value (per-acquisition row in Ledger)
-
-```
-DB:  assets.weight_per_unit_grams  →  included in existing GET /api/assets response
-DB:  acquisitions.quantity         →  already in LedgerRow from GET /api/ledger
-DB:  dealers.we_buy_price_per_gram →  new GET /api/dealers
-
-Frontend: LedgerPage fetches ledger rows + dealers list in parallel
-  → liquidation = parseFloat(row.quantity) * parseFloat(asset.weight_per_unit_grams) * parseFloat(dealer.we_buy_price_per_gram)
-  → computed inline in the component, not shipped from the API
-```
-
-Justification for frontend-side: this is a presentational cross-product of three already-fetched columns. No aggregation is required. Keeping it frontend avoids adding a new join to the ledger query while keeping the calculation visible next to the UI that uses it.
-
-### Tier health tile on Dashboard
-
-```
-DB: assets (tier, current_value) + tier_config (tier, target_pct, min_pct, max_pct)
-API: GET /api/dashboard/tier-health
-  → SQL: GROUP BY assets.tier, SUM(current_value), calculate pct of portfolio total
-  → JOIN tier_config on tier
-  → returns: { total_portfolio_value, rows: TierHealthRow[] }
-
-Frontend: DashboardPage fires api.dashboard.summary() AND api.dashboard.tierHealth() in parallel
-  → renders compact tile: 4 rows × (tier label, actual%, target%, status: ok/under/over)
-```
-
-Justification for server-side: the tile is a portfolio-wide aggregate sum. Computing it on the frontend would require shipping all asset rows to the browser solely for a summary widget. A single SQL `GROUP BY` + `JOIN` is the right tool.
-
-### TierPage: allocation table
-
-```
-API: GET /api/assets  →  full list, now includes tier + weight_per_unit_grams
-API: GET /api/tier-config  →  4 rows
-
-Frontend: TierPage — local useState<Asset[]> + useState<TierConfig[]>
-  → totalValue = sum of parseFloat(asset.current_value)
-  → per tier: actualValue, actualPct, targetPct, minPct, maxPct, deviation
-  → no server round-trip for derived numbers
-  → tier config editing: PUT /api/tier-config/:tier inline via api.tierConfig.update()
-```
-
----
-
-## Build Order
-
-Dependencies flow downward — each phase requires everything above it.
-
-```
-Phase 1 — DB Foundation
-  ├── 010_dealers migration
-  ├── 011_asset_tier migration  (tier + weight_per_unit_grams columns on assets)
-  └── 012_tier_config migration (table + seed 4 default rows in up())
-
-Phase 2 — Types  (frontend/src/types.ts)
-  ├── Dealer, CreateDealer, UpdateDealer
-  ├── TierConfig, UpdateTierConfig
-  ├── TierHealth, TierHealthRow
-  └── Asset interface extended: tier?, weight_per_unit_grams?
-  NOTE: CreateAsset/UpdateAsset pick up new fields automatically via existing
-        Omit<>/Partial<> derivation — no manual Update type changes needed
-
-Phase 3 — Backend routes
-  ├── api/src/routes/dealers.ts       (full CRUD)
-  ├── api/src/routes/tierConfig.ts    (GET all + PUT :tier)
-  ├── api/src/routes/dashboard.ts     (add GET /tier-health)
-  └── api/src/routes/index.ts         (mount dealers + tierConfig routers)
-
-Phase 4 — Frontend API client  (frontend/src/api.ts)
-  ├── api.dealers  (list/create/update/delete)
-  ├── api.tierConfig  (list/update)
-  └── api.dashboard.tierHealth()
-
-Phase 5 — Navigation shell
-  ├── Sidebar.tsx: add 'tier' to View union + NAV_ITEMS entry
-  ├── App.tsx: import TierPage + add case 'tier'
-  └── TierPage.tsx: scaffold (renders but shows empty state)
-  VERIFY: AppShell.tsx re-exports View from Sidebar — recompile confirms no drift
-
-Phase 6 — Asset modal extensions
-  ├── AssetModal.tsx: tier select field (nullable, 0–3)
-  └── AssetModal.tsx: weight_per_unit_grams number input (nullable)
-  NOTE: PUT /api/assets/:id already handles these fields — zero backend change
-
-Phase 7 — Dealer management  (MKTD-01, MKTD-02, MKTD-03)
-  ├── DealerModal component  (create/edit)
-  └── LedgerPage: dealer panel + liquidation value column
-  DEPENDS ON: Phase 3 dealers route, Phase 4 api.dealers
-
-Phase 8 — TierPage content  (TIER-01, TIER-03, TIER-04, TIER-05)
-  ├── Fetch assets + tier_config
-  ├── Allocation table with deviation indicators
-  └── Inline tier_config editing
-  DEPENDS ON: Phase 3 tierConfig route, Phase 4 api.tierConfig, Phase 5 navigation
-
-Phase 9 — Dashboard tier health tile  (TIER-02 dashboard widget)
-  └── DashboardPage: fetch api.dashboard.tierHealth() + render tile
-  DEPENDS ON: Phase 3 dashboard extension, Phase 4 api client
-```
-
----
-
-## Integration Notes
-
-### `View` type lives in `Sidebar.tsx`, not `types.ts`
-The `View` union is defined in `frontend/src/components/Sidebar.tsx` and re-exported via `AppShell.tsx`. When adding `'tier'`, change the union in **Sidebar.tsx only**. AppShell.tsx re-exports it transparently — no change there. Do not create a duplicate definition in types.ts.
-
-### `tier_config` rows must be seeded inside the migration `up()`
-The `PUT /api/tier-config/:tier` handler does an UPDATE, not an upsert. If the 4 rows don't exist, updates silently no-op. Seed them in `012_tier_config.ts up()` with safe defaults — e.g. `{ tier: 0, target_pct: 0, min_pct: 0, max_pct: 0 }` for "Unassigned" and a reasonable split (60/25/15) for tiers 1–3.
-
-### `PUT /api/assets/:id` is already column-agnostic
-`assets.ts` uses `knex('assets').update({ ...req.body, updated_at: knex.fn.now() })`. Once the migration adds `tier` and `weight_per_unit_grams`, those fields pass through the existing handler without any code change. This is the established pattern — exploit it.
-
-### Dealer We Buy prices are not ledger rows — keep types separate
-Do not add `we_buy_price_per_gram` to `LedgerRow`. Dealers have no per-acquisition relationship. LedgerPage should fetch `api.dealers.list()` independently and render them in a separate panel. Merging into the Ledger JOIN query would dirty the data model.
-
-### Crypto as Tier 3 — no schema change needed
-`asset_class = 'crypto'` already exists in the schema. Assigning `tier = 3` to crypto assets via the AssetModal is sufficient. The tier grouping query operates on the `tier` column regardless of asset class; no special-casing required.
-
-### Dashboard tier-health endpoint path
-Mount as `GET /api/dashboard/tier-health` (not under `/summary`). DashboardPage fires both `api.dashboard.summary()` and `api.dashboard.tierHealth()` in parallel. Keeping them as separate endpoints preserves the existing summary response shape and avoids coupling entity_id filter semantics to a portfolio-wide calculation.
-
-### TierPage and entity filter
-Tier allocation is a portfolio-wide view; applying an entity filter would make the percentage math misleading (percentages would no longer sum to 100% of the portfolio). TierPage accepts the `entityFilter` prop for prop-interface consistency with all other pages, but should either ignore it or display a dismissible notice when a filter is active.
-
----
-*v1.1 architecture addendum for: Precious Dashboard*
-*Researched: April 11, 2026*
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| PAXG/XAUT created with `sub_class` not equal to `'gold'` → routed to native crypto path, finds no price entry | Medium | AssetModal: if `coin_symbol` is 'PAXG' or 'XAUT', auto-set `sub_class = 'gold'` and display warning |
+| PAXG/XAUT quantity entered as token count (integer) instead of troy oz — they are the same, but user confusion risk | Low | Acquisition form hint: "For PAXG/XAUT: 1 token = 1 troy oz — enter number of tokens" |
+| `spot_prices` has no XAU entry when recalculate runs (v1.2 data not set up yet) | Low | Branch 2 checks `if (xauSpot)` and skips silently — gold-backed assets retain existing `current_value` |
+| Recalculate triggered before any crypto spot price entered → native crypto `current_value` remains at manual amount | Low | Branch 3 guard: `if (!spotPrice) continue` — NEVER zeros out existing value; backwards compatible |
+| `DISTINCT ON` returns incorrect row if index missing | Low | Index on `(symbol, recorded_at DESC)` is explicitly created in migration 023 — not left to chance |
