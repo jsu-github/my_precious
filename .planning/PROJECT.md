@@ -29,6 +29,17 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 - Value / premium decomposition (metals only) — per acquisition: metal value = weight × qty × spot, premium = cost − metal value; aggregated at portfolio level
 - New Valuation screen — (a) value summary: liquidation / cost / metal value side-by-side; (b) cash flow section: capital deployed, returned, unrealized P&L
 
+## Planned Milestone: v1.3 — Crypto Asset Tracking
+
+**Goal:** Extend the portfolio to support individually tracked crypto assets with quantity × spot price math, gold-backed token classification (Monero, PAXG, XAUT), and per-asset custody/storage tracking.
+
+**Target features:**
+- Crypto quantity + manual EUR spot price per coin symbol (XMR, BTC, ETH, etc.); value = qty × spot
+- PAXG / XAUT flagged as gold-backed — value derives from qty × XAU spot (1 token = 1 troy oz)
+- Custody type per asset: exchange, hot_wallet, hardware_wallet, paper_wallet, custodian
+- Free-text custody name with per-type UI suggestions (Binance, Ledger, MetaMask, etc.)
+- Custody type + name visible in Ledger and asset detail views
+
 ---
 
 ## Requirements
