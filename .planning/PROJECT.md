@@ -19,9 +19,15 @@ A single **Global Net Worth Dashboard** showing total financial position across 
 - TierPage — allocation % vs target/min/max bounds, RangeBar + StatusBadge (green/amber/red)
 - Dashboard Tier Health tile — X/4 in-range score, mini-bars, clickable to TierPage
 
-## Next Milestone: v1.2 — TBD
+## Current Milestone: v1.2 — Portfolio Valuation
 
-Run `/gsd-new-milestone` to define requirements and roadmap for v1.2.
+**Goal:** Replace manually-entered asset values with a calculated multi-dimensional view — dealer liquidation value, metal spot value, and premium paid — and add a dedicated Valuation screen with capital flow tracking.
+
+**Target features:**
+- Spot price management — manually enter XAU/XAG/XPT/XPD spot prices per gram; drives metal-value math
+- Dealer-derived asset valuation — calculate current value from default dealer (HollandGold) We Buy price × weight × qty; fallback to manual for assets without dealer prices
+- Value / premium decomposition (metals only) — per acquisition: metal value = weight × qty × spot, premium = cost − metal value; aggregated at portfolio level
+- New Valuation screen — (a) value summary: liquidation / cost / metal value side-by-side; (b) cash flow section: capital deployed, returned, unrealized P&L
 
 ---
 
@@ -53,9 +59,9 @@ Run `/gsd-new-milestone` to define requirements and roadmap for v1.2.
 - [x] Dedicated Tier page shows current allocation vs targets with green/amber/red status per tier — TIER-04
 - [x] Dashboard shows a Tier health summary tile — TIER-05
 
-### Active (v1.2 — TBD)
+### Active (v1.2 — Portfolio Valuation)
 
-(To be defined — run `/gsd-new-milestone`)
+(To be defined during milestone — see REQUIREMENTS.md)
 
 ### Out of Scope
 
@@ -122,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-13 — v1.1 complete (phases 13–16: dealer pricing, sovereign tier system, dashboard health tile)*
+*Last updated: 2026-04-13 — v1.2 started: Portfolio Valuation (spot prices, dealer-derived valuations, value/premium decomposition, new Valuation screen)*
