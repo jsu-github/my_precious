@@ -7,7 +7,7 @@ stopped_at: ~
 last_updated: "2026-04-13T00:00:00Z"
 last_activity: 2026-04-13
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** A single Global Net Worth Dashboard showing total financial position across all entities and asset classes — accurate enough to trust, fast enough to open daily
-**Current focus:** Milestone v1.2 — Portfolio Valuation (defining requirements)
+**Current focus:** Milestone v1.2 — Portfolio Valuation (roadmap defined, Phase 17 ready to plan)
+
+**v1.3 status:** Requirements defined (CRPT-01 through CRPT-07) + roadmap phases planned (Phases 20–22, pending v1.2 completion)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (roadmap defined — Phase 17 up next)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-13 — Milestone v1.2 started
+Status: Ready to plan
+Last activity: 2026-04-13 — v1.2 roadmap created (3 phases, 9 requirements)
 
 Progress: [____________] 0%
 
@@ -36,7 +38,9 @@ Progress: [____________] 0%
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| TBD | TBD | TBD | Not started |
+| 17 | Spot Price Data Foundation | SPOT-01, SPOT-02 | Not started |
+| 18 | Valuation Calculation Engine | DERIV-01, DERIV-02, PREM-01, PREM-02 | Not started |
+| 19 | Valuation Screen | VAL-01, VAL-02, VAL-03 | Not started |
 
 **By Phase:**
 

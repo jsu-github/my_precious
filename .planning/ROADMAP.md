@@ -7,9 +7,11 @@
 
 ---
 
-## Current Milestone: v1.2 — TBD
+## Current Milestone: v1.2 — Portfolio Valuation (Phases 17–19)
 
-(Start with `/gsd-new-milestone` to define v1.2 requirements and roadmap.)
+Requirements defined. See [.planning/v1.2-REQUIREMENTS.md](v1.2-REQUIREMENTS.md). Three phases planned (17–19). Phases to be added to ROADMAP.md when milestone execution begins.
+
+> **v1.3 phase numbering:** v1.3 uses Phases 20–22, following v1.2's 3 planned phases (17–19). Renumber v1.3 at milestone start if v1.2 expands beyond Phase 19.
 
 ---
 
@@ -53,6 +55,22 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 14: Dealer Price Management** - Dealer CRUD + weight field in AssetModal + Ledger liquidation value column with active-dealer selector (completed 2026-04-11)
 - [x] **Phase 15: Sovereign Tier System** - Tier assignment in AssetModal + crypto asset support + tier_config CRUD + dedicated TierPage with allocation vs target and status indicators (completed 2026-04-11)
 - [x] **Phase 16: Dashboard Health Tile** - Extend dashboard summary API + add Tier health glass-panel tile to DashboardPage (completed 2026-04-11)
+
+---
+
+### v1.2 — Portfolio Valuation (Phases 17–19 — to be added at milestone start)
+
+*(Phase details will be appended when v1.2 execution begins)*
+
+---
+
+### v1.3 — Crypto Asset Tracking (Phases 20–22)
+
+> Numbers assume v1.2 ends at Phase 19. Renumber at milestone start if v1.2 expands.
+
+- [ ] **Phase 20: Crypto Asset Foundation** - 3 DB migrations (qty precision to DECIMAL(20,12), crypto fields on assets, crypto_spot_prices table) + cryptoSpotPrices API route + valuation branches 2 + 3
+- [ ] **Phase 21: Crypto Asset Management UI** - types.ts + api.ts extensions + AssetModal crypto fields (coin symbol/name, custody type/name, PAXG/XAUT hint) + custody columns in Ledger
+- [ ] **Phase 22: Crypto Spot Price Panel + Live Valuation** - Crypto EUR price entry UI panel + recalculate propagation to Dashboard, Ledger, Tier, Analytics
 
 ## Phase Details
 
@@ -317,6 +335,65 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+---
+
+## v1.3 — Crypto Asset Tracking
+
+> Phase numbers (20–22) assume v1.2 ends at Phase 19. Confirm at v1.3 milestone start.
+
+### Phase 20: Crypto Asset Foundation
+**Goal**: DB schema is extended for crypto assets — 12-decimal quantity precision, coin_symbol/coin_name/custody_type/custody_name on assets, and a new crypto_spot_prices table — a new API route handles crypto spot price CRUD, and the valuation recalculate endpoint correctly branches on all three crypto paths (gold-backed via XAU spot, native crypto via crypto_spot_prices, manual fallback unchanged)
+**Depends on**: Phase 19 (v1.2 final phase, subject to renumbering)
+**Requirements**: CRPT-01, CRPT-04
+**Success Criteria** (what must be TRUE):
+  1. `GET /api/assets` returns `coin_symbol`, `coin_name`, `custody_type`, `custody_name` fields (null for non-crypto rows) — confirmed after migration runs
+  2. `POST /api/crypto-spot-prices` creates a price entry; `GET /api/crypto-spot-prices/latest` returns the most recent entry per symbol — same append-only pattern as v1.2 `spot_prices`
+  3. API rejects `POST /api/crypto-spot-prices` with symbols `PAXG` or `XAUT` (400 error) — gold-backed tokens must never enter this table
+  4. After `POST /api/valuation/recalculate`: a crypto asset with `sub_class = 'gold'` (PAXG/XAUT) derives value from `qty × XAU_spot_per_gram × 31.1035`; a native crypto asset derives value from `qty × crypto_spot_prices(symbol)` — verified by inserting test assets and checking `current_value`
+  5. An acquisition with a 12-decimal quantity (e.g. `0.123456789012` XMR) round-trips through INSERT/SELECT without truncation
+**Plans**: TBD
+**Notes**:
+  - Assign migration numbers AFTER v1.2 merges: `ls api/migrations/ | tail -5` before creating any file
+  - qty precision requires raw SQL `ALTER COLUMN TYPE` — Knex fluent API cannot change existing column precision
+  - `crypto_spot_prices` schema: `(id SERIAL, coin_symbol VARCHAR(20), price_per_unit NUMERIC(20,8), recorded_at TIMESTAMPTZ DEFAULT NOW())`
+  - Valuation branch discriminator: `sub_class = 'gold'` on crypto asset → XAU path; `coin_symbol IS NOT NULL` (and not gold) → crypto_spot path; else → manual fallback unchanged
+  - PAXG/XAUT: `acquisitions.quantity` = number of tokens (1 token = 1 troy oz); `weight_per_unit` must remain NULL
+
+### Phase 21: Crypto Asset Management UI
+**Goal**: Users can enter all crypto-specific fields in the AssetModal (coin symbol/name, custody type with per-type suggestions, custody name, gold-backed auto-hint for PAXG/XAUT), and custody type + name are visible in the Ledger table and asset edit view
+**Depends on**: Phase 20
+**Requirements**: CRPT-05, CRPT-06, CRPT-07
+**Success Criteria** (what must be TRUE):
+  1. AssetModal shows `coin_symbol` and `coin_name` inputs only when `asset_class = 'crypto'`; both fields persist after save and appear in `GET /api/assets` response
+  2. A custody type dropdown (exchange / hot_wallet / hardware_wallet / paper_wallet / custodian) appears for all crypto assets; selected value persists after page reload
+  3. Custody name field uses a `<datalist>` with per-type suggestions: exchange → Binance, Coinbase, Kraken, Bybit, Bitfinex, Bitstamp; hardware_wallet → Ledger Nano X, Ledger Nano S, Trezor Model T, Trezor Model One, Coldcard, BitBox02; hot_wallet → MetaMask, Exodus, Electrum, Trust Wallet, Wasabi; paper_wallet and custodian → free text only
+  4. When `coin_symbol` is `PAXG` or `XAUT`, AssetModal shows an inline hint: "Value derived from XAU spot — 1 token = 1 troy oz"
+  5. Ledger table shows `custody_type` and `custody_name` columns for crypto asset rows; asset edit modal pre-populates both custody fields from DB on open
+**Plans**: TBD
+**UI hint**: yes
+**Notes**:
+  - `CustodyType` enum: `'exchange' | 'hot_wallet' | 'hardware_wallet' | 'paper_wallet' | 'custodian'`
+  - Add to `types.ts`: `CustodyType`, `CryptoSpotPrice`, `CreateCryptoSpotPrice`; extend `Asset` with `coin_symbol`, `coin_name`, `custody_type`, `custody_name` (all nullable)
+  - Add to `api.ts`: `cryptoSpotPrices` namespace with `list()`, `latest()`, `create()` methods
+  - Critical ordering: `types.ts` must be updated before `AssetModal.tsx` — `CustodyType` must exist before the modal compiles
+
+### Phase 22: Crypto Spot Price Panel + Live Valuation
+**Goal**: Users can enter EUR spot prices per coin symbol through a UI panel; Dashboard, Ledger, Tier, and Analytics screens automatically reflect `qty × spot` computed values for all crypto positions after recalculate
+**Depends on**: Phase 21
+**Requirements**: CRPT-02, CRPT-03
+**Success Criteria** (what must be TRUE):
+  1. A crypto spot price entry panel lists all known coin symbols with their latest EUR price and timestamp; user can submit a new price entry per symbol via an inline form
+  2. Submitting a new XMR spot price then triggering recalculate updates the XMR asset's `current_value` to `qty × new_price` — visible on both Dashboard and Ledger immediately after recalculate
+  3. PAXG/XAUT assets do NOT appear as entry targets in the crypto spot price panel; their values update automatically via the XAU spot path from v1.2
+  4. Inserting 3 historical XMR price entries and running recalculate 3 times produces identical `current_value` each time — confirms no cartesian product bug from un-windowed JOIN
+  5. Dashboard total portfolio value and Ledger rows reflect correct computed crypto valuations for all positions
+**Plans**: TBD
+**UI hint**: yes
+**Notes**:
+  - Crypto spot price panel lives inside the v1.2 Valuation screen as a sub-section — zero new pages, zero new nav items
+  - Always use `DISTINCT ON (coin_symbol) ORDER BY coin_symbol, recorded_at DESC` CTE when joining — never a bare JOIN against append-only table
+  - Regression test: run recalculate after v1.3 work and confirm Branch 1 (precious metals) values are unchanged
+
 ## Progress
 
 | Phase | Name | Plans Complete | Status | Completed |
@@ -337,3 +414,7 @@ Plans:
 | 14 | Dealer Price Management | 1/1 | Complete ✓ | 2026-04-11 |
 | 15 | Sovereign Tier System | — | Complete ✓ | 2026-04-11 |
 | 16 | Dashboard Health Tile | — | Complete ✓ | 2026-04-11 |
+| 17–19 | v1.2 Portfolio Valuation | TBD | Not started | - |
+| 20 | Crypto Asset Foundation | 0/TBD | Not started | - |
+| 21 | Crypto Asset Management UI | 0/TBD | Not started | - |
+| 22 | Crypto Spot Price Panel | 0/TBD | Not started | - |
