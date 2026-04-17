@@ -38,8 +38,9 @@ export interface AssetLocation {
   name: string;
   country_code: string;
   custodian_name: string;
-  map_x_pct: number;
-  map_y_pct: number;
+  lat: number | null;
+  lon: number | null;
+  insurance_amount: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,7 +53,9 @@ export interface Asset {
   asset_class: AssetClass;
   sub_class: string | null;     // e.g. 'gold', 'silver', 'platinum'
   product_type: string | null;  // e.g. 'bar', 'coin'
-  weight_per_unit_grams: string | null; // NUMERIC(10,4) as string — null until set by user
+  brand: string | null;         // e.g. 'Maple Leaf', 'Umicore', 'C. Hafner'
+  weight_per_unit: string | null;  // NUMERIC stored as string; value in the chosen unit
+  weight_unit: string | null;      // 'g' or 'oz'
   tier: number | null;                  // 0=Grid-Down, 1=Digital, 2=Vaults, 3=Crypto; 0 is valid!
   current_value: string; // NUMERIC returned as string by pg driver
   security_class: SecurityClass;
@@ -66,6 +69,7 @@ export interface Asset {
   entity_type?: EntityType;
   location_name?: string;
   custodian_name?: string;
+  total_quantity?: string; // NUMERIC as string; sum of acquisition quantities
   acquisitions?: Acquisition[];
 }
 
@@ -118,17 +122,22 @@ export interface Dealer {
   id: number;
   name: string;
   contact_notes: string | null;
-  we_buy_gold_per_gram: string | null;       // Au bars €/g
-  we_buy_gold_coin_per_gram: string | null;  // Au coins €/g
-  we_buy_silver_bar_per_gram: string | null; // Ag bars €/g
-  we_buy_silver_coin_per_gram: string | null;// Ag coins €/g
-  we_buy_platinum_per_gram: string | null;   // Pt €/g
-  we_buy_palladium_per_gram: string | null;  // Pd €/g
+  we_buy_gold_per_gram: string | null;           // Au 1g bars €/g (fallback)
+  we_buy_gold_1oz_bar_per_gram: string | null;    // Au 1oz bars €/g
+  we_buy_gold_50g_bar_per_gram: string | null;    // Au 50g bars €/g
+  we_buy_gold_100g_bar_per_gram: string | null;   // Au 100g bars €/g
+  we_buy_gold_coin_per_gram: string | null;       // Au coins €/g
+  we_buy_silver_bar_per_gram: string | null;      // Ag bars €/g (storage fallback)
+  we_buy_silver_100oz_bar_per_gram: string | null;// Ag 100oz physical bars €/g
+  we_buy_silver_coin_per_gram: string | null;     // Ag coins €/g
+  we_buy_platinum_per_gram: string | null;        // Pt €/g
+  we_buy_palladium_per_gram: string | null;       // Pd €/g
   updated_at: string;
 }
 
 export interface TierConfig {
   tier_id: number;
+  entity_scope: string; // 'personal' | 'business'
   tier_name: string;
   target_pct: string;  // NUMERIC(5,2) as string
   min_pct: string;     // NUMERIC(5,2) as string
@@ -175,10 +184,12 @@ export interface LedgerRow {
   asset_class: AssetClass;
   sub_class: string | null;
   product_type: string | null;
-  weight_per_unit_grams: string | null; // NUMERIC(10,4) as string — from assets join
+  weight_per_unit: string | null;  // NUMERIC as string — value in the unit specified by weight_unit
+  weight_unit: string | null;      // 'g' or 'oz'
   asset_current_value: string; // NUMERIC as string — total value of parent asset
   entity_name: string;
   entity_type: EntityType;
+  location_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -200,4 +211,25 @@ export interface DashboardSummary {
     }>;
     in_range: number;
   };
+}
+
+export interface HistoryPoint {
+  bucket: string; // ISO date string
+  value: string;  // NUMERIC as string
+}
+
+export interface DashboardHistory {
+  points: HistoryPoint[];
+  growth_pct: number | null;    // growth over the selected period window
+  growth_1y_pct: number | null; // always 1-year growth, regardless of selected period
+}
+
+export interface RecentMovement {
+  id: number;
+  purchase_date: string;
+  cost_basis: string;   // NUMERIC as string
+  asset_name: string;
+  asset_class: AssetClass;
+  entity_name: string;
+  is_gain: boolean;
 }

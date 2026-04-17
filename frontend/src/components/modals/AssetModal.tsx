@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { api } from '../../api';
-import type { Asset, CreateAsset, AssetClass, SecurityClass, AuditFrequency, Entity, AssetLocation } from '../../types';
+import type { Asset, CreateAsset, AssetClass, SecurityClass, AuditFrequency, Entity, AssetLocation, TierConfig } from '../../types';
 import Modal from './Modal';
 import { Field, Input, Select, Textarea, FormActions, ErrorMessage } from './FormFields';
 
@@ -15,15 +15,36 @@ const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
   fixed_income: 'Fixed Income', cash: 'Cash', exotics: 'Exotics',
 };
 
+const ASSET_CLASS_TIER_DEFAULTS: Partial<Record<AssetClass, number>> = {
+  precious_metals: 2,
+  crypto: 3,
+  cash: 1,
+};
+
 interface Props {
   asset?: Asset;
   entities: Entity[];
   locations: AssetLocation[];
+  tierConfigs: TierConfig[];
   onSaved: (asset: Asset) => void;
   onClose: () => void;
 }
 
-export default function AssetModal({ asset, entities, locations, onSaved, onClose }: Props) {
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function buildAssetName(brand: string, metal: string, type: string, weight: string, unit: string): string {
+  const parts = [
+    brand.trim() || null,
+    metal ? capitalize(metal) : null,
+    type  ? capitalize(type)  : null,
+    weight                    ? `${weight}${unit}` : null,
+  ].filter(Boolean) as string[];
+  return parts.join(' ');
+}
+
+export default function AssetModal({ asset, entities, locations, tierConfigs, onSaved, onClose }: Props) {
   const isEdit = !!asset;
   const [form, setForm] = useState<CreateAsset>({
     entity_id: asset?.entity_id ?? (entities[0]?.id ?? 0),
@@ -32,7 +53,9 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
     asset_class: asset?.asset_class ?? 'precious_metals',
     sub_class: asset?.sub_class ?? null,
     product_type: asset?.product_type ?? null,
-    weight_per_unit_grams: asset?.weight_per_unit_grams ?? null,
+    brand: asset?.brand ?? null,
+    weight_per_unit: asset?.weight_per_unit ?? null,
+    weight_unit: asset?.weight_unit ?? 'g',
     tier: asset?.tier ?? null,
     current_value: asset?.current_value ?? '',
     security_class: asset?.security_class ?? 'standard',
@@ -43,14 +66,28 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const derivedName = useMemo(() => {
+    if (form.asset_class !== 'precious_metals') return '';
+    return buildAssetName(
+      form.brand ?? '',
+      form.sub_class ?? '',
+      form.product_type ?? '',
+      form.weight_per_unit ?? '',
+      form.weight_unit ?? 'g',
+    );
+  }, [form.asset_class, form.brand, form.sub_class, form.product_type, form.weight_per_unit, form.weight_unit]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
+      const payload = form.asset_class === 'precious_metals'
+        ? { ...form, name: derivedName || 'Precious Metal' }
+        : form;
       const saved = isEdit
-        ? await api.assets.update(asset!.id, form)
-        : await api.assets.create(form);
+        ? await api.assets.update(asset!.id, payload)
+        : await api.assets.create(payload);
       onSaved(saved);
     } catch (err) {
       setError(String(err));
@@ -62,27 +99,118 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
   return (
     <Modal title={isEdit ? 'Edit Asset' : 'New Asset'} onClose={onClose} width="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Name" required>
-            <Input
-              required
-              autoFocus
-              placeholder="e.g. Swiss Gold Bars"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            />
-          </Field>
+        {/* Row 1: Name (non-PM) or Asset Class alone — then PM identity block */}
+        {form.asset_class !== 'precious_metals' ? (
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Name" required>
+              <Input
+                required
+                autoFocus
+                placeholder="e.g. Swiss Government Bonds"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              />
+            </Field>
+            <Field label="Asset Class" required>
+              <Select
+                value={form.asset_class}
+                onChange={e => setForm(f => {
+                  const cls = e.target.value as AssetClass;
+                  const def = ASSET_CLASS_TIER_DEFAULTS[cls];
+                  return { ...f, asset_class: cls, tier: f.tier == null && def != null ? def : f.tier };
+                })}
+              >
+                {ASSET_CLASSES.map(cls => (
+                  <option key={cls} value={cls}>{ASSET_CLASS_LABELS[cls]}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        ) : (
           <Field label="Asset Class" required>
             <Select
               value={form.asset_class}
-              onChange={e => setForm(f => ({ ...f, asset_class: e.target.value as AssetClass }))}
+              onChange={e => setForm(f => {
+                const cls = e.target.value as AssetClass;
+                const def = ASSET_CLASS_TIER_DEFAULTS[cls];
+                return { ...f, asset_class: cls, tier: f.tier == null && def != null ? def : f.tier };
+              })}
             >
               {ASSET_CLASSES.map(cls => (
                 <option key={cls} value={cls}>{ASSET_CLASS_LABELS[cls]}</option>
               ))}
             </Select>
           </Field>
-        </div>
+        )}
+
+        {/* Precious metals identity block */}
+        {form.asset_class === 'precious_metals' && (
+          <div className="border border-outline-variant/20 rounded-lg bg-surface-high/20 p-4 space-y-3">
+            <p className="text-[10px] text-on-surface-variant/35 uppercase tracking-wider mb-1">Product Identity</p>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Metal" required>
+                <Select
+                  value={form.sub_class ?? ''}
+                  onChange={e => setForm(f => ({ ...f, sub_class: e.target.value || null }))}
+                >
+                  <option value="">— Select —</option>
+                  <option value="gold">Gold</option>
+                  <option value="silver">Silver</option>
+                  <option value="platinum">Platinum</option>
+                  <option value="palladium">Palladium</option>
+                </Select>
+              </Field>
+              <Field label="Type" required>
+                <Select
+                  value={form.product_type ?? ''}
+                  onChange={e => setForm(f => ({ ...f, product_type: e.target.value || null }))}
+                >
+                  <option value="">— Select —</option>
+                  <option value="bar">Bar</option>
+                  <option value="coin">Coin</option>
+                </Select>
+              </Field>
+              <Field label="Brand">
+                <Input
+                  type="text"
+                  placeholder="e.g. Maple Leaf, Umicore"
+                  value={form.brand ?? ''}
+                  onChange={e => setForm(f => ({ ...f, brand: e.target.value || null }))}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Weight">
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="e.g. 1, 100"
+                  value={form.weight_per_unit ?? ''}
+                  onChange={e => setForm(f => ({ ...f, weight_per_unit: e.target.value || null }))}
+                />
+              </Field>
+              <Field label="Unit">
+                <Select
+                  value={form.weight_unit ?? 'g'}
+                  onChange={e => setForm(f => ({ ...f, weight_unit: e.target.value }))}
+                >
+                  <option value="g">Grams (g)</option>
+                  <option value="oz">Troy Oz (oz)</option>
+                </Select>
+              </Field>
+              <div>
+                <label className="block text-[11px] font-medium text-on-surface-variant/60 uppercase tracking-wider mb-1.5">Name Preview</label>
+                <div className="w-full min-h-[38px] flex items-center bg-surface-highest border border-outline-variant/40 rounded px-3 py-2 text-sm font-mono truncate">
+                  {derivedName
+                    ? <span className="text-on-surface">{derivedName}</span>
+                    : <span className="text-on-surface-variant/25 text-xs italic">Fill fields above…</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Entity" required>
             <Select
@@ -148,18 +276,6 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
             />
           </Field>
         </div>
-        {form.asset_class === 'precious_metals' && (
-          <Field label="Weight per Unit (grams)">
-            <Input
-              type="number"
-              min="0"
-              step="0.0001"
-              placeholder="e.g. 31.1035 for 1 troy oz"
-              value={form.weight_per_unit_grams ?? ''}
-              onChange={e => setForm(f => ({ ...f, weight_per_unit_grams: e.target.value || null }))}
-            />
-          </Field>
-        )}
         <Field label="Sovereign Tier">
           <Select
             value={form.tier != null ? String(form.tier) : ''}
@@ -169,10 +285,11 @@ export default function AssetModal({ asset, entities, locations, onSaved, onClos
             }))}
           >
             <option value="">— Unassigned —</option>
-            <option value="0">Tier 0 — Grid-Down Baseline</option>
-            <option value="1">Tier 1 — Digital Liquidity</option>
-            <option value="2">Tier 2 — The Vaults</option>
-            <option value="3">Tier 3 — Uncensorable Frontier</option>
+            {tierConfigs.map(tc => (
+              <option key={tc.tier_id} value={String(tc.tier_id)}>
+                Tier {tc.tier_id} — {tc.tier_name}
+              </option>
+            ))}
           </Select>
         </Field>
         <Field label="Description">

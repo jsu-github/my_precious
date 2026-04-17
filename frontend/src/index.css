@@ -1,7 +1,9 @@
 /* ─── Fonts (self-hosted via @fontsource — no CDN) ──────────────────────────── */
-@import '@fontsource/newsreader/400.css';
-@import '@fontsource/newsreader/400-italic.css';
-@import '@fontsource/newsreader/300.css';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+@import '@fontsource/manrope/800.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
@@ -12,20 +14,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── CSS custom properties (Midnight Sovereign tokens) ────────────────────── */
+/* ─── CSS custom properties (Stitch design system tokens) ──────────────────── */
 :root {
-  --color-background:       #0b1326;
-  --color-surface-low:      #131b2e;
-  --color-surface-base:     #171f33;
-  --color-surface-high:     #222a3d;
-  --color-surface-highest:  #2d3449;
-  --color-primary:          #e9c349;
-  --color-secondary:        #4edea3;
-  --color-on-surface:       #dae2fd;
-  --color-on-surface-muted: #c6c6cd;
-  --color-outline:          #909097;
-  --color-outline-variant:  #45464d;
-  --color-error:            #ffb4ab;
+  --color-background:       #F8FAFC;
+  --color-surface-low:      #F1F5F9;
+  --color-surface-base:     #E2E8F0;
+  --color-surface-high:     #CBD5E1;
+  --color-surface-highest:  #B0BEC5;
+  --color-primary:          #1E293B;
+  --color-secondary:        #75777D;
+  --color-on-surface:       #1E293B;
+  --color-on-surface-muted: #475569;
+  --color-outline:          #64748B;
+  --color-outline-variant:  #94A3B8;
+  --color-error:            #9f403d;
 }
 
 /* ─── Base resets ────────────────────────────────────────────────────────────── */
@@ -45,8 +47,8 @@ html {
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #0b1326;
-  color: #dae2fd;
+  background-color: #F8FAFC;
+  color: #1E293B;
   min-height: 100vh;
   line-height: 1.5;
 }
@@ -57,30 +59,28 @@ body {
 
 /* ─── Component utilities ────────────────────────────────────────────────────── */
 @layer components {
-  /* Glassmorphism panel — use on overlays, hero cards, modals, map tooltips ONLY */
+  /* Flat card panel — primary surface for cards, section containers */
   .glass-panel {
-    background: rgba(34, 42, 61, 0.70);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    box-shadow: 0 2px 12px rgba(30, 41, 59, 0.06);
+    border-radius: 12px;
   }
 
-  /* Gold gradient text — use on wordmarks, hero numbers, primary callouts */
-  .gold-gradient {
-    background: linear-gradient(135deg, #e9c349 0%, #d4a017 50%, #ffe088 100%);
+  /* Low surface card — for secondary/nested containers */
+  .card-low {
+    background: var(--color-surface-low);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    box-shadow: 0 1px 6px rgba(30, 41, 59, 0.04);
+    border-radius: 12px;
+  }
+
+  /* Slate gradient — use on wordmarks, hero numbers, primary callouts */
+  .primary-gradient {
+    background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-
-  /* Subtle gold shimmer text — for secondary accents */
-  .gold-shimmer {
-    background: linear-gradient(90deg, #e9c349 0%, #ffe088 50%, #e9c349 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s linear infinite;
   }
 }
 
@@ -96,6 +96,24 @@ body {
   .smooth-scroll {
     scroll-behavior: smooth;
   }
+
+  /*
+   * Contrast floor — boost low-opacity text to ensure WCAG AA readability.
+   * on-surface-variant base: #334155. Rules override Tailwind's generated
+   * opacity utilities since this @layer utilities block comes last.
+   */
+  .text-on-surface-variant\/30 { color: rgb(51 65 85 / 0.62); }
+  .text-on-surface-variant\/35 { color: rgb(51 65 85 / 0.65); }
+  .text-on-surface-variant\/40 { color: rgb(51 65 85 / 0.70); }
+  .text-on-surface-variant\/45 { color: rgb(51 65 85 / 0.73); }
+  .text-on-surface-variant\/50 { color: rgb(51 65 85 / 0.76); }
+  .text-on-surface-variant\/55 { color: rgb(51 65 85 / 0.80); }
+  .text-on-surface-variant\/60 { color: rgb(51 65 85 / 0.84); }
+
+  .text-on-surface\/35 { color: rgb(30 41 59 / 0.65); }
+  .text-on-surface\/50 { color: rgb(30 41 59 / 0.76); }
+  .text-on-surface\/60 { color: rgb(30 41 59 / 0.82); }
+  .text-on-surface\/70 { color: rgb(30 41 59 / 0.88); }
 }
 
 /* ─── Animations ─────────────────────────────────────────────────────────────── */
@@ -104,19 +122,19 @@ body {
   100% { background-position: 200% center; }
 }
 
-/* ─── Custom scrollbar (dark theme) ─────────────────────────────────────────── */
+/* ─── Custom scrollbar (light theme) ─────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #131b2e;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(233, 195, 73, 0.25);
+  background: rgba(30, 41, 59, 0.20);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(233, 195, 73, 0.45);
+  background: rgba(30, 41, 59, 0.40);
 }
 

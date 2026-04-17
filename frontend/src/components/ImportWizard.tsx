@@ -230,7 +230,7 @@ export default function ImportWizard({ entities, onImportComplete }: Props) {
             asset_class: sample.asset_class,
             sub_class: null,
             product_type: null,
-            weight_per_unit_grams: null,
+            weight_per_unit: null,
             tier: null,
             current_value: String(sample.current_value),
             security_class: 'standard',

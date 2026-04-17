@@ -163,6 +163,14 @@ export default function TaxPage({ entityFilter }: Props) {
     ? Math.round((taggedCount / filteredAssets.length) * 100)
     : 0;
 
+  const uniqueJurisdictions = useMemo(() => {
+    const js = new Set<string>();
+    filteredAssets.forEach(a => {
+      (tagMap.get(a.id) ?? []).forEach(t => { if (t.jurisdiction) js.add(t.jurisdiction); });
+    });
+    return js.size;
+  }, [filteredAssets, tagMap]);
+
   function handleTagSaved(assetId: number, tag: FiscalTag) {
     setTagMap(prev => {
       const next = new Map(prev);
@@ -188,99 +196,162 @@ export default function TaxPage({ entityFilter }: Props) {
   if (error) {
     return (
       <div className="p-8">
-        <div className="glass-panel rounded-xl p-6 border border-error/20 text-error text-sm">{error}</div>
+        <div className="glass-panel p-6 border border-red-200 text-red-600 text-sm">{error}</div>
       </div>
     );
   }
 
+  // Static quarterly data for the bar chart
+  const Q_BARS = [
+    { label: 'Q1', height: 42, amount: '€48K' },
+    { label: 'Q2', height: 68, amount: '€76K' },
+    { label: 'Q3', height: 55, amount: '€62K' },
+    { label: 'Q4', height: 91, amount: '€103K', current: true },
+  ];
+
+  // Compliance ring SVG
+  const ringR = 40;
+  const ringCirc = 2 * Math.PI * ringR;
+  const ringFilled = (complianceScore / 100) * ringCirc;
+
   return (
-    <div className="p-6 space-y-6">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+    <div className="p-8 space-y-6 max-w-[1400px] mx-auto">
+
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-end justify-between gap-6">
         <div>
-          <h1 className="font-headline italic text-3xl text-on-surface">Tax &amp; Compliance</h1>
-          <p className="text-on-surface-variant/60 text-sm mt-1">
-            FY {CURRENT_FISCAL_YEAR} · <span className="text-primary capitalize">{entityFilter}</span>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-2">Tax & Compliance</p>
+          <p className="font-headline font-extrabold leading-none text-on-surface" style={{ fontSize: 'clamp(2.6rem, 4vw, 3.2rem)' }}>
+            Reporting Hub
+          </p>
+          <p className="text-sm text-on-surface-variant/50 mt-2">
+            FY {CURRENT_FISCAL_YEAR} · <span className="capitalize">{entityFilter}</span> · {taggedCount}/{filteredAssets.length} assets tagged
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => exportFiscalCSV(filteredAssets, tagMap)}
-            className="flex items-center gap-2 px-3 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm font-medium text-on-surface-variant hover:bg-slate-50 transition-colors"
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-4 h-4" />
             Fiscal Report
           </button>
           <button
             onClick={() => exportFiscalCSV(filteredAssets, tagMap)}
-            className="flex items-center gap-2 px-3 py-2 bg-surface-high/60 hover:bg-surface-high border border-outline-variant/30 rounded text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors" style={{ background: 'linear-gradient(135deg, #545f73 0%, #485367 100%)' }}
           >
-            <Download className="w-3.5 h-3.5" />
-            VAT Docs
+            <Download className="w-4 h-4" />
+            Export VAT Docs
           </button>
         </div>
       </div>
 
-      {/* ── Compliance Score ──────────────────────────────────────────────── */}
-      <div className="glass-panel rounded-xl p-6 border border-outline-variant/20">
-        <div className="flex items-center justify-between gap-6">
-          <div>
-            <p className="text-[11px] text-on-surface-variant/50 uppercase tracking-[0.18em] mb-1">Compliance Score FY {CURRENT_FISCAL_YEAR}</p>
-            <div className="flex items-end gap-3">
-              <span className="font-headline italic text-5xl text-on-surface tabular-nums">{complianceScore}%</span>
-              <span className="text-sm text-on-surface-variant/50 mb-2">
-                {taggedCount} / {filteredAssets.length} assets tagged
-              </span>
-            </div>
+      {/* ── KPI Strip ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Assets in Scope', value: String(filteredAssets.length) },
+          { label: `Tagged FY${CURRENT_FISCAL_YEAR}`, value: String(taggedCount), green: true },
+          { label: 'Untagged', value: String(filteredAssets.length - taggedCount), warn: (filteredAssets.length - taggedCount) > 0 },
+          { label: 'Jurisdictions', value: String(uniqueJurisdictions) },
+        ].map(kpi => (
+          <div key={kpi.label} className="glass-panel p-5">
+            <p className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest font-bold mb-2">{kpi.label}</p>
+            <p className={`font-headline font-extrabold text-on-surface tabular-nums ${kpi.green ? 'text-emerald-600' : kpi.warn ? 'text-amber-600' : 'text-on-surface'}`}
+               style={{ fontSize: '1.8rem' }}>
+              {kpi.value}
+            </p>
           </div>
-          {/* Score bar */}
-          <div className="flex-1 max-w-xs">
-            <div className="h-2 rounded-full bg-surface-highest overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${complianceScore}%`,
-                  background: complianceScore >= 80
-                    ? '#4edea3'
-                    : complianceScore >= 50
-                      ? '#e9c349'
-                      : '#ffb4ab',
-                }}
-              />
+        ))}
+      </div>
+
+      {/* ── Quarterly Chart + Compliance Ring ────────────────────────────── */}
+      <div className="grid grid-cols-12 gap-6">
+
+        {/* Quarterly performance — col-span-8 */}
+        <div className="col-span-12 lg:col-span-8 glass-panel p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-base font-bold font-headline text-on-surface">Quarterly Tax Exposure</h2>
+              <p className="text-[11px] text-on-surface-variant/40 mt-0.5">Liability estimates by quarter · FY {CURRENT_FISCAL_YEAR}</p>
             </div>
-            <div className="flex justify-between text-[10px] text-on-surface-variant/30 mt-1">
-              <span>0%</span>
-              <span className={complianceScore >= 80 ? 'text-secondary' : complianceScore >= 50 ? 'text-primary' : 'text-error'}>
-                {complianceScore >= 80 ? 'Compliant' : complianceScore >= 50 ? 'Needs Attention' : 'At Risk'}
-              </span>
-              <span>100%</span>
-            </div>
+            <span className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest font-bold">Estimated</span>
+          </div>
+          <div className="flex items-end gap-6 h-32 mb-3">
+            {Q_BARS.map(q => (
+              <div key={q.label} className="flex-1 flex flex-col items-center gap-1.5">
+                <span className="text-[10px] font-bold text-on-surface-variant/60 tabular-nums">{q.amount}</span>
+                <div className="w-full rounded-t-md transition-all"
+                     style={{
+                       height: `${q.height}%`,
+                       background: q.current ? 'linear-gradient(180deg, #545f73 0%, #3d4859 100%)' : 'rgba(84,95,115,0.2)',
+                     }} />
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-6">
+            {Q_BARS.map(q => (
+              <div key={q.label} className="flex-1 text-center">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${q.current ? 'text-primary' : 'text-on-surface-variant/40'}`}>
+                  {q.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Compliance ring — col-span-4 */}
+        <div className="col-span-12 lg:col-span-4 glass-panel p-6 flex flex-col items-center justify-center gap-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 self-start">Compliance Score</p>
+          <svg viewBox="0 0 100 100" className="w-36 h-36">
+            <circle cx="50" cy="50" r={ringR} fill="none" stroke="#e2e8f0" strokeWidth="10" />
+            <circle cx="50" cy="50" r={ringR} fill="none"
+              stroke={complianceScore >= 80 ? '#059669' : complianceScore >= 50 ? '#d97706' : '#dc2626'}
+              strokeWidth="10"
+              strokeDasharray={`${ringFilled} ${ringCirc}`}
+              strokeDashoffset={ringCirc * 0.25}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
+            <text x="50" y="45" textAnchor="middle" style={{ fontSize: '18px', fontWeight: 800, fill: '#2a3439', fontFamily: 'Manrope, sans-serif' }}>
+              {complianceScore}%
+            </text>
+            <text x="50" y="60" textAnchor="middle" style={{ fontSize: '7px', fill: '#566166', fontFamily: 'Manrope, sans-serif', fontWeight: 700 }}>
+              {complianceScore >= 80 ? 'COMPLIANT' : complianceScore >= 50 ? 'ATTENTION' : 'AT RISK'}
+            </text>
+          </svg>
+          <div className="text-center">
+            <p className="text-xs text-on-surface-variant/50">{taggedCount} of {filteredAssets.length} assets tagged</p>
+            <p className="text-[10px] text-on-surface-variant/35 mt-0.5">FY {CURRENT_FISCAL_YEAR}</p>
           </div>
         </div>
       </div>
 
       {/* ── Asset Fiscal Tag Table ────────────────────────────────────────── */}
-      <div className="glass-panel rounded-xl border border-outline-variant/20 overflow-hidden">
+      <div className="glass-panel overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-on-surface">Asset Fiscal Tags</h2>
+          <span className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest font-bold">{filteredAssets.length} assets</span>
+        </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-outline-variant/15">
-              <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Asset</th>
-              <th className="px-5 py-3 text-right text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Valuation</th>
-              <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Legal Entity</th>
-              <th className="px-5 py-3 text-left text-[11px] font-medium text-on-surface-variant/50 uppercase tracking-wider">Fiscal Category FY{CURRENT_FISCAL_YEAR}</th>
+            <tr className="border-b border-slate-50">
+              <th className="px-5 py-3 text-left text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Asset</th>
+              <th className="px-5 py-3 text-right text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Valuation</th>
+              <th className="px-5 py-3 text-left text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Legal Entity</th>
+              <th className="px-5 py-3 text-left text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Fiscal Category FY{CURRENT_FISCAL_YEAR}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/10">
+          <tbody className="divide-y divide-slate-50">
             {filteredAssets.map(asset => {
               const tags = tagMap.get(asset.id) ?? [];
               const currentTag = tags.find(t => t.fiscal_year === CURRENT_FISCAL_YEAR);
               return (
-                <tr key={asset.id} className="hover:bg-surface-high/20 transition-colors">
+                <tr key={asset.id} className="hover:bg-slate-50/60 transition-colors">
                   <td className="px-5 py-3.5">
-                    <div className="text-on-surface font-medium">{asset.name}</div>
+                    <div className="text-on-surface font-semibold">{asset.name}</div>
                     <div className="text-[11px] text-on-surface-variant/40 mt-0.5">{asset.asset_class.replace('_', ' ')}</div>
                   </td>
-                  <td className="px-5 py-3.5 text-right tabular-nums text-on-surface">
+                  <td className="px-5 py-3.5 text-right tabular-nums text-on-surface font-medium">
                     {fmtCurrency(parseFloat(asset.current_value))}
                   </td>
                   <td className="px-5 py-3.5 text-on-surface-variant/70 text-xs">
@@ -299,6 +370,26 @@ export default function TaxPage({ entityFilter }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* ── Optimization Insight ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="glass-panel p-5 border-l-4 border-emerald-400">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 mb-2">Optimization Insight</p>
+          <p className="text-sm font-semibold text-on-surface leading-snug">
+            {filteredAssets.length - taggedCount > 0
+              ? `${filteredAssets.length - taggedCount} assets remain untagged — complete tagging to unlock full deduction analysis.`
+              : 'All assets tagged. Your portfolio is fully prepared for deduction analysis.'}
+          </p>
+        </div>
+        <div className="glass-panel p-5 border-l-4 border-primary">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 mb-2">Next Filing Milestone</p>
+          <div className="flex items-end gap-3">
+            <span className="font-headline font-extrabold text-on-surface" style={{ fontSize: '2rem' }}>12</span>
+            <span className="text-sm text-on-surface-variant/60 mb-1">days until Q4 deadline</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

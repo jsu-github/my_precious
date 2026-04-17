@@ -13,7 +13,7 @@ import type {
   FiscalTag, CreateFiscalTag, UpdateFiscalTag,
   Transfer, CreateTransfer,
   ValuationSnapshot, CreateValuationSnapshot,
-  DashboardSummary,
+  DashboardSummary, DashboardHistory, RecentMovement,
   LedgerRow,
   Dealer, TierConfig,
 } from './types';
@@ -113,6 +113,19 @@ export const api = {
   dashboard: {
     summary: (entityId?: number) =>
       request<DashboardSummary>(`/dashboard/summary${entityId ? `?entity_id=${entityId}` : ''}`),
+    history: (period: '1M' | '6M' | '1Y' | '5Y' | 'ALL', entityType?: string) =>
+      request<DashboardHistory>(
+        `/dashboard/history?period=${period}${entityType ? `&entity_type=${entityType}` : ''}`
+      ),
+    recalculate: () =>
+      request<{ ok: boolean; snapshots_created: number }>('/dashboard/recalculate-history', { method: 'POST' }),
+    recentActivity: (limit?: number, entityType?: string) => {
+      const params = new URLSearchParams();
+      if (limit) params.set('limit', String(limit));
+      if (entityType) params.set('entity_type', entityType);
+      const qs = params.toString();
+      return request<RecentMovement[]>(`/dashboard/recent-activity${qs ? `?${qs}` : ''}`);
+    },
   },
 
   ledger: {
@@ -128,17 +141,19 @@ export const api = {
 
   dealers: {
     list: () => request<Dealer[]>('/dealers'),
-    create: (data: Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>) =>
+    create: (data: Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_1oz_bar_per_gram' | 'we_buy_gold_50g_bar_per_gram' | 'we_buy_gold_100g_bar_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_100oz_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>) =>
       request<Dealer>('/dealers', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: Partial<Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>>) =>
+    update: (id: number, data: Partial<Pick<Dealer, 'name' | 'contact_notes' | 'we_buy_gold_per_gram' | 'we_buy_gold_1oz_bar_per_gram' | 'we_buy_gold_50g_bar_per_gram' | 'we_buy_gold_100g_bar_per_gram' | 'we_buy_gold_coin_per_gram' | 'we_buy_silver_bar_per_gram' | 'we_buy_silver_100oz_bar_per_gram' | 'we_buy_silver_coin_per_gram' | 'we_buy_platinum_per_gram' | 'we_buy_palladium_per_gram'>>) =>
       request<Dealer>(`/dealers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    refreshPrices: (id: number) =>
+      request<Dealer>(`/dealers/${id}/refresh-prices`, { method: 'POST' }),
     delete: (id: number) =>
       request<void>(`/dealers/${id}`, { method: 'DELETE' }),
   },
 
   tierConfig: {
-    list: () => request<TierConfig[]>('/tier-config'),
-    update: (tierId: number, data: Pick<TierConfig, 'target_pct' | 'min_pct' | 'max_pct'>) =>
-      request<TierConfig>(`/tier-config/${tierId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    list: (scope: 'personal' | 'business') => request<TierConfig[]>(`/tier-config?scope=${scope}`),
+    update: (tierId: number, scope: 'personal' | 'business', data: Pick<TierConfig, 'target_pct' | 'min_pct' | 'max_pct'>) =>
+      request<TierConfig>(`/tier-config/${tierId}?scope=${scope}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 } as const;

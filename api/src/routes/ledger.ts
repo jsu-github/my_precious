@@ -16,6 +16,7 @@ router.get('/', async (req, res, next) => {
     let q = knex('acquisitions as acq')
       .join('assets as a', 'a.id', 'acq.asset_id')
       .join('entities as e', 'e.id', 'a.entity_id')
+      .leftJoin('asset_locations as loc', 'loc.id', 'a.location_id')
       .select(
         'acq.id',
         'acq.asset_id',
@@ -30,10 +31,12 @@ router.get('/', async (req, res, next) => {
         'a.asset_class',
         'a.sub_class',
         'a.product_type',
-        'a.weight_per_unit_grams',
+        'a.weight_per_unit',
+        'a.weight_unit',
         'a.current_value as asset_current_value',
         'e.name as entity_name',
         'e.type as entity_type',
+        'loc.name as location_name',
       )
       .orderBy('acq.purchase_date', 'desc');
 

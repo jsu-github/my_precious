@@ -8,6 +8,7 @@ import LocationsPage from './pages/LocationsPage';
 import TaxPage from './pages/TaxPage';
 import EntityPage from './pages/EntityPage';
 import TierPage from './pages/TierPage';
+import DealerPage from './pages/DealerPage';
 
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -16,7 +17,8 @@ export default function App() {
   function renderPage() {
     switch (view) {
       case 'dashboard':  return <DashboardPage entityFilter={entityFilter} onNavigate={setView} />;
-      case 'ledger':     return <LedgerPage entityFilter={entityFilter} />;
+      case 'ledger':     return <LedgerPage entityFilter={entityFilter} onNavigate={setView} />;
+      case 'dealer':     return <DealerPage />;
       case 'analytics':  return <AnalyticsPage entityFilter={entityFilter} />;
       case 'locations':  return <LocationsPage entityFilter={entityFilter} />;
       case 'tax':        return <TaxPage entityFilter={entityFilter} />;

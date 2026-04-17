@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tax &amp; Compliance Center - Financial Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "secondary-fixed": "#e1e2e9",
+                "tertiary-fixed": "#d9d7f8",
+                "tertiary-fixed-dim": "#cbc9e9",
+                "inverse-primary": "#dae6fe",
+                "error-dim": "#4e0309",
+                "on-surface-variant": "#566166",
+                "primary-fixed": "#d8e3fb",
+                "primary-container": "#d8e3fb",
+                "on-secondary-fixed": "#3d3f45",
+                "on-error-container": "#752121",
+                "primary": "#545f73",
+                "on-surface": "#2a3439",
+                "error": "#9f403d",
+                "on-tertiary-container": "#4a4a65",
+                "tertiary": "#5d5d78",
+                "secondary-fixed-dim": "#d3d4db",
+                "secondary-container": "#e1e2e9",
+                "on-primary": "#f6f7ff",
+                "surface-dim": "#cfdce3",
+                "surface-container-low": "#f0f4f7",
+                "on-primary-container": "#475266",
+                "inverse-on-surface": "#9a9d9f",
+                "surface-variant": "#d9e4ea",
+                "surface-bright": "#f7f9fb",
+                "on-tertiary-fixed-variant": "#54546f",
+                "surface-container": "#e8eff3",
+                "secondary": "#5d5f65",
+                "on-primary-fixed": "#354053",
+                "on-secondary-fixed-variant": "#595b61",
+                "primary-dim": "#485367",
+                "inverse-surface": "#0b0f10",
+                "surface-container-highest": "#d9e4ea",
+                "surface-container-high": "#e1e9ee",
+                "tertiary-container": "#d9d7f8",
+                "on-tertiary-fixed": "#373851",
+                "surface-tint": "#545f73",
+                "on-tertiary": "#fbf7ff",
+                "on-error": "#fff7f6",
+                "background": "#f7f9fb",
+                "on-primary-fixed-variant": "#515c70",
+                "outline": "#717c82",
+                "surface": "#f7f9fb",
+                "error-container": "#fe8983",
+                "primary-fixed-dim": "#cad5ed",
+                "on-background": "#2a3439",
+                "tertiary-dim": "#51516c",
+                "surface-container-lowest": "#ffffff",
+                "secondary-dim": "#515359",
+                "outline-variant": "#a9b4b9",
+                "on-secondary": "#f8f8ff",
+                "on-secondary-container": "#505257"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.5rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "fontFamily": {
+                "headline": ["Manrope"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; color: #2a3439; }
+        h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .asymmetric-grid { display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 2rem; }
+    </style>
+</head>
+<body class="bg-surface font-body">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-50 border-r-0 flex flex-col py-8 px-6 z-50">
+<div class="mb-12">
+<h1 class="text-xl font-extrabold tracking-tighter text-slate-900">Atelier Suite</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mt-1">Private Banking</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Assets -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span>Assets</span>
+</a>
+<!-- Business vs. Personal -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">pie_chart</span>
+<span>Business vs. Personal</span>
+</a>
+<!-- Analytics -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span>Analytics</span>
+</a>
+<!-- Ledger -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Ledger</span>
+</a>
+<!-- Tax (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-900 font-bold border-r-2 border-slate-800 transition-all font-manrope text-sm tracking-wide bg-slate-100/50" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span>Tax</span>
+</a>
+<!-- Dealer & Prices -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span>Dealer &amp; Prices</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 border-t border-slate-100 pt-6">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 transition-all font-manrope font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span>Support</span>
+</a>
+<button class="w-full mt-4 px-4 py-3 rounded-lg bg-primary text-on-primary font-semibold text-sm hover:opacity-90 transition-opacity">
+                Contact Advisor
+            </button>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-slate-50/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 ml-64 border-b-0">
+<div class="flex items-center gap-6">
+<h2 class="text-lg font-bold text-slate-800 font-manrope tracking-tight">Financial Atelier</h2>
+<div class="h-4 w-[1px] bg-slate-300"></div>
+<span class="text-sm font-medium text-slate-500 font-body">Tax &amp; Compliance Hub</span>
+</div>
+<div class="flex items-center gap-6 pr-64">
+<div class="flex items-center gap-4 text-slate-700">
+<button class="material-symbols-outlined hover:bg-slate-200/50 p-2 rounded-full transition-colors">payments</button>
+<button class="material-symbols-outlined hover:bg-slate-200/50 p-2 rounded-full transition-colors">account_balance_wallet</button>
+<button class="material-symbols-outlined hover:bg-slate-200/50 p-2 rounded-full transition-colors relative">
+                    notifications
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-800">Alexander Thorne</p>
+<p class="text-[10px] text-slate-500">Premium Tier</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a professional male executive in a grey suit with a confident expression in a soft lit studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLpVo4AJzdfJyy2168hQ_KeIGCWpQOTnXzgxAXUm79izyFugEJ7TruSDTg_jlHx-VgKGMuVmRad73xnoXAzFu5_3v1ZOhc1J93i5JLF3lOC7q9ulWDPeb36MI7ADiquEsn-ddCY4Umb9e9qW_wPDZt422GczWwNuU-U83uFVsawyv5TdWOTdbCi-eCIZSGjmH5UP37w_xdzBbIVfKSNi3_jUMAXTypBr9HJOYGjurNjVhbOI1BKzrg7nsAQNZHLs5405rgZx_Cn3A"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-24 px-12 pb-12 min-h-screen bg-surface">
+<!-- Header Section -->
+<header class="mb-10 flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tighter mb-2">Reporting Hub FY 2024</h1>
+<p class="text-on-surface-variant text-lg font-medium max-w-2xl">A curated overview of your fiscal standing, liability mitigation, and regulatory health for the current calendar year.</p>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-3 bg-surface-container-high text-on-surface font-semibold rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-xl">file_export</span>
+                    Export VAT
+                </button>
+<button class="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-dim text-on-primary font-semibold rounded-lg shadow-sm hover:opacity-95 transition-opacity">
+<span class="material-symbols-outlined text-xl">analytics</span>
+                    Generate Fiscal Report
+                </button>
+</div>
+</header>
+<!-- Asymmetric Summary Grid -->
+<div class="asymmetric-grid mb-8">
+<!-- Liability vs Exemption Chart Area -->
+<div class="bg-surface-container-lowest rounded-xl p-8 flex flex-col">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h3 class="headline text-xl font-bold text-on-surface">Liability vs. Exemption</h3>
+<p class="text-sm text-on-surface-variant font-medium mt-1">Real-time fiscal burden distribution</p>
+</div>
+<div class="flex gap-6">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-xs font-bold text-on-surface-variant">Tax Liability</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary-container"></span>
+<span class="text-xs font-bold text-on-surface-variant">Qualified Exemptions</span>
+</div>
+</div>
+</div>
+<div class="flex-1 flex items-end gap-12 h-64 px-4">
+<!-- Placeholder for sophisticated bar chart -->
+<div class="flex-1 flex flex-col justify-end gap-2 group cursor-pointer">
+<div class="flex gap-1 h-full items-end">
+<div class="w-full bg-primary/20 rounded-t h-[60%] transition-all group-hover:bg-primary/40"></div>
+<div class="w-full bg-tertiary-container/30 rounded-t h-[40%] transition-all group-hover:bg-tertiary-container/50"></div>
+</div>
+<span class="text-[10px] font-bold text-center text-on-surface-variant uppercase tracking-widest">Q1 2024</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-2 group cursor-pointer">
+<div class="flex gap-1 h-full items-end">
+<div class="w-full bg-primary/20 rounded-t h-[75%] transition-all group-hover:bg-primary/40"></div>
+<div class="w-full bg-tertiary-container/30 rounded-t h-[25%] transition-all group-hover:bg-tertiary-container/50"></div>
+</div>
+<span class="text-[10px] font-bold text-center text-on-surface-variant uppercase tracking-widest">Q2 2024</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-2 group cursor-pointer">
+<div class="flex gap-1 h-full items-end">
+<div class="w-full bg-primary rounded-t h-[55%] transition-all"></div>
+<div class="w-full bg-tertiary-container rounded-t h-[45%] transition-all"></div>
+</div>
+<span class="text-[10px] font-extrabold text-center text-on-surface uppercase tracking-widest">Q3 (Active)</span>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-2 opacity-30">
+<div class="flex gap-1 h-full items-end">
+<div class="w-full bg-slate-200 rounded-t h-[20%]"></div>
+<div class="w-full bg-slate-100 rounded-t h-[10%]"></div>
+</div>
+<span class="text-[10px] font-bold text-center text-on-surface-variant uppercase tracking-widest">Q4 2024</span>
+</div>
+</div>
+</div>
+<!-- Compliance Score Card -->
+<div class="bg-primary-dim rounded-xl p-8 flex flex-col items-center justify-center text-center">
+<h3 class="headline text-lg font-semibold text-primary-fixed mb-8">Compliance Score</h3>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- Circular SVG Progress -->
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-on-primary-fixed/20" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="10"></circle>
+<circle class="text-primary-fixed" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-dasharray="552.92" stroke-dashoffset="33.17" stroke-linecap="round" stroke-width="10"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-5xl font-extrabold text-on-primary font-manrope tracking-tighter">94%</span>
+<span class="text-xs font-bold text-primary-fixed/80 uppercase tracking-widest mt-1">Excellent</span>
+</div>
+</div>
+<div class="mt-8 space-y-2">
+<p class="text-primary-fixed/70 text-sm leading-relaxed">Your portfolio aligns with 14/15 regional tax jurisdictions.</p>
+<a class="text-primary-fixed font-bold text-sm underline underline-offset-4 decoration-primary-fixed/30 hover:decoration-primary-fixed transition-all" href="#">View Mitigation Strategy</a>
+</div>
+</div>
+</div>
+<!-- Asset Categorization Table -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<div class="px-8 py-6 flex justify-between items-center border-b border-surface-container-high/50">
+<h3 class="headline text-xl font-bold text-on-surface">Asset Categorization</h3>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border-none rounded-lg text-sm w-64 focus:ring-1 focus:ring-primary/20" placeholder="Search assets..." type="text"/>
+</div>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-high rounded-full transition-colors text-on-surface-variant">filter_list</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant text-[10px] uppercase tracking-[0.15em] font-bold">
+<th class="px-8 py-4">Asset Name</th>
+<th class="px-8 py-4">Valuation</th>
+<th class="px-8 py-4">Legal Entity</th>
+<th class="px-8 py-4">Fiscal Category</th>
+<th class="px-8 py-4 text-right">Reporting Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40">
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Zurich Lakeside Commercial</p>
+<p class="text-[10px] text-on-surface-variant font-medium">REIT-7729-CH</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-manrope font-bold text-on-surface">$12,450,000</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Atelier Holdings AG</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-tertiary-container/30 text-on-tertiary-container text-[10px] font-extrabold rounded-full uppercase tracking-wider">Business Deductible</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-xs font-bold text-primary flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Verified
+                                </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">diamond</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Private Art Collection</p>
+<p class="text-[10px] text-on-surface-variant font-medium">PHY-COL-112</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-manrope font-bold text-on-surface">$4,120,000</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Personal Trust (Thorne)</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-extrabold rounded-full uppercase tracking-wider">Personal Wealth</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-xs font-bold text-primary flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Verified
+                                </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Equity Series D (AeroX)</p>
+<p class="text-[10px] text-on-surface-variant font-medium">VC-STK-090</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-manrope font-bold text-on-surface">$1,890,500</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Thorne Capital Partners</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-tertiary-container/30 text-on-tertiary-container text-[10px] font-extrabold rounded-full uppercase tracking-wider">Business Deductible</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-xs font-bold text-error flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-sm">pending</span>
+                                    Review Req.
+                                </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Global Liquid Cash</p>
+<p class="text-[10px] text-on-surface-variant font-medium">CASH-MM-01</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-manrope font-bold text-on-surface">$2,340,000</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Multiple Accounts</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-extrabold rounded-full uppercase tracking-wider">Personal Wealth</span>
+</td>
+<td class="px-8 py-5 text-right">
+<span class="text-xs font-bold text-primary flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Verified
+                                </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 bg-surface-container flex justify-between items-center text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+<span>Showing 4 of 32 Assets</span>
+<div class="flex gap-4">
+<button class="hover:text-primary transition-colors">Previous</button>
+<button class="hover:text-primary transition-colors">Next</button>
+</div>
+</div>
+</section>
+<!-- Insights Footer -->
+<footer class="mt-12 flex gap-8">
+<div class="flex-1 p-6 bg-surface-container rounded-xl border border-surface-container-high/30">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+<h4 class="font-manrope font-bold text-on-surface">Optimization Insight</h4>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">Switching your AeroX equity holding to the trust-based legal entity could reduce your 2024 liability by an estimated <span class="text-on-surface font-bold">4.2%</span>. Review this with your advisor before the Oct 15 deadline.</p>
+</div>
+<div class="w-1/3 p-6 bg-surface-container-high rounded-xl">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-manrope font-bold text-on-surface">Next Milestone</h4>
+<span class="text-[10px] font-extrabold px-2 py-1 bg-error-container text-on-error-container rounded">Critical</span>
+</div>
+<div class="flex items-end gap-2 mb-2">
+<span class="text-2xl font-extrabold font-manrope text-on-surface">12 Days</span>
+<span class="text-xs text-on-surface-variant font-medium pb-1">Remaining</span>
+</div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Quarterly VAT Submission</p>
+</div>
+</footer>
+</main>
+<!-- Visual Accents -->
+<div class="fixed bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+<div class="fixed top-24 left-72 w-64 h-64 bg-tertiary/5 rounded-full blur-[80px] -z-10 pointer-events-none"></div>
+</body></html>

@@ -17,6 +17,7 @@ router.get('/', async (req, res, next) => {
         'e.type as entity_type',
         'al.name as location_name',
         'al.custodian_name',
+        knex.raw('(SELECT COALESCE(SUM(quantity::numeric), 0) FROM acquisitions WHERE asset_id = a.id) as total_quantity'),
       )
       .orderBy('a.current_value', 'desc');
 
@@ -64,14 +65,27 @@ router.post('/', async (req, res, next) => {
 // PUT /api/assets/:id
 router.put('/:id', async (req, res, next) => {
   try {
-    const [row] = await knex('assets')
-      .where({ id: req.params.id })
-      .update({ ...req.body, updated_at: knex.fn.now() })
-      .returning('*');
-    if (!row) {
+    const existing = await knex('assets').where({ id: req.params.id }).first();
+    if (!existing) {
       const e: any = new Error('Asset not found'); e.status = 404; throw e;
     }
-    res.json(row);
+
+    const updated = await knex.transaction(async trx => {
+      const [row] = await trx('assets')
+        .where({ id: req.params.id })
+        .update({ ...req.body, updated_at: trx.fn.now() })
+        .returning('*');
+
+      // Snapshot current_value when it changes
+      const newValue = req.body.current_value;
+      if (newValue !== undefined && String(newValue) !== String(existing.current_value)) {
+        await trx('valuation_snapshots').insert({ asset_id: req.params.id, value: newValue });
+      }
+
+      return row;
+    });
+
+    res.json(updated);
   } catch (err) { next(err); }
 });
 

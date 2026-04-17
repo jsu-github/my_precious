@@ -10,9 +10,10 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@fontsource/newsreader": "^5.0.0",
+    "@fontsource/manrope": "^5.0.0",
     "@fontsource/inter": "^5.0.0",
     "lucide-react": "^0.400.0",
+    "react-simple-maps": "^3.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
