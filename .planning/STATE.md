@@ -85,6 +85,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 17 added: Push to remote and implement all CONCERNS.md fixes
+- Phase 18 added: Model Portfolio Risk Analysis
 
 ## Session Continuity
 

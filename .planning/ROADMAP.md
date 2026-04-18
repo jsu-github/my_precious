@@ -345,6 +345,16 @@ Plans:
 Plans:
 - [x] TBD (run /gsd-plan-phase 17 to break down) (completed 2026-04-18)
 
+### Phase 18: Model Portfolio Risk Analysis
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 17
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 18 to break down)
+
 ---
 
 ## v1.3 — Crypto Asset Tracking
