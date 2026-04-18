@@ -345,44 +345,78 @@ Plans:
 Plans:
 - [x] TBD (run /gsd-plan-phase 17 to break down) (completed 2026-04-18)
 
-### Phase 18: Model Portfolio Risk Analysis
+### Phase 18: Jurisdictional Great Reset Risk Model
 
-**Goal**: User can define per-tier sub-class allocation targets (e.g. Tier 2 — The Vaults: gold 75%, silver 20%, platinum 5%), see current vs target breakdown within each tier on the TierPage, and get a EUR gap-to-target for every sub-class (how much to buy or sell to reach the model)
+**Goal**: A second risk model — "Great Reset Risk" — that classifies assets by the sovereign/jurisdictional risk of their storage location (country_code on asset_locations). Countries are assigned to 5 risk tiers (e.g. Switzerland = Sovereignty Safe, USA = Critical Reset Risk). TierPage gets a toggle to switch between the existing "Asset Classification" view and the new "Jurisdictional Risk" view.
 **Depends on:** Phase 17
-**Requirements**: TBD
+
+**Why a second model?** The current tier model classifies assets by *type* (physical gold, digital cash, crypto…). The jurisdictional model classifies assets by *where* they are held — capturing legal seizure risk, CBDC rollout exposure, and bail-in vulnerability per country.
 
 **Design decisions (locked in analysis):**
-- Targets are **% of that tier's total value** (not % of total portfolio) — independent of tier-level allocation
-- Sub-class model lives in an **expanded panel per tier on TierPage** — no new page or nav item
-- **Manual entry only** — no presets for sub-class targets
+- **Country → risk tier mapping is editable** in the UI — user assigns/reassigns countries to tiers
+- **Tier names are new** — specific to great reset risk (e.g. "Sovereignty Safe", "Critical Reset Risk") — not reusing current tier labels
+- **Same target/min/max model** — jurisdictional view also has target % bands per tier + current vs model donuts
+- **Assets with no location** → shown as "Unclassified" (excluded from % calculations)
+- **Toggle on TierPage** — same page, switchable view (not a new nav item)
 
-**New DB table: `tier_subclass_model`**
-- `(tier_id, entity_scope, sub_class)` composite PK
-- `target_pct NUMERIC(5,2)` — % of that tier's total value; targets per tier must sum to ≤ 100
+**Default tier labels (seed data, user-editable):**
+| Tier | Name | Example countries |
+|------|------|------------------|
+| 0 | Sovereignty Safe | Switzerland, Singapore, UAE, Liechtenstein |
+| 1 | Low Reset Risk | Norway, New Zealand, Guernsey, Jersey |
+| 2 | Moderate Exposure | Canada, Australia, Japan |
+| 3 | High Reset Risk | EU Core (DE, FR, NL, BE), UK |
+| 4 | Critical Reset Risk | USA |
 
-**New API routes:**
-- `GET /api/tier-config/subclass-model?scope=personal|business` — returns all sub-class targets
-- `PUT /api/tier-config/subclass-model` — upsert a single sub-class target (body: `{ tier_id, entity_scope, sub_class, target_pct }`)
-- `DELETE /api/tier-config/subclass-model/:tierId/:subClass?scope=...` — remove a target
-- `GET /api/tier-config/gap?scope=personal|business` — returns current vs target per tier/sub-class with EUR values and gap (positive = buy, negative = sell)
+**New DB tables:**
+
+`country_risk`
+- `country_code` VARCHAR(3) PRIMARY KEY
+- `country_name` VARCHAR(100) NOT NULL
+- `risk_tier` INTEGER (0-4, nullable = unclassified)
+
+`jurisdiction_tier_config`
+- `tier_id` INTEGER (0-4)
+- `entity_scope` VARCHAR ('personal' | 'business')
+- `tier_name` VARCHAR NOT NULL
+- `description` TEXT
+- `target_pct` NUMERIC(5,2)
+- `min_pct` NUMERIC(5,2)
+- `max_pct` NUMERIC(5,2)
+- PRIMARY KEY (`tier_id`, `entity_scope`)
+
+**New API routes (new router `/api/jurisdiction-tiers`):**
+- `GET /api/jurisdiction-tiers?scope=personal|business` — tier config with current distribution (% of total and EUR)
+- `PUT /api/jurisdiction-tiers/:tierId?scope=personal|business` — update tier_name, description, target_pct, min_pct, max_pct
+- `GET /api/country-risk` — all countries in `country_risk` with their assigned tier (and tier name)
+- `PUT /api/country-risk/:countryCode` — update a country's risk_tier assignment
+- `POST /api/country-risk` — add a new country to the registry
+
+**Data flow:**
+`asset.location_id` → `asset_locations.country_code` → `country_risk.risk_tier` → `jurisdiction_tier_config.tier_id`
 
 **Frontend changes (TierPage only):**
-- Each tier card gains a collapsible sub-section listing sub-classes present in that tier
-- Each row: sub-class label, current % of tier, target % (editable inline), current €, target €, gap € (color-coded: green=in range, amber=close, red=over/under)
-- Sum validation: show warning if targets don't sum to 100 (allow partial — unspecified sub-classes are unconstrained)
+- **Toggle at top**: "Asset Classification" | "Jurisdictional Risk" (controls which data model is active)
+- **Asset Classification view** = existing TierPage (unchanged)
+- **Jurisdictional Risk view** = same layout structure (donut current/model side by side, tier cards) but:
+  - Values derived from location country → risk tier
+  - Each tier card lists the countries assigned to it (with reassign control — dropdown or drag)
+  - "Unclassified" section at bottom shows assets with no location or location with no risk tier
+  - Tier name/description editable inline (same pattern as current model)
+  - Preset selector hidden in this view (no presets for jurisdictional model)
 
 **Notes:**
-- Use existing `sub_class` column on assets — no new asset fields needed
-- Gap endpoint should query live asset values via `current_value` — no snapshot needed
-- Treat tier_subclass_model as advisory: missing targets mean no constraint on that sub-class
-- Do NOT add sub-class presets in this phase
+- Seed `country_risk` with a sensible starter set (CH, SG, NO, CA, AU, DE, FR, US, GB, NL, BE, JP, AE, GG, JE, NZ, LI)
+- Tier distribution calculation: sum `current_value` of all assets whose `location → country → risk_tier = X` ÷ total portfolio value
+- Do NOT modify the existing `tier_config` table or current TierPage Asset Classification view
 
 **Success Criteria** (what must be TRUE):
-  1. `GET /api/tier-config/gap?scope=personal` returns per-tier/sub-class data with `current_eur`, `target_eur`, `gap_eur`, `current_pct_of_tier`, `target_pct_of_tier` — verified via API call
-  2. User can enter a target % for any sub-class within any tier via TierPage inline edit — the value persists on reload
-  3. Each tier card on TierPage shows a sub-class breakdown panel — current vs target bars, gap in EUR — only for sub-classes that have assets in that tier
-  4. A warning appears on any tier where sub-class targets sum > 100%
-  5. Deleting a sub-class target removes the constraint (no error — sub-class becomes unconstrained)
+  1. `GET /api/jurisdiction-tiers?scope=personal` returns 5 tiers with `tier_name`, `target_pct`, `current_pct`, `current_eur`, and `status` (green/amber/red) — verified via API call
+  2. Switching the toggle on TierPage to "Jurisdictional Risk" renders the donut and tier cards using location-derived risk data (not asset.tier)
+  3. Countries can be reassigned to a different risk tier in the UI — change persists on reload
+  4. A new country can be added and assigned to a tier
+  5. Assets with no location appear in an "Unclassified" section and are excluded from tier % calculations
+  6. Switching back to "Asset Classification" view is instant and unchanged from pre-Phase-18 behaviour
 **Plans**: TBD
 **UI hint**: yes
 
