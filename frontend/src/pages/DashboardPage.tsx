@@ -166,7 +166,7 @@ export default function DashboardPage({ entityFilter, onNavigate }: Props) {
   }, [filteredAssets, tierConfigs, totalValue]);
 
   const riskLabel = tierHealth
-    ? tierHealth.in_range === 4 ? 'Low' : tierHealth.in_range >= 2 ? 'Low / Med' : 'Medium'
+    ? tierHealth.in_range === tierHealth.tiers.length ? 'Low' : tierHealth.in_range >= 2 ? 'Low / Med' : 'Medium'
     : '—';
 
   const byAssetClass = useMemo(() => {

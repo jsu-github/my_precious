@@ -49,12 +49,6 @@ export default function TopHeader({ entityFilter, onEntityChange }: TopHeaderPro
         })}
       </div>
 
-      {/* Market Connected status */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50">
-        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shrink-0" />
-        <span className="text-xs text-emerald-700 font-medium tracking-wide">USD / Active</span>
-      </div>
-
       {/* Notification icons */}
       <div className="flex items-center gap-1">
         <button className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant/50 hover:text-on-surface hover:bg-slate-100 transition-colors">

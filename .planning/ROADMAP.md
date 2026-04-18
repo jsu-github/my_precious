@@ -335,6 +335,16 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 17: Push to remote and implement all CONCERNS.md fixes
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
+
 ---
 
 ## v1.3 — Crypto Asset Tracking

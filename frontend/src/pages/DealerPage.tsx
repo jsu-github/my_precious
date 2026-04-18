@@ -165,7 +165,12 @@ export default function DealerPage() {
   useEffect(() => {
     setLoading(true);
     Promise.all([api.dealers.list(), api.assets.list()])
-      .then(([d, a]) => { setDealers(d); setAssets(a); })
+      .then(([d, a]) => {
+        setDealers(d);
+        setAssets(a);
+        const def = d.find(x => x.name.toLowerCase().replace(/\s+/g, '') === 'hollandgold') ?? d[0];
+        if (def) setSelectedDealerId(def.id);
+      })
       .catch(err => setPageError(String(err)))
       .finally(() => setLoading(false));
   }, []);
@@ -303,9 +308,6 @@ export default function DealerPage() {
       setRefreshingPrices(false);
     }
   }
-
-  // Static 24h trend bars (16 bars, relative heights 0–100)
-  const TREND_BARS = [45, 52, 48, 61, 58, 72, 68, 65, 79, 84, 77, 82, 91, 88, 93, 97];
 
   // ─── Render ───────────────────────────────────────────────────────────────
   if (loading) {
@@ -555,12 +557,9 @@ export default function DealerPage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* VENDOR CATALOG + PRICE TREND MATRIX                              */}
+      {/* VENDOR CATALOG                                                    */}
       {/* ══════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-12 gap-6">
-
-        {/* Vendor Catalog — col-span-8 */}
-        <div className="col-span-12 lg:col-span-8 glass-panel overflow-hidden">
+      <div className="glass-panel overflow-hidden">
 
           <div className="px-5 py-3.5 border-b border-slate-100">
             <div className="flex items-baseline justify-between gap-3">
@@ -685,45 +684,6 @@ export default function DealerPage() {
             </table>
           )}
         </div>
-
-        {/* Price Trend Matrix — col-span-4 */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-5">
-          <div className="glass-panel p-5 flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-on-surface">24h Price Trend</h3>
-              <span className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest font-bold">Gold</span>
-            </div>
-            {/* Mini bar chart */}
-            <div className="flex items-end gap-1 h-20 mb-3">
-              {TREND_BARS.map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-sm transition-all"
-                  style={{ height: `${h}%`, background: i === TREND_BARS.length - 1 ? '#545f73' : 'rgba(84,95,115,0.25)' }}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-[9px] text-on-surface-variant/35 font-bold uppercase tracking-wide">
-              <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Now</span>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-              {[
-                { label: 'Open', value: '€82,150' },
-                { label: '24h High', value: '€84,890', up: true },
-                { label: '24h Low', value: '€81,820', up: false },
-                { label: 'Current', value: '€84,264', primary: true },
-              ].map(r => (
-                <div key={r.label} className="flex items-center justify-between text-xs">
-                  <span className="text-on-surface-variant/50">{r.label}</span>
-                  <span className={`font-mono font-bold tabular-nums ${r.primary ? 'text-primary' : r.up ? 'text-emerald-600' : r.up === false && !r.primary ? 'text-red-500' : 'text-on-surface'}`}>
-                    {r.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ── Protection Plan Banner ────────────────────────────────────────── */}
       <div className="rounded-xl p-6 flex items-center justify-between gap-6" style={{ background: 'linear-gradient(135deg, #545f73 0%, #3d4859 60%, #2e3a4a 100%)' }}>

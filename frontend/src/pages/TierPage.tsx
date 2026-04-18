@@ -10,6 +10,7 @@ const TIER_LABELS: Record<number, string> = {
   1: 'Digital Liquidity',
   2: 'The Vaults',
   3: 'Uncensorable Frontier',
+  4: 'Paper Prosperity',
 };
 
 const TIER_DESCRIPTIONS: Record<number, string> = {
@@ -17,9 +18,19 @@ const TIER_DESCRIPTIONS: Record<number, string> = {
   1: 'Highly liquid digital and near-cash positions',
   2: 'Long-term store of value: gold, silver, real estate',
   3: 'Self-sovereign, uncensorable assets: crypto',
+  4: 'Stocks, bonds, ETFs — conventional markets exposed to systemic and counterparty risk',
 };
 
 type TierStatus = 'green' | 'amber' | 'red' | 'unset';
+
+// ─── Tier Presets ─────────────────────────────────────────────────────────────
+const TIER_PRESETS: { id: string; label: string; targets: Record<number, number> }[] = [
+  { id: 'very-defensive', label: 'Very Defensive', targets: { 0: 35, 1: 5,  2: 55, 3: 5,  4: 0  } },
+  { id: 'defensive',      label: 'Defensive',      targets: { 0: 20, 1: 10, 2: 55, 3: 10, 4: 5  } },
+  { id: 'neutral',        label: 'Neutral',        targets: { 0: 15, 1: 15, 2: 45, 3: 15, 4: 10 } },
+  { id: 'relaxed',        label: 'Relaxed',        targets: { 0: 10, 1: 15, 2: 40, 3: 20, 4: 15 } },
+  { id: 'very-relaxed',   label: 'Very Relaxed',   targets: { 0: 5,  1: 10, 2: 35, 3: 30, 4: 20 } },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function computeStatus(currentPct: number, minPct: number, maxPct: number): TierStatus {
@@ -60,6 +71,7 @@ const TIER_COLORS: Record<number, string> = {
   1: '#3B82F6',
   2: '#10B981',
   3: '#8B5CF6',
+  4: '#F59E0B',
 };
 const UNASSIGNED_COLOR = '#CBD5E1';
 
@@ -91,7 +103,7 @@ interface TierAllocationChartsProps {
 
 function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct, isGlobal }: TierAllocationChartsProps) {
   const sorted = isGlobal
-    ? [0, 1, 2, 3].map(tid => ({ tier_id: tid, tier_name: TIER_LABELS[tid], target_pct: '0' } as TierConfig))
+    ? [0, 1, 2, 3, 4].map(tid => ({ tier_id: tid, tier_name: TIER_LABELS[tid], target_pct: '0' } as TierConfig))
     : [...tierConfigs].sort((a, b) => a.tier_id - b.tier_id);
   const cx = 50, cy = 50, R = 44, r = 27;
 
@@ -113,7 +125,7 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
       <div className="flex items-center gap-8">
         {/* Donut — Current */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <p className="text-[10px] text-on-surface-variant/50 uppercase tracking-wider">Huidig</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Huidig</p>
           <svg viewBox="0 0 100 100" width="92" height="92">
             {currentPaths.length === 0
               ? <circle cx={cx} cy={cy} r={R} fill="none" stroke="#E2E8F0" strokeWidth={R - r} />
@@ -125,30 +137,45 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
         {/* Donut — Model (hidden in global view) */}
         {!isGlobal && (
           <div className="flex flex-col items-center gap-1 shrink-0">
-            <p className="text-[10px] text-on-surface-variant/50 uppercase tracking-wider">Model</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Model</p>
             <svg viewBox="0 0 100 100" width="92" height="92">
               {modelPaths.length === 0
                 ? <circle cx={cx} cy={cy} r={R} fill="none" stroke="#E2E8F0" strokeWidth={R - r} />
                 : modelPaths.map((p, i) => <path key={i} d={p.d} fill={p.color} />)}
+              <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10" fill="#1E293B" fontWeight="700">{totalLabel}</text>
             </svg>
           </div>
         )}
 
         {/* Shared legend */}
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-x-auto">
           <div
-            className="grid gap-x-5 gap-y-2.5"
-            style={{ gridTemplateColumns: isGlobal ? 'auto auto' : 'auto auto auto auto' }}
+            className="grid gap-x-4 gap-y-2.5"
+            style={{ gridTemplateColumns: isGlobal ? 'auto auto auto' : 'auto auto auto auto auto auto auto' }}
           >
+            {/* Header row */}
             <span /> {/* spacer */}
-            <span className="text-[10px] text-on-surface-variant uppercase tracking-wider text-right">Huidig</span>
-            {!isGlobal && <span className="text-[10px] text-on-surface-variant uppercase tracking-wider text-right">Model</span>}
-            {!isGlobal && <span className="text-[10px] text-on-surface-variant uppercase tracking-wider text-right">Delta</span>}
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Huidig %</span>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Huidig €</span>
+            {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Model %</span>}
+            {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Model €</span>}
+            {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Delta %</span>}
+            {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Delta €</span>}
             {sorted.map(tc => {
               const current = tierPcts[tc.tier_id] ?? 0;
               const target = parseFloat(tc.target_pct);
               const delta = current - target;
               const deltaColor = Math.abs(delta) < 0.5 ? 'text-on-surface-variant' : delta > 0 ? 'text-amber-500' : 'text-blue-500';
+              const currentEur = totalValue * current / 100;
+              const targetEur  = totalValue * target / 100;
+              const deltaEur   = currentEur - targetEur;
+              const fmtK = (v: number) => Math.abs(v) >= 1000
+                ? `€${(v / 1000).toFixed(0)}k`
+                : `€${v.toFixed(0)}`;
+              const fmtKSigned = (v: number) => {
+                const abs = Math.abs(v) >= 1000 ? `€${(Math.abs(v) / 1000).toFixed(0)}k` : `€${Math.abs(v).toFixed(0)}`;
+                return (v > 0 ? '+' : v < 0 ? '-' : '') + abs;
+              };
               return (
                 <React.Fragment key={tc.tier_id}>
                   <div className="flex items-center gap-2 min-w-0">
@@ -156,10 +183,17 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
                     <span className="text-[13px] font-medium text-on-surface truncate">T{tc.tier_id} {tc.tier_name}</span>
                   </div>
                   <span className="text-[13px] tabular-nums font-semibold text-on-surface text-right">{current.toFixed(1)}%</span>
+                  <span className="text-[12px] tabular-nums text-on-surface-variant/60 text-right">{fmtK(currentEur)}</span>
                   {!isGlobal && <span className="text-[13px] tabular-nums font-medium text-on-surface-variant text-right">{target.toFixed(1)}%</span>}
+                  {!isGlobal && <span className="text-[12px] tabular-nums text-on-surface-variant/50 text-right">{fmtK(targetEur)}</span>}
                   {!isGlobal && (
                     <span className={`text-[13px] tabular-nums font-medium text-right ${deltaColor}`}>
                       {delta > 0 ? '+' : ''}{delta.toFixed(1)}%
+                    </span>
+                  )}
+                  {!isGlobal && (
+                    <span className={`text-[12px] tabular-nums font-medium text-right ${deltaColor}`}>
+                      {fmtKSigned(deltaEur)}
                     </span>
                   )}
                 </React.Fragment>
@@ -172,8 +206,13 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
                   <span className="text-[13px] font-medium text-on-surface-variant">Unassigned</span>
                 </div>
                 <span className="text-[13px] tabular-nums font-semibold text-on-surface text-right">{unassignedPct.toFixed(1)}%</span>
-                {!isGlobal && <span />}
-                {!isGlobal && <span />}
+                <span className="text-[12px] tabular-nums text-on-surface-variant/60 text-right">
+                  {totalValue * unassignedPct / 100 >= 1000
+                    ? `€${(totalValue * unassignedPct / 10000).toFixed(0)}k`
+                    : `€${(totalValue * unassignedPct / 100).toFixed(0)}`}
+                </span>
+                {!isGlobal && <span />}{!isGlobal && <span />}
+                {!isGlobal && <span />}{!isGlobal && <span />}
               </React.Fragment>
             )}
           </div>
@@ -741,6 +780,38 @@ export default function TierPage({ entityFilter }: Props) {
     }
   }
 
+  const [applyingPreset, setApplyingPreset] = useState<string | null>(null);
+  // Track selected preset independently per entity scope
+  const [selectedPresets, setSelectedPresets] = useState<Record<string, string | null>>({});
+  const selectedPresetId = selectedPresets[entityScope] ?? null;
+
+  async function handleApplyPreset(preset: typeof TIER_PRESETS[number]) {
+    if (isGlobal) return;
+    setApplyingPreset(preset.id);
+    try {
+      const updates = await Promise.all(
+        Object.entries(preset.targets).map(([tid, target]) => {
+          const min = parseFloat((Math.max(0, target * 0.9)).toFixed(1));
+          const max = parseFloat((Math.min(100, target * 1.1)).toFixed(1));
+          return api.tierConfig.update(Number(tid), entityScope, {
+            target_pct: String(target),
+            min_pct: String(min),
+            max_pct: String(max),
+          });
+        }),
+      );
+      setTierConfigs(prev =>
+        prev.map(c => {
+          const updated = updates.find(u => u.tier_id === c.tier_id);
+          return updated ?? c;
+        }),
+      );
+      setSelectedPresets(prev => ({ ...prev, [entityScope]: preset.id }));
+    } finally {
+      setApplyingPreset(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
@@ -789,6 +860,36 @@ export default function TierPage({ entityFilter }: Props) {
         </div>
       )}
 
+      {/* Allocation presets — hidden in global view */}
+      {!isGlobal && (
+        <div className="glass-panel rounded-xl border border-outline-variant/20 p-4">
+          <p className="text-[10px] text-on-surface-variant/40 uppercase tracking-wider mb-3">Model Allocatie</p>
+          <div className="flex flex-wrap gap-2">
+            {TIER_PRESETS.map(preset => {
+              const isSelected = selectedPresetId === preset.id;
+              const isApplying = applyingPreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => handleApplyPreset(preset)}
+                  disabled={applyingPreset !== null}
+                  className="px-3.5 py-1.5 rounded-lg border text-xs font-medium transition-all disabled:opacity-40"
+                  style={isSelected
+                    ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'rgba(var(--color-primary),.12)', fontWeight: 700 }
+                    : { borderColor: 'rgba(169,180,185,0.30)', color: isApplying ? 'var(--color-primary)' : 'var(--color-on-surface-variant)', backgroundColor: isApplying ? 'rgba(var(--color-primary),.08)' : 'rgba(169,180,185,0.08)' }
+                  }
+                >
+                  {isApplying ? '…' : preset.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-on-surface-variant/30 mt-2">
+            Sets target per tier; min/max = target ± 10% relative. Deselects when you edit manually.
+          </p>
+        </div>
+      )}
+
       {/* Pie charts — Current vs Model */}
       <TierAllocationCharts
         tierConfigs={tierConfigs}
@@ -801,7 +902,7 @@ export default function TierPage({ entityFilter }: Props) {
       {/* Tier rows */}
       <div className="space-y-3">
         {(isGlobal
-          ? [0, 1, 2, 3].map(tid => ({
+          ? [0, 1, 2, 3, 4].map(tid => ({
               tier_id: tid,
               entity_scope: 'global',
               tier_name: TIER_LABELS[tid],
@@ -822,9 +923,10 @@ export default function TierPage({ entityFilter }: Props) {
             tierAssets={filteredAssets.filter(a => a.tier === tc.tier_id)}
             isGlobal={isGlobal}
             entityScope={entityScope}
-            onUpdate={updated =>
-              setTierConfigs(prev => prev.map(c => c.tier_id === updated.tier_id ? updated : c))
-            }
+            onUpdate={updated => {
+              setTierConfigs(prev => prev.map(c => c.tier_id === updated.tier_id ? updated : c));
+              setSelectedPresets(prev => ({ ...prev, [entityScope]: null }));
+            }}
             onTierChange={handleTierChange}
           />
         ))}

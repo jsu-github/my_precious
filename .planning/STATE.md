@@ -82,6 +82,10 @@ None yet.
 - **Valuation snapshots** (DATA-09): Schema must be included in Phase 2 even though performance time-series charts are deferred to v2. Phase 10 triggers snapshot creation on `current_value` update.
 - **React re-render on entity toggle** (PITFALLS P6): Memoize page content with `useMemo` / `React.memo` when entity filter state changes — address in Phase 3 App Shell.
 
+### Roadmap Evolution
+
+- Phase 17 added: Push to remote and implement all CONCERNS.md fixes
+
 ## Session Continuity
 
 Last session: 2026-04-11T19:19:06.592Z

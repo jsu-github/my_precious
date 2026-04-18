@@ -11,13 +11,23 @@ import TierPage from './pages/TierPage';
 import DealerPage from './pages/DealerPage';
 
 export default function App() {
-  const [view, setView] = useState<View>('dashboard');
-  const [entityFilter, setEntityFilter] = useState<EntityFilter>('global');
+  const [view, setView] = useState<View>(() => (localStorage.getItem('nav-view') as View) ?? 'dashboard');
+  const [entityFilter, setEntityFilter] = useState<EntityFilter>(() => (localStorage.getItem('nav-entity') as EntityFilter) ?? 'global');
+
+  function handleNavigate(v: View) {
+    localStorage.setItem('nav-view', v);
+    setView(v);
+  }
+
+  function handleEntityChange(f: EntityFilter) {
+    localStorage.setItem('nav-entity', f);
+    setEntityFilter(f);
+  }
 
   function renderPage() {
     switch (view) {
-      case 'dashboard':  return <DashboardPage entityFilter={entityFilter} onNavigate={setView} />;
-      case 'ledger':     return <LedgerPage entityFilter={entityFilter} onNavigate={setView} />;
+      case 'dashboard':  return <DashboardPage entityFilter={entityFilter} onNavigate={handleNavigate} />;
+      case 'ledger':     return <LedgerPage entityFilter={entityFilter} onNavigate={handleNavigate} />;
       case 'dealer':     return <DealerPage />;
       case 'analytics':  return <AnalyticsPage entityFilter={entityFilter} />;
       case 'locations':  return <LocationsPage entityFilter={entityFilter} />;
@@ -32,8 +42,8 @@ export default function App() {
     <AppShell
       view={view}
       entityFilter={entityFilter}
-      onNavigate={setView}
-      onEntityChange={setEntityFilter}
+      onNavigate={handleNavigate}
+      onEntityChange={handleEntityChange}
     >
       {renderPage()}
     </AppShell>

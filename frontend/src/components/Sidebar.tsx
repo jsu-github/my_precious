@@ -25,9 +25,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'analytics', label: 'Analytics',             icon: TrendingUp      },
   { id: 'ledger',    label: 'Ledger',                icon: BookOpen        },
   { id: 'locations', label: 'Locations',             icon: MapPin          },
-  { id: 'tax',       label: 'Tax',                   icon: ShieldCheck     },
   { id: 'tier',      label: 'Tier System',           icon: Layers          },
   { id: 'dealer',    label: 'Dealer & Prices',       icon: Store           },
+  { id: 'tax',       label: 'Tax',                   icon: ShieldCheck     },
 ];
 
 interface SidebarProps {

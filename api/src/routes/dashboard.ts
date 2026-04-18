@@ -8,6 +8,7 @@ const TIER_NAMES: Record<number, string> = {
   1: 'Digital Liquidity',
   2: 'The Vaults',
   3: 'Uncensorable Frontier',
+  4: 'Paper Prosperity',
 };
 
 type TierStatus = 'green' | 'amber' | 'red';
