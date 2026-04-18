@@ -1,172 +1,371 @@
-# CONVENTIONS.md — Code Style & Conventions
+# CONVENTIONS.md
+_Last updated: 2026-04-18_
 
-## Status: Pre-Implementation
-
-No application code exists yet. All conventions below are **prescribed** in:
-- `.github/copilot-instructions.md` — primary architecture rules
-- `.github/instructions/frontend-coding-standards.instructions.md` — frontend design philosophy and code standards
-- `.github/instructions/frontend-architect-behavior.instructions.md` — AI agent behavioral contract
-- `PRD.md` — product design requirements
+## Overview
+Precious Dashboard uses a consistent set of conventions across TypeScript, React, CSS, and API routes. The frontend is built with Tailwind CSS and a bespoke "Stitch" design system using CSS custom properties. The API follows Express + Knex patterns with centralized error handling. All conventions have been extracted from the actual running codebase.
 
 ---
 
-## Design Philosophy: Intentional Minimalism
+## File & Directory Naming
 
-The codebase must embody **"The Sovereign Vault"** — a private banking terminal aesthetic, not consumer fintech. Core directives:
-
-- **Anti-Generic:** Reject standard bootstrapped layouts. If it looks like a template, it is wrong.
-- **Reduction is sophistication.** Every added element must justify its presence.
-- **No UI library unless present** — if Shadcn/Radix/MUI exists, it MUST be used (do not hand-roll primitives). Currently no UI library specified — custom CSS.
-- Styling: Tailwind CSS + custom design token extension. Never mix utility and custom styles arbitrarily.
+| Type | Convention | Example |
+|------|-----------|---------|
+| React page components | PascalCase | `TierPage.tsx`, `DealerPage.tsx` |
+| React modal components | PascalCase | `AssetModal.tsx`, `EntityModal.tsx` |
+| Utility modules | camelCase | `metalPricing.ts`, `errorHandler.ts` |
+| API route files | camelCase | `assets.ts`, `tierConfig.ts` |
+| CSS/config files | camelCase | `tailwind.config.ts` |
+| Migration files | `NNN_snake_case.ts` | `022_tier_config_entity_scope.ts` |
 
 ---
 
-## Frontend Conventions
+## TypeScript Patterns
 
-### Component Structure
+**Declare types at the top of each file in a `// ─── Types` section:**
 ```typescript
-// Pages: full-page views accepting only navigation callbacks
-// frontend/src/pages/DashboardPage.tsx
-interface DashboardPageProps {
-  onNavigateToLedger: () => void;
-  onNavigateToAnalytics: () => void;
-  // ... etc
+// ─── Types ────────────────────────────────────────────────────────────────────
+type MetalTab = 'gold' | 'silver' | 'platinum' | 'palladium';
+
+interface DealerFormValues {
+  name: string;
+  contact_notes: string;
+  we_buy_gold_per_gram: string;
 }
-
-// Components: reusable, no page imports
-// frontend/src/components/AssetCard.tsx
 ```
 
-### Navigation
+**Use `type` for union/alias types; `interface` for object shapes:**
 ```typescript
-// App.tsx — discriminated union, conditional rendering
-type View =
-  | { page: 'dashboard' }
-  | { page: 'ledger' }
-  | { page: 'analytics' }
-  | { page: 'assets' }
-  | { page: 'tax' }
-  | { page: 'business-personal' }
-
-// NEVER: import LedgerPage from '../pages/LedgerPage' inside DashboardPage
-// ALWAYS: pass onNavigateToLedger callback as prop
+type TierStatus = 'green' | 'amber' | 'red' | 'unset';
+interface TierAllocationChartsProps { ... }
 ```
 
-### API Calls
+**Component Props interface is always named `Props`:**
 ```typescript
-// frontend/src/api.ts — single request() helper
-// ALL fetch calls go through api.* methods
-
-// CORRECT:
-const assets = await api.getAssets();
-
-// WRONG:
-const response = await fetch('/api/assets'); // Never inline fetch
+interface Props {
+  entityFilter: EntityFilter;
+  onNavigate?: (view: View) => void;
+}
+export default function DashboardPage({ entityFilter, onNavigate }: Props) { ... }
 ```
 
-### Error Shape
+**Use `Record<K, V>` for lookup maps:**
 ```typescript
-// API error shape: { error: { message: string, status: number } }
-// request() helper extracts error.message and throws it
-// Components catch the thrown string
+const TIER_LABELS: Record<number, string> = { 0: 'Grid-Down Baseline', ... };
+const STATUS_COLORS: Record<TierStatus, string> = { green: '#059669', ... };
 ```
 
-### Types
+**Use `Partial<Record<K, V>>` for optional lookup maps:**
 ```typescript
-// frontend/src/types.ts — single source of truth
-// Use Pick<T, ...> and Partial<> for input/update types
+const ASSET_CLASS_TIER_DEFAULTS: Partial<Record<AssetClass, number>> = {
+  precious_metals: 2,
+  crypto: 3,
+};
+```
 
-// CORRECT:
-type CreateAsset = Pick<Asset, 'name' | 'class' | 'entityId'>;
+**All shared types live exclusively in `frontend/src/types.ts`.** Never duplicate type definitions in component files. Import them as `import type { ... } from '../types'`.
 
-// WRONG:
-interface CreateAssetInput { name: string; class: string; entityId: number; }
-// (duplication)
+**404 errors in API routes use typed-cast pattern:**
+```typescript
+const e: any = new Error('Asset not found'); e.status = 404; throw e;
 ```
 
 ---
 
-## Score Scale Convention
+## Section Comment Style
 
-Scores are stored as integers 1–5:
+Every file uses ASCII banner section comments to organize code. This is mandatory:
+
 ```typescript
-const SCORE_LABELS = ['Extra Low', 'Low', 'Medium', 'High', 'Critical'];
-// Usage: SCORE_LABELS[score - 1]
+// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 ```
 
-Assets carry: gross score, net score, and mitigations (portfolio capital-weighted).
+Typical section order in page files:
+1. `// ─── Types` (local-only types; shared types are in `types.ts`)
+2. `// ─── Constants` (lookup maps, label arrays)
+3. `// ─── Helpers` (pure utility functions)
+4. `// ─── Sub-components` (small presentational components used only here)
+5. `// ─── Component` or `// ─── Main Component` (the default export)
 
 ---
 
-## API (Backend) Conventions
+## React Patterns
 
-### Route Structure
+**Functional components only.** No class components, ever.
+
+**Hook import line:**
 ```typescript
-// api/src/routes/assets.ts
-// Nested resources as sub-routes on parent router:
-assetsRouter.use('/:assetId/scores', scoresRouter);    // Not top-level
-assetsRouter.use('/:assetId/mitigations', mitigationsRouter);
-
-// Route prefixes: ALL /api/... except /health
-// app.use('/api/assets', assetsRouter);  // Correct
+import { useState, useEffect, useMemo } from 'react';
 ```
 
-### Error Handling
+**State declaration pattern — pair declarations grouped by concern:**
 ```typescript
-// api/src/middleware/errorHandler.ts — MUST be last middleware
-// Returns: { error: { message: string, status: number } }
+const [dealers, setDealers]       = useState<Dealer[]>([]);
+const [assets, setAssets]         = useState<Asset[]>([]);
+const [loading, setLoading]       = useState(true);
+const [pageError, setPageError]   = useState<string | null>(null);
+const [editingId, setEditingId]   = useState<number | 'new' | null>(null);
 ```
 
-### Migrations
+**Parallel data fetching with `Promise.all` in `useEffect`:**
 ```typescript
-// api/migrations/001_create_assets.ts
-// Always use:
-await knex.schema.createTableIfNotExists('assets', (t) => { ... });
-// Never: createTable (will throw if exists)
+useEffect(() => {
+  setLoading(true);
+  Promise.all([api.dealers.list(), api.assets.list()])
+    .then(([d, a]) => {
+      setDealers(d);
+      setAssets(a);
+    })
+    .catch(err => setPageError(String(err)))
+    .finally(() => setLoading(false));
+}, []);
+```
+
+**Derived/computed values with `useMemo`:**
+```typescript
+const selectedDealer = useMemo(
+  () => dealers.find(d => d.id === selectedDealerId) ?? null,
+  [dealers, selectedDealerId],
+);
+```
+
+**Form submission with `async function handleSubmit`:**
+```typescript
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setSaving(true);
+  setError(null);
+  try {
+    const saved = isEdit
+      ? await api.assets.update(asset!.id, form)
+      : await api.assets.create(form);
+    onSaved(saved);
+  } catch (err) {
+    setError(String(err));
+  } finally {
+    setSaving(false);
+  }
+}
+```
+
+**Sub-components defined in the same file** (before the main export). Only extract to a separate file if used across multiple pages/modals.
+
+**Sub-component props are inline interfaces, not reusing `Props`:**
+```typescript
+function StatusBadge({ status }: { status: TierStatus }) { ... }
+function DealerChip({ dealer, active, onSelect, onEdit }: { dealer: Dealer; active: boolean; ... }) { ... }
+```
+
+**Never use React Router.** Navigation uses a discriminated union `View` state in `App.tsx`. Pages receive `onNavigate*` callbacks as props.
+
+---
+
+## API Call Conventions
+
+**All fetch calls go through `api.*` from `frontend/src/api.ts`.** Never call `fetch()` inline in a component.
+
+```typescript
+// ✅ Correct
+import { api } from '../api';
+const data = await api.assets.list();
+
+// ❌ Never do this
+const res = await fetch('/api/assets');
+```
+
+The `request<T>()` helper in `frontend/src/api.ts` handles auth headers, JSON parsing, and error extraction. It throws `error.message` as a plain string on non-OK responses.
+
+---
+
+## CSS / Tailwind Approach
+
+**Design system: "Stitch" — a light-themed slate palette.** Despite older instructions referencing a dark theme, the implemented system is light-first.
+
+**Color tokens are CSS custom properties in `frontend/src/index.css`:**
+```css
+:root {
+  --color-background:       #F8FAFC;
+  --color-surface-low:      #F1F5F9;
+  --color-surface-base:     #E2E8F0;
+  --color-primary:          #1E293B;
+  --color-on-surface:       #1E293B;
+  --color-on-surface-muted: #475569;
+  --color-outline-variant:  #94A3B8;
+  --color-error:            #9f403d;
+}
+```
+
+**Tailwind theme extension in `frontend/tailwind.config.ts`** maps these tokens to utility classes:
+- `text-on-surface`, `text-on-surface-variant` — body text
+- `bg-surface-low`, `bg-surface-high`, `bg-surface-highest` — background layers
+- `border-outline-variant` — subtle borders
+- `text-primary`, `bg-primary` — primary interactive color (#1E293B)
+- `text-error`, `bg-error` — error states (#9f403d)
+
+**Typography: two fonts via `@fontsource` (no CDN):**
+- `font-sans` / `font-body` / `font-label` → Inter
+- `font-headline` → Manrope (use for hero numbers, section titles)
+
+**Component utility classes defined in `@layer components`:**
+```css
+.glass-panel    /* white card with subtle shadow + rounded-12px */
+.card-low       /* surface-low card for secondary containers */
+.primary-gradient  /* slate gradient for wordmarks / hero callouts */
+```
+
+**Use `.tabular-nums` on all financial data** (numbers that need alignment):
+```tsx
+<span className="tabular-nums text-on-surface font-semibold">{value}</span>
+```
+
+**Opacity floor overrides in `@layer utilities`** — do not fight these with custom `!important`:
+```
+text-on-surface-variant/30 → actual opacity 0.62 (WCAG AA floor)
+text-on-surface-variant/50 → actual opacity 0.76
+```
+
+**Conditional className pattern (no external clsx/cn library):**
+```typescript
+className={[
+  'base-class transition-all',
+  active ? 'border-primary/50 bg-primary/10' : 'border-outline-variant/30',
+].join(' ')}
 ```
 
 ---
 
-## Visual / UX Conventions
+## API Route Conventions
 
-### Color Usage Rules
-| Color | Token | When to use |
-|-------|-------|------------|
-| Gold | `primary: #e9c349` | Primary actions, wealth indicators — sparingly |
-| Emerald | `secondary: #4edea3` | Positive P&L, growth indicators ONLY |
-| Slate | `tertiary: #b9c7e0` | Secondary data, metadata |
-| Error red | `error: #ffb4ab` | Negative performance, errors |
+**One router per resource file in `api/src/routes/`.** Router is mounted in `api/src/routes/index.ts`.
 
-### Forbidden Patterns
-- **No 1px solid borders** for structural separation — use surface nesting instead
-- **No pure black `#000000`** — use midnight blues
-- **No large corner radii** — `sm` or `md` only (not pill shapes), except status chips
-- **No generic layouts** — asymmetry and bespoke structure required
-- **No inline `fetch()`** in components
+**Every handler follows the same try/catch/next(err) wrapper:**
+```typescript
+router.get('/', async (req, res, next) => {
+  try {
+    const rows = await knex('assets').orderBy('current_value', 'desc');
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+```
 
-### Required Patterns
-- **Glassmorphism** for modals/floating elements: `backdrop-blur: 24px`, surface at 70% opacity
-- **Tabular numbers** on all financial figures: `font-variant-numeric: tabular-nums`
-- **Newsreader** for display/headline text; **Inter** for all data/UI
-- **Extreme whitespace** — interfaces should feel "expensive"
-- **Surface nesting** for depth: `surface-container-lowest` → `surface-container-low` → `surface-container-high` → `surface-container-highest`
+**Route comment header directly above each handler:**
+```typescript
+// GET /api/assets?entity_id=N
+router.get('/', async (req, res, next) => { ... });
 
-### Micro-Interactions
-- Hover states, focus rings, and transitions must be **intentional** — every one has a purpose
-- Active state = surface shift (not border); `surface-container-low` → `surface-container-high`
-- Positive trend sparklines: `secondary` color + `drop-shadow` glow. Negative: `error`, no glow.
+// POST /api/assets
+router.post('/', async (req, res, next) => { ... });
+```
+
+**PUT handlers snapshot value changes via transaction:**
+```typescript
+const updated = await knex.transaction(async trx => {
+  const [row] = await trx('table').where({ id }).update({ ...req.body, updated_at: trx.fn.now() }).returning('*');
+  // side effects (snapshots, logs) also inside trx
+  return row;
+});
+```
+
+**DELETE returns 204 No Content** on success.
 
 ---
 
-## Semantic HTML Requirement
-- Semantic HTML5 always (`<main>`, `<section>`, `<article>`, `<nav>`, `<header>`, etc.)
-- `<div>` soup is a failure state
+## Error Handling Conventions
+
+**API (backend):** All errors pass through `next(err)`. The centralized `errorHandler` in `api/src/middleware/errorHandler.ts` — registered last in `api/src/index.ts` — serializes to:
+```json
+{ "error": { "message": "...", "status": 404 } }
+```
+
+For 500+ errors, `console.error('[error]', err)` is called.
+
+**Frontend:** Error state is always `string | null`. Cast errors to string with `String(err)`:
+```typescript
+const [error, setError] = useState<string | null>(null);
+// ...
+} catch (err) {
+  setError(String(err));
+}
+```
+
+Display errors with the `ErrorMessage` component from `frontend/src/components/modals/FormFields.tsx`:
+```tsx
+{error && <ErrorMessage message={error} />}
+```
 
 ---
 
-## AI Agent Behavioral Contract (`.github/instructions/frontend-architect-behavior.instructions.md`)
+## Migration Conventions
 
-When agents work on this codebase:
-1. Execute requests immediately — no unsolicited advice
-2. Every response: 1-sentence rationale → code
-3. `ULTRATHINK` trigger: engage exhaustive multi-dimensional reasoning (psychological, technical, accessibility WCAG AAA, scalability)
+Files in `api/migrations/` are numbered sequentially: `001_`, `002_`, ..., `022_`, etc.
+
+Each file exports `up` and `down`:
+```typescript
+export async function up(knex: Knex): Promise<void> { ... }
+export async function down(knex: Knex): Promise<void> { ... }
+```
+
+**Always use `createTableIfNotExists` / `dropTableIfExists`.**
+
+**Money/currency columns MUST use `table.decimal('name', 20, 2)`.** Never `table.float()` or `table.double()` for monetary values — these introduce floating-point precision errors.
+
+**Composite primary keys use `.primary([col1, col2])`:**
+```typescript
+table.primary(['tier_id', 'entity_scope']);
+```
+
+**Migrations that seed data must handle the case where existing rows are empty** (fall back to defaults), as shown in `api/migrations/022_tier_config_entity_scope.ts`.
+
+---
+
+## Form Field Conventions
+
+Reusable form primitives live in `frontend/src/components/modals/FormFields.tsx`:
+- `<Field label="..." required>` — label wrapper
+- `<Input>` — styled `<input>`
+- `<Select>` — styled `<select>`
+- `<Textarea>` — styled `<textarea>`
+- `<FormActions onCancel submitLabel loading>` — Save/Cancel button row
+- `<ErrorMessage message>` — error display
+
+All inputs share a single `inputClass` string defined in `FormFields.tsx`. Override only by extending `className`, not by redefining styles inline.
+
+---
+
+## Constants Naming
+
+Module-level lookup maps and arrays use SCREAMING_SNAKE_CASE:
+```typescript
+const TIER_LABELS: Record<number, string> = { ... };
+const STATUS_COLORS: Record<TierStatus, string> = { ... };
+const METAL_TABS: { id: MetalTab; label: string }[] = [ ... ];
+const TIER_PRESETS: { id: string; label: string; targets: Record<number, number> }[] = [ ... ];
+```
+
+Local helper functions use camelCase:
+```typescript
+function fmtEur(v: number, fractions = 2): string { ... }
+function freshnessClass(iso: string): string { ... }
+function computeStatus(currentPct: number, minPct: number, maxPct: number): TierStatus { ... }
+```
+
+---
+
+## What NOT To Do
+
+- **No React Router** — use `View` discriminated union + `onNavigate*` callbacks
+- **No inline `fetch()`** — always go through `api.*` from `frontend/src/api.ts`
+- **No UI component libraries** (Shadcn, Radix, MUI) — build bespoke primitives from scratch
+- **No `table.float()` / `table.double()` for money** — use `decimal(20, 2)` exclusively
+- **No duplicate type definitions** — all shared types belong in `frontend/src/types.ts`
+- **No arbitrary pixel values** in Tailwind — use the token scale or CSS custom properties
+- **No dark-theme colors** — the "dark-first" language in older instructions is outdated; the implemented palette is light-first (#F8FAFC background)
+- **No `clsx` or `cn` utilities** — use array `.join(' ')` pattern for conditional classes
+- **No docstrings on utility functions** unless the function is non-obvious (see `metalPricing.ts`)
+
+---
+
+*Convention analysis: 2026-04-18*
