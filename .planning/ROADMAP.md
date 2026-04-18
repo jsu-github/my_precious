@@ -347,13 +347,44 @@ Plans:
 
 ### Phase 18: Model Portfolio Risk Analysis
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal**: User can define per-tier sub-class allocation targets (e.g. Tier 2 — The Vaults: gold 75%, silver 20%, platinum 5%), see current vs target breakdown within each tier on the TierPage, and get a EUR gap-to-target for every sub-class (how much to buy or sell to reach the model)
 **Depends on:** Phase 17
-**Plans:** 0 plans
+**Requirements**: TBD
 
-Plans:
-- [ ] TBD (run /gsd-plan-phase 18 to break down)
+**Design decisions (locked in analysis):**
+- Targets are **% of that tier's total value** (not % of total portfolio) — independent of tier-level allocation
+- Sub-class model lives in an **expanded panel per tier on TierPage** — no new page or nav item
+- **Manual entry only** — no presets for sub-class targets
+
+**New DB table: `tier_subclass_model`**
+- `(tier_id, entity_scope, sub_class)` composite PK
+- `target_pct NUMERIC(5,2)` — % of that tier's total value; targets per tier must sum to ≤ 100
+
+**New API routes:**
+- `GET /api/tier-config/subclass-model?scope=personal|business` — returns all sub-class targets
+- `PUT /api/tier-config/subclass-model` — upsert a single sub-class target (body: `{ tier_id, entity_scope, sub_class, target_pct }`)
+- `DELETE /api/tier-config/subclass-model/:tierId/:subClass?scope=...` — remove a target
+- `GET /api/tier-config/gap?scope=personal|business` — returns current vs target per tier/sub-class with EUR values and gap (positive = buy, negative = sell)
+
+**Frontend changes (TierPage only):**
+- Each tier card gains a collapsible sub-section listing sub-classes present in that tier
+- Each row: sub-class label, current % of tier, target % (editable inline), current €, target €, gap € (color-coded: green=in range, amber=close, red=over/under)
+- Sum validation: show warning if targets don't sum to 100 (allow partial — unspecified sub-classes are unconstrained)
+
+**Notes:**
+- Use existing `sub_class` column on assets — no new asset fields needed
+- Gap endpoint should query live asset values via `current_value` — no snapshot needed
+- Treat tier_subclass_model as advisory: missing targets mean no constraint on that sub-class
+- Do NOT add sub-class presets in this phase
+
+**Success Criteria** (what must be TRUE):
+  1. `GET /api/tier-config/gap?scope=personal` returns per-tier/sub-class data with `current_eur`, `target_eur`, `gap_eur`, `current_pct_of_tier`, `target_pct_of_tier` — verified via API call
+  2. User can enter a target % for any sub-class within any tier via TierPage inline edit — the value persists on reload
+  3. Each tier card on TierPage shows a sub-class breakdown panel — current vs target bars, gap in EUR — only for sub-classes that have assets in that tier
+  4. A warning appears on any tier where sub-class targets sum > 100%
+  5. Deleting a sub-class target removes the constraint (no error — sub-class becomes unconstrained)
+**Plans**: TBD
+**UI hint**: yes
 
 ---
 
