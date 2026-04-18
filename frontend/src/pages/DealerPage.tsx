@@ -182,8 +182,7 @@ export default function DealerPage() {
 
   const displayDealer = useMemo(() => {
     if (selectedDealer) return selectedDealer;
-    const hollandGold = dealers.find(d => d.name.toLowerCase().replace(/\s+/g, '') === 'hollandgold');
-    return hollandGold ?? dealers[0] ?? null;
+    return dealers[0] ?? null;
   }, [dealers, selectedDealer]);
 
   const SPOT_PRICES = useMemo(() => ([
@@ -294,9 +293,9 @@ export default function DealerPage() {
     setPageError(null);
     setRefreshNotice(null);
     try {
-      const targetDealerId = selectedDealerId ?? dealers.find(d => d.name === 'HollandGold')?.id ?? null;
+      const targetDealerId = selectedDealerId ?? dealers[0]?.id ?? null;
       if (!targetDealerId) {
-        throw new Error('Select a dealer first (or create HollandGold) before updating prices.');
+        throw new Error('No dealer available. Add a dealer first before updating prices.');
       }
       const updated = await api.dealers.refreshPrices(targetDealerId);
       setDealers(prev => prev.map(d => (d.id === updated.id ? updated : d)));

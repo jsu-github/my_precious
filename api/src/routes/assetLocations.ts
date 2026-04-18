@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { knex } from '../db';
+import { HttpError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -15,9 +16,7 @@ router.get('/', async (_req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const row = await knex('asset_locations').where({ id: req.params.id }).first();
-    if (!row) {
-      const e: any = new Error('Asset location not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Asset location not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -25,7 +24,8 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/asset-locations
 router.post('/', async (req, res, next) => {
   try {
-    const [row] = await knex('asset_locations').insert(req.body).returning('*');
+    const { name, country_code, custodian_name, lon, lat, insurance_amount } = req.body;
+    const [row] = await knex('asset_locations').insert({ name, country_code, custodian_name, lon, lat, insurance_amount }).returning('*');
     res.status(201).json(row);
   } catch (err) { next(err); }
 });
@@ -33,13 +33,12 @@ router.post('/', async (req, res, next) => {
 // PUT /api/asset-locations/:id
 router.put('/:id', async (req, res, next) => {
   try {
+    const { name, country_code, custodian_name, lon, lat, insurance_amount } = req.body;
     const [row] = await knex('asset_locations')
       .where({ id: req.params.id })
-      .update({ ...req.body, updated_at: knex.fn.now() })
+      .update({ name, country_code, custodian_name, lon, lat, insurance_amount, updated_at: knex.fn.now() })
       .returning('*');
-    if (!row) {
-      const e: any = new Error('Asset location not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Asset location not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -48,9 +47,7 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const deleted = await knex('asset_locations').where({ id: req.params.id }).delete();
-    if (!deleted) {
-      const e: any = new Error('Asset location not found'); e.status = 404; throw e;
-    }
+    if (!deleted) throw new HttpError(404, 'Asset location not found');
     res.status(204).send();
   } catch (err) { next(err); }
 });

@@ -24,8 +24,16 @@ router.get('/summary', async (req, res, next) => {
   try {
     const { entity_id } = req.query;
 
+    let entityIdNum: number | undefined;
+    if (entity_id) {
+      entityIdNum = parseInt(entity_id as string, 10);
+      if (isNaN(entityIdNum) || entityIdNum < 0) {
+        return res.status(400).json({ error: { message: 'Invalid entity_id', status: 400 } });
+      }
+    }
+
     let q = knex('assets');
-    if (entity_id) q = q.where('entity_id', entity_id as string);
+    if (entityIdNum !== undefined) q = q.where('entity_id', entityIdNum);
 
     const [totals] = await q.clone()
       .sum({ total_value: 'current_value' })
@@ -72,7 +80,7 @@ router.get('/summary', async (req, res, next) => {
     res.json({
       total_value: totals.total_value ?? '0',
       asset_count: Number(totals.asset_count),
-      entity_id: entity_id ? Number(entity_id) : null,
+      entity_id: entityIdNum ?? null,
       by_asset_class: byClass.map((r: any) => ({
         asset_class: r.asset_class,
         total_value: r.total_value,

@@ -125,7 +125,7 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
       <div className="flex items-center gap-8">
         {/* Donut — Current */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Huidig</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Current</p>
           <svg viewBox="0 0 100 100" width="92" height="92">
             {currentPaths.length === 0
               ? <circle cx={cx} cy={cy} r={R} fill="none" stroke="#E2E8F0" strokeWidth={R - r} />
@@ -155,8 +155,8 @@ function TierAllocationCharts({ tierConfigs, tierPcts, totalValue, unassignedPct
           >
             {/* Header row */}
             <span /> {/* spacer */}
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Huidig %</span>
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Huidig €</span>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Current %</span>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Current €</span>
             {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Model %</span>}
             {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Model €</span>}
             {!isGlobal && <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Delta %</span>}
@@ -364,7 +364,7 @@ function TierGroupedBarChart({ tierConfigs, tierPcts, statuses, tierAllocations,
               {/* Bars */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-on-surface-variant/40 w-11 shrink-0 text-right">Huidig</span>
+                  <span className="text-[10px] text-on-surface-variant/40 w-11 shrink-0 text-right">Current</span>
                   <div className="flex-1 h-5 bg-surface-highest/40 rounded overflow-hidden">
                     <div
                       className="h-full rounded transition-all duration-500"

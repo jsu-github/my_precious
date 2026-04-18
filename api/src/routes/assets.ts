@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { knex } from '../db';
+import { HttpError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -22,7 +23,9 @@ router.get('/', async (req, res, next) => {
       .orderBy('a.current_value', 'desc');
 
     if (req.query.entity_id) {
-      q = q.where('a.entity_id', req.query.entity_id as string);
+      const entityId = parseInt(req.query.entity_id as string, 10);
+      if (isNaN(entityId) || entityId < 0) return res.status(400).json({ error: { message: 'Invalid entity_id', status: 400 } });
+      q = q.where('a.entity_id', entityId);
     }
 
     res.json(await q);
@@ -45,9 +48,7 @@ router.get('/:id', async (req, res, next) => {
       .where('a.id', req.params.id)
       .first();
 
-    if (!asset) {
-      const e: any = new Error('Asset not found'); e.status = 404; throw e;
-    }
+    if (!asset) throw new HttpError(404, 'Asset not found');
 
     asset.acquisitions = await knex('acquisitions').where({ asset_id: asset.id }).orderBy('purchase_date', 'desc');
     res.json(asset);
@@ -57,7 +58,16 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/assets
 router.post('/', async (req, res, next) => {
   try {
-    const [row] = await knex('assets').insert(req.body).returning('*');
+    const {
+      entity_id, location_id, name, asset_class, sub_class, product_type,
+      current_value, security_class, audit_frequency, last_audit_date, description,
+      tier, weight_per_unit, weight_unit, brand,
+    } = req.body;
+    const [row] = await knex('assets').insert({
+      entity_id, location_id, name, asset_class, sub_class, product_type,
+      current_value, security_class, audit_frequency, last_audit_date, description,
+      tier, weight_per_unit, weight_unit, brand,
+    }).returning('*');
     res.status(201).json(row);
   } catch (err) { next(err); }
 });
@@ -66,14 +76,23 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const existing = await knex('assets').where({ id: req.params.id }).first();
-    if (!existing) {
-      const e: any = new Error('Asset not found'); e.status = 404; throw e;
-    }
+    if (!existing) throw new HttpError(404, 'Asset not found');
+
+    const {
+      entity_id, location_id, name, asset_class, sub_class, product_type,
+      current_value, security_class, audit_frequency, last_audit_date, description,
+      tier, weight_per_unit, weight_unit, brand,
+    } = req.body;
 
     const updated = await knex.transaction(async trx => {
       const [row] = await trx('assets')
         .where({ id: req.params.id })
-        .update({ ...req.body, updated_at: trx.fn.now() })
+        .update({
+          entity_id, location_id, name, asset_class, sub_class, product_type,
+          current_value, security_class, audit_frequency, last_audit_date, description,
+          tier, weight_per_unit, weight_unit, brand,
+          updated_at: trx.fn.now(),
+        })
         .returning('*');
 
       // Snapshot current_value when it changes
@@ -93,9 +112,7 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const deleted = await knex('assets').where({ id: req.params.id }).delete();
-    if (!deleted) {
-      const e: any = new Error('Asset not found'); e.status = 404; throw e;
-    }
+    if (!deleted) throw new HttpError(404, 'Asset not found');
     res.status(204).send();
   } catch (err) { next(err); }
 });
@@ -115,8 +132,9 @@ router.get('/:assetId/acquisitions', async (req, res, next) => {
 // POST /api/assets/:assetId/acquisitions
 router.post('/:assetId/acquisitions', async (req, res, next) => {
   try {
+    const { purchase_date, cost_basis, quantity, tax_status, description } = req.body;
     const [row] = await knex('acquisitions')
-      .insert({ ...req.body, asset_id: req.params.assetId })
+      .insert({ purchase_date, cost_basis, quantity, tax_status, description, asset_id: req.params.assetId })
       .returning('*');
     res.status(201).json(row);
   } catch (err) { next(err); }
@@ -125,13 +143,12 @@ router.post('/:assetId/acquisitions', async (req, res, next) => {
 // PUT /api/assets/:assetId/acquisitions/:id
 router.put('/:assetId/acquisitions/:id', async (req, res, next) => {
   try {
+    const { purchase_date, cost_basis, quantity, tax_status, description } = req.body;
     const [row] = await knex('acquisitions')
       .where({ id: req.params.id, asset_id: req.params.assetId })
-      .update({ ...req.body, updated_at: knex.fn.now() })
+      .update({ purchase_date, cost_basis, quantity, tax_status, description, updated_at: knex.fn.now() })
       .returning('*');
-    if (!row) {
-      const e: any = new Error('Acquisition not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Acquisition not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -142,9 +159,7 @@ router.delete('/:assetId/acquisitions/:id', async (req, res, next) => {
     const deleted = await knex('acquisitions')
       .where({ id: req.params.id, asset_id: req.params.assetId })
       .delete();
-    if (!deleted) {
-      const e: any = new Error('Acquisition not found'); e.status = 404; throw e;
-    }
+    if (!deleted) throw new HttpError(404, 'Acquisition not found');
     res.status(204).send();
   } catch (err) { next(err); }
 });
@@ -164,8 +179,9 @@ router.get('/:assetId/fiscal-tags', async (req, res, next) => {
 // POST /api/assets/:assetId/fiscal-tags
 router.post('/:assetId/fiscal-tags', async (req, res, next) => {
   try {
+    const { fiscal_year, fiscal_category, jurisdiction, notes } = req.body;
     const [row] = await knex('fiscal_tags')
-      .insert({ ...req.body, asset_id: req.params.assetId })
+      .insert({ fiscal_year, fiscal_category, jurisdiction, notes, asset_id: req.params.assetId })
       .returning('*');
     res.status(201).json(row);
   } catch (err) { next(err); }
@@ -174,13 +190,12 @@ router.post('/:assetId/fiscal-tags', async (req, res, next) => {
 // PUT /api/assets/:assetId/fiscal-tags/:id
 router.put('/:assetId/fiscal-tags/:id', async (req, res, next) => {
   try {
+    const { fiscal_year, fiscal_category, jurisdiction, notes } = req.body;
     const [row] = await knex('fiscal_tags')
       .where({ id: req.params.id, asset_id: req.params.assetId })
-      .update({ ...req.body, updated_at: knex.fn.now() })
+      .update({ fiscal_year, fiscal_category, jurisdiction, notes, updated_at: knex.fn.now() })
       .returning('*');
-    if (!row) {
-      const e: any = new Error('Fiscal tag not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Fiscal tag not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -191,9 +206,7 @@ router.delete('/:assetId/fiscal-tags/:id', async (req, res, next) => {
     const deleted = await knex('fiscal_tags')
       .where({ id: req.params.id, asset_id: req.params.assetId })
       .delete();
-    if (!deleted) {
-      const e: any = new Error('Fiscal tag not found'); e.status = 404; throw e;
-    }
+    if (!deleted) throw new HttpError(404, 'Fiscal tag not found');
     res.status(204).send();
   } catch (err) { next(err); }
 });

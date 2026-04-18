@@ -115,7 +115,7 @@ function htmlToText(html: string): string {
 
 function fetchText(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    https
+    const req = https
       .get(url, (res) => {
         if (res.statusCode && res.statusCode >= 400) {
           reject(new Error(`HTTP ${res.statusCode} for ${url}`));
@@ -126,6 +126,9 @@ function fetchText(url: string): Promise<string> {
         res.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
       })
       .on('error', reject);
+    req.setTimeout(10_000, () => {
+      req.destroy(new Error(`Timeout fetching ${url}`));
+    });
   });
 }
 
@@ -290,6 +293,13 @@ router.post('/:id/refresh-prices', async (req, res, next) => {
     const [dealer] = await db('dealers').select('*').where({ id: req.params.id });
     if (!dealer) {
       return res.status(404).json({ error: { message: 'Not found', status: 404 } });
+    }
+
+    // Cooldown: reject if prices were updated less than 5 minutes ago
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+    const lastUpdated = dealer.updated_at ? new Date(dealer.updated_at).getTime() : 0;
+    if (Date.now() - lastUpdated < FIVE_MINUTES_MS) {
+      return res.status(429).json({ error: { message: 'Prices updated recently. Try again in a few minutes.', status: 429 } });
     }
 
     const prices = await scrapeHollandGoldPrices();

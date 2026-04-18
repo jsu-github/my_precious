@@ -4,6 +4,15 @@ export interface AppError extends Error {
   status?: number;
 }
 
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = 'HttpError';
+  }
+}
+
 /**
  * Centralized error handler — must be registered LAST in index.ts via app.use(errorHandler).
  * Returns the canonical error shape: { error: { message: string, status: number } }

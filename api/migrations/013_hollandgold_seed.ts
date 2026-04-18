@@ -1,6 +1,8 @@
 import type { Knex } from 'knex';
 
-// Migration 012 ran with an earlier version that created we_buy_silver_per_gram.
+// NOTE: Despite the "_hollandgold_seed" filename, this migration is a SCHEMA CHANGE,
+// not a seed. It was misnamed at the time of creation. The filename cannot be changed
+// after the DB has been migrated (Knex tracks migration history by filename).
 // This migration aligns the schema with the final design:
 //   - rename we_buy_silver_per_gram → we_buy_silver_bar_per_gram
 //   - add we_buy_gold_coin_per_gram (Au coins: typically ~0.5% below bar rate)

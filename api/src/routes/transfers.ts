@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { knex } from '../db';
+import { HttpError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -28,9 +29,7 @@ router.get('/:id', async (req, res, next) => {
       .select('t.*', 'fe.name as from_entity_name', 'te.name as to_entity_name')
       .where('t.id', req.params.id)
       .first();
-    if (!row) {
-      const e: any = new Error('Transfer not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Transfer not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -38,7 +37,8 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/transfers
 router.post('/', async (req, res, next) => {
   try {
-    const [row] = await knex('transfers').insert(req.body).returning('*');
+    const { from_entity_id, to_entity_id, amount, transfer_date, description } = req.body;
+    const [row] = await knex('transfers').insert({ from_entity_id, to_entity_id, amount, transfer_date, description }).returning('*');
     res.status(201).json(row);
   } catch (err) { next(err); }
 });
@@ -46,13 +46,12 @@ router.post('/', async (req, res, next) => {
 // PUT /api/transfers/:id
 router.put('/:id', async (req, res, next) => {
   try {
+    const { from_entity_id, to_entity_id, amount, transfer_date, description } = req.body;
     const [row] = await knex('transfers')
       .where({ id: req.params.id })
-      .update({ ...req.body, updated_at: knex.fn.now() })
+      .update({ from_entity_id, to_entity_id, amount, transfer_date, description, updated_at: knex.fn.now() })
       .returning('*');
-    if (!row) {
-      const e: any = new Error('Transfer not found'); e.status = 404; throw e;
-    }
+    if (!row) throw new HttpError(404, 'Transfer not found');
     res.json(row);
   } catch (err) { next(err); }
 });
@@ -61,9 +60,7 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const deleted = await knex('transfers').where({ id: req.params.id }).delete();
-    if (!deleted) {
-      const e: any = new Error('Transfer not found'); e.status = 404; throw e;
-    }
+    if (!deleted) throw new HttpError(404, 'Transfer not found');
     res.status(204).send();
   } catch (err) { next(err); }
 });
